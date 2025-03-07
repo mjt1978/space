@@ -49,6 +49,7 @@
             ufo: new Image(),
             background: new Image()
         };
+
         images.ship.src = "jet_fighter_PNG23.png"; // Paikallinen tiedosto
         images.bullet.src = "rockets_PNG13272.png"; // Paikallinen tiedosto
         images.obstacle.src = "stone_PNG13573.png"; // Paikallinen tiedosto
@@ -128,14 +129,32 @@
             });
         }
 
-        // Piirrä ellipsien törmäystarkistus ulkokehällä
-        function checkCollision(rect1, rect2) {
-            return (
-                rect1.x < rect2.x + rect2.width &&
-                rect1.x + rect1.width > rect2.x &&
-                rect1.y < rect2.y + rect2.height &&
-                rect1.y + rect1.height > rect2.y
-            );
+        function checkPixelCollision(image1, x1, y1, image2, x2, y2) {
+            const canvas1 = document.createElement('canvas');
+            const canvas2 = document.createElement('canvas');
+            canvas1.width = image1.width;
+            canvas1.height = image1.height;
+            canvas2.width = image2.width;
+            canvas2.height = image2.height;
+            const ctx1 = canvas1.getContext('2d');
+            const ctx2 = canvas2.getContext('2d');
+
+            ctx1.drawImage(image1, 0, 0);
+            ctx2.drawImage(image2, 0, 0);
+
+            const data1 = ctx1.getImageData(0, 0, image1.width, image1.height).data;
+            const data2 = ctx2.getImageData(0, 0, image2.width, image2.height).data;
+
+            for (let y = 0; y < image1.height; y++) {
+                for (let x = 0; x < image1.width; x++) {
+                    const alpha1 = data1[(y * image1.width + x) * 4 + 3];
+                    const alpha2 = data2[((y + (y2 - y1)) * image2.width + (x + (x2 - x1))) * 4 + 3];
+                    if (alpha1 > 0 && alpha2 > 0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         function update() {
@@ -154,7 +173,7 @@
                 if (ob.x + ob.width < 0) obstacles.splice(index, 1);
 
                 bullets.forEach((bullet, bulletIndex) => {
-                    if (checkCollision(bullet, ob)) {
+                    if (checkPixelCollision(images.bullet, bullet.x, bullet.y, images.obstacle, ob.x, ob.y)) {
                         bullets.splice(bulletIndex, 1);
                         ob.hits--;
                         ob.width -= ob.width / (ob.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
@@ -167,7 +186,9 @@
                     }
                 });
 
-                if (ob.hits > 0 && checkCollision(ship, ob)) ship.alive = false;
+                if (ob.hits > 0 && checkPixelCollision(images.ship, ship.x, ship.y, images.obstacle, ob.x, ob.y)) {
+                    ship.alive = false;
+                }
             });
 
             if (ufo) {
@@ -178,11 +199,13 @@
                 ufo.x += (dx / dist) * 2;
                 ufo.y += (dy / dist) * 2;
 
-                if (ufo.hits > 0 && checkCollision(ship, ufo)) ship.alive = false;
+                if (ufo.hits > 0 && checkPixelCollision(images.ship, ship.x, ship.y, images.ufo, ufo.x, ufo.y)) {
+                    ship.alive = false;
+                }
             }
 
             bullets.forEach((bullet, bulletIndex) => {
-                if (ufo && checkCollision(bullet, ufo)) {
+                if (ufo && checkPixelCollision(images.bullet, bullet.x, bullet.y, images.ufo, ufo.x, ufo.y)) {
                     bullets.splice(bulletIndex, 1);
                     ufo.hits--;
                     ufo.width -= ufo.width / (ufo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
