@@ -48,7 +48,8 @@
             basicUfo: new Image(),
             followUfo: new Image(),
             splitUfo: new Image(),
-            background: new Image()
+            background: new Image(),
+            ammoUpgrade: new Image()
         };
         images.ship.src = "alus.png"; // Paikallinen tiedosto
         images.bullet.src = "rockets_PNG13272.png"; // Paikallinen tiedosto
@@ -56,8 +57,9 @@
         images.followUfo.src = "ufo2.png"; // Paikallinen tiedosto
         images.splitUfo.src = "ufo3.png"; // Paikallinen tiedosto
         images.background.src = "skynews-planet-earth-sun_6072586.jpg"; // Paikallinen tiedosto
+        images.ammoUpgrade.src = "ammus_50%.png"; // Paikallinen tiedosto
 
-        let ship, obstacles, bullets, followUfo, splitUfos, keys, obstacleSpeed, canShoot, score, scoreInterval;
+        let ship, obstacles, bullets, followUfo, splitUfos, ammoUpgrade, keys, obstacleSpeed, canShoot, score, scoreInterval, bulletUpgradeCollected;
 
         function init() {
             ship = { x: 150, y: canvas.height / 2, width: 100, height: 100, speed: 5, alive: true };
@@ -65,10 +67,12 @@
             bullets = [];
             followUfo = null;
             splitUfos = [];
+            ammoUpgrade = null;
             keys = {};
             obstacleSpeed = 5;
             canShoot = true;
             score = 0;
+            bulletUpgradeCollected = false;
             scoreDisplay.textContent = "Pisteet: 0";
 
             clearInterval(scoreInterval);
@@ -120,6 +124,20 @@
                     speed: obstacleSpeed // Sama nopeus kuin esteellä
                 });
             }, 5000); // Useammin kuin ennen
+
+            // AmmusUpgraden luontiväli
+            setInterval(() => {
+                if (!ammoUpgrade && !bulletUpgradeCollected) {
+                    const size = 50; // kiinteä koko ammusUpgrade:lle
+                    ammoUpgrade = {
+                        x: canvas.width,
+                        y: Math.random() * (canvas.height - size),
+                        width: size,
+                        height: size,
+                        speed: obstacleSpeed * 2 // 100% nopeammin kuin basicUfo
+                    };
+                }
+            }, 10000);
         }
 
         window.addEventListener("keydown", (e) => {
@@ -139,9 +157,10 @@
             bullets.push({
                 x: ship.x + ship.width,
                 y: ship.y + ship.height / 2 - 5,
-                width: 10,
-                height: 10,
-                speed: 7
+                width: bulletUpgradeCollected ? 15 : 10, // 50% suurempi koko, jos upgrade kerätty
+                height: bulletUpgradeCollected ? 15 : 10, // 50% suurempi koko, jos upgrade kerätty
+                speed: 7,
+                damage: bulletUpgradeCollected ? 1.5 : 1 // 50% enemmän tuhoa, jos upgrade kerätty
             });
         }
 
@@ -180,7 +199,7 @@
                         radius: ob.width / 2
                     })) {
                         bullets.splice(bulletIndex, 1);
-                        ob.hits--;
+                        ob.hits -= bullet.damage;
                         ob.width -= ob.width / (ob.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
                         ob.height -= ob.height / (ob.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
                         if (ob.hits <= 0) {
@@ -223,7 +242,7 @@
                         radius: followUfo.width / 2
                     })) {
                         bullets.splice(bulletIndex, 1);
-                        followUfo.hits--;
+                        followUfo.hits -= bullet.damage;
                         followUfo.width -= followUfo.width / (followUfo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
                         followUfo.height -= followUfo.height / (followUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
                         if (followUfo.hits <= 0) {
@@ -301,6 +320,24 @@
                     }
                 }
             });
+
+            if (ammoUpgrade) {
+                ammoUpgrade.x -= ammoUpgrade.speed;
+                if (ammoUpgrade.x + ammoUpgrade.width < 0) {
+                    ammoUpgrade = null;
+                } else if (checkCircleCollision({
+                    x: ship.x + ship.width / 2,
+                    y: ship.y + ship.height / 2,
+                    radius: ship.width / 2
+                }, {
+                    x: ammoUpgrade.x + ammoUpgrade.width / 2,
+                    y: ammoUpgrade.y + ammoUpgrade.height / 2,
+                    radius: ammoUpgrade.width / 2
+                })) {
+                    bulletUpgradeCollected = true;
+                    ammoUpgrade = null;
+                }
+            }
         }
 
         function draw() {
@@ -326,6 +363,10 @@
                     ctx.drawImage(images.splitUfo, splitUfo.x, splitUfo.y, splitUfo.width, splitUfo.height);
                 }
             });
+
+            if (ammoUpgrade) {
+                ctx.drawImage(images.ammoUpgrade, ammoUpgrade.x, ammoUpgrade.y, ammoUpgrade.width, ammoUpgrade.height);
+            }
         }
 
         function gameLoop() {
