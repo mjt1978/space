@@ -215,7 +215,7 @@
                 ufo.y += (dy / dist);
 
                 bullets.forEach((bullet, bulletIndex) => {
-                    if (checkCircleCollision({
+                    if (ufo && checkCircleCollision({
                         x: bullet.x + bullet.width / 2,
                         y: bullet.y + bullet.height / 2,
                         radius: bullet.width / 2
@@ -255,7 +255,7 @@
                     fastUfo = null;
                 } else {
                     bullets.forEach((bullet, bulletIndex) => {
-                        if (checkCircleCollision({
+                        if (fastUfo && checkCircleCollision({
                             x: bullet.x + bullet.width / 2,
                             y: bullet.y + bullet.height / 2,
                             radius: bullet.width / 2
