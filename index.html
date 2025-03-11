@@ -276,6 +276,7 @@
 
             ufos.forEach(ufo => {
                 if (ufo.hits > 0) {
+                    console.log(`Drawing UFO at (${ufo.x}, ${ufo.y}) with size (${ufo.width}, ${ufo.height})`);
                     ctx.drawImage(ufo.image, ufo.x, ufo.y, ufo.width, ufo.height);
                 }
             });
