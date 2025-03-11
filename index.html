@@ -47,21 +47,24 @@
             bullet: new Image(),
             obstacle: new Image(),
             ufo: new Image(),
+            fastUfo: new Image(),
             background: new Image()
         };
         images.ship.src = "alus.png"; // Paikallinen tiedosto
         images.bullet.src = "rockets_PNG13272.png"; // Paikallinen tiedosto
         images.obstacle.src = "ufo.png"; // Paikallinen tiedosto
         images.ufo.src = "ufo2.png"; // Paikallinen tiedosto
+        images.fastUfo.src = "ufo3.png"; // Paikallinen tiedosto
         images.background.src = "skynews-planet-earth-sun_6072586.jpg"; // Paikallinen tiedosto
 
-        let ship, obstacles, bullets, ufo, keys, obstacleSpeed, canShoot, score, scoreInterval;
+        let ship, obstacles, bullets, ufo, fastUfo, keys, obstacleSpeed, canShoot, score, scoreInterval;
 
         function init() {
             ship = { x: 150, y: canvas.height / 2, width: 100, height: 100, speed: 5, alive: true };
             obstacles = [];
             bullets = [];
             ufo = null;
+            fastUfo = null;
             keys = {};
             obstacleSpeed = 5;
             canShoot = true;
@@ -103,6 +106,21 @@
                     };
                 }
             }, 10000);
+
+            // Lisätty nopean UFO:n luontiväli
+            setInterval(() => {
+                if (!fastUfo) {
+                    const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
+                    const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
+                    fastUfo = {
+                        x: canvas.width,
+                        y: Math.random() * (canvas.height - size),
+                        width: size,
+                        height: size,
+                        hits: hits
+                    };
+                }
+            }, 15000);
         }
 
         window.addEventListener("keydown", (e) => {
@@ -192,8 +210,8 @@
                 let dy = ship.y - ufo.y;
                 let dist = Math.sqrt(dx * dx + dy * dy);
 
-                ufo.x += (dx / dist) * 2;
-                ufo.y += (dy / dist) * 2;
+                ufo.x += (dx / dist);
+                ufo.y += (dy / dist);
 
                 if (ufo.hits > 0 && checkCircleCollision({
                     x: ship.x + ship.width / 2,
@@ -203,6 +221,27 @@
                     x: ufo.x + ufo.width / 2,
                     y: ufo.y + ufo.height / 2,
                     radius: ufo.width / 2
+                })) {
+                    ship.alive = false;
+                }
+            }
+
+            if (fastUfo) {
+                let dx = ship.x - fastUfo.x;
+                let dy = ship.y - fastUfo.y;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+
+                fastUfo.x += (dx / dist) * 2;
+                fastUfo.y += (dy / dist) * 2;
+
+                if (fastUfo.hits > 0 && checkCircleCollision({
+                    x: ship.x + ship.width / 2,
+                    y: ship.y + ship.height / 2,
+                    radius: ship.width / 2
+                }, {
+                    x: fastUfo.x + fastUfo.width / 2,
+                    y: fastUfo.y + fastUfo.height / 2,
+                    radius: fastUfo.width / 2
                 })) {
                     ship.alive = false;
                 }
@@ -228,6 +267,26 @@
                         scoreDisplay.textContent = "Pisteet: " + score;
                     }
                 }
+
+                if (fastUfo && checkCircleCollision({
+                    x: bullet.x + bullet.width / 2,
+                    y: bullet.y + bullet.height / 2,
+                    radius: bullet.width / 2
+                }, {
+                    x: fastUfo.x + fastUfo.width / 2,
+                    y: fastUfo.y + fastUfo.height / 2,
+                    radius: fastUfo.width / 2
+                })) {
+                    bullets.splice(bulletIndex, 1);
+                    fastUfo.hits--;
+                    fastUfo.width -= fastUfo.width / (fastUfo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
+                    fastUfo.height -= fastUfo.height / (fastUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
+                    if (fastUfo.hits <= 0) {
+                        fastUfo = null;
+                        score += 20;
+                        scoreDisplay.textContent = "Pisteet: " + score;
+                    }
+                }
             });
         }
 
@@ -247,6 +306,10 @@
 
             if (ufo && ufo.hits > 0) {
                 ctx.drawImage(images.ufo, ufo.x, ufo.y, ufo.width, ufo.height);
+            }
+
+            if (fastUfo && fastUfo.hits > 0) {
+                ctx.drawImage(images.fastUfo, fastUfo.x, fastUfo.y, fastUfo.width, fastUfo.height);
             }
         }
 
