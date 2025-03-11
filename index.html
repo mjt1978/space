@@ -110,7 +110,7 @@
             // Lisätty nopean UFO:n luontiväli
             setInterval(() => {
                 const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
-                const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
+                const hits = Math.ceil(size / 30); // 50% vähemmän osumia
                 splitUfos.push({
                     x: canvas.width,
                     y: Math.random() * (canvas.height - size),
@@ -266,19 +266,19 @@
                             const newSize = splitUfo.width / 1.5; // Hieman suurempi koko jäljellä oleville ufoksi
                             if (newSize > 10) {
                                 splitUfos.push({
-                                    x: splitUfo.x - newSize / 2,
-                                    y: splitUfo.y - newSize / 2,
+                                    x: splitUfo.x,
+                                    y: splitUfo.y - newSize,
                                     width: newSize,
                                     height: newSize,
-                                    hits: Math.ceil(newSize / 20),
+                                    hits: Math.ceil(newSize / 30), // 50% vähemmän osumia
                                     speed: splitUfo.speed
                                 });
                                 splitUfos.push({
-                                    x: splitUfo.x + newSize / 2,
-                                    y: splitUfo.y + newSize / 2,
+                                    x: splitUfo.x,
+                                    y: splitUfo.y + newSize,
                                     width: newSize,
                                     height: newSize,
-                                    hits: Math.ceil(newSize / 20),
+                                    hits: Math.ceil(newSize / 30), // 50% vähemmän osumia
                                     speed: splitUfo.speed
                                 });
                             }
