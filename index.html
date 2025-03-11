@@ -229,40 +229,42 @@
 
             if (fastUfo) {
                 fastUfo.x -= fastUfo.speed;
-                if (fastUfo.x + fastUfo.width < 0) fastUfo = null;
+                if (fastUfo.x + fastUfo.width < 0) {
+                    fastUfo = null;
+                } else {
+                    bullets.forEach((bullet, bulletIndex) => {
+                        if (checkCircleCollision({
+                            x: bullet.x + bullet.width / 2,
+                            y: bullet.y + bullet.height / 2,
+                            radius: bullet.width / 2
+                        }, {
+                            x: fastUfo.x + fastUfo.width / 2,
+                            y: fastUfo.y + fastUfo.height / 2,
+                            radius: fastUfo.width / 2
+                        })) {
+                            bullets.splice(bulletIndex, 1);
+                            fastUfo.hits--;
+                            fastUfo.width -= fastUfo.width / (fastUfo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
+                            fastUfo.height -= fastUfo.height / (fastUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
+                            if (fastUfo.hits <= 0) {
+                                fastUfo = null;
+                                score += 20;
+                                scoreDisplay.textContent = "Pisteet: " + score;
+                            }
+                        }
+                    });
 
-                bullets.forEach((bullet, bulletIndex) => {
-                    if (checkCircleCollision({
-                        x: bullet.x + bullet.width / 2,
-                        y: bullet.y + bullet.height / 2,
-                        radius: bullet.width / 2
+                    if (fastUfo.hits > 0 && checkCircleCollision({
+                        x: ship.x + ship.width / 2,
+                        y: ship.y + ship.height / 2,
+                        radius: ship.width / 2
                     }, {
                         x: fastUfo.x + fastUfo.width / 2,
                         y: fastUfo.y + fastUfo.height / 2,
                         radius: fastUfo.width / 2
                     })) {
-                        bullets.splice(bulletIndex, 1);
-                        fastUfo.hits--;
-                        fastUfo.width -= fastUfo.width / (fastUfo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
-                        fastUfo.height -= fastUfo.height / (fastUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
-                        if (fastUfo.hits <= 0) {
-                            fastUfo = null;
-                            score += 20;
-                            scoreDisplay.textContent = "Pisteet: " + score;
-                        }
+                        ship.alive = false;
                     }
-                });
-
-                if (fastUfo && fastUfo.hits > 0 && checkCircleCollision({
-                    x: ship.x + ship.width / 2,
-                    y: ship.y + ship.height / 2,
-                    radius: ship.width / 2
-                }, {
-                    x: fastUfo.x + fastUfo.width / 2,
-                    y: fastUfo.y + fastUfo.height / 2,
-                    radius: fastUfo.width / 2
-                })) {
-                    ship.alive = false;
                 }
             }
         }
