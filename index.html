@@ -214,7 +214,29 @@
                 ufo.x += (dx / dist);
                 ufo.y += (dy / dist);
 
-                if (ufo.hits > 0 && checkCircleCollision({
+                bullets.forEach((bullet, bulletIndex) => {
+                    if (checkCircleCollision({
+                        x: bullet.x + bullet.width / 2,
+                        y: bullet.y + bullet.height / 2,
+                        radius: bullet.width / 2
+                    }, {
+                        x: ufo.x + ufo.width / 2,
+                        y: ufo.y + ufo.height / 2,
+                        radius: ufo.width / 2
+                    })) {
+                        bullets.splice(bulletIndex, 1);
+                        ufo.hits--;
+                        ufo.width -= ufo.width / (ufo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
+                        ufo.height -= ufo.height / (ufo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
+                        if (ufo.hits <= 0) {
+                            ufo = null;
+                            score += 10;
+                            scoreDisplay.textContent = "Pisteet: " + score;
+                        }
+                    }
+                });
+
+                if (ufo && ufo.hits > 0 && checkCircleCollision({
                     x: ship.x + ship.width / 2,
                     y: ship.y + ship.height / 2,
                     radius: ship.width / 2
@@ -254,7 +276,7 @@
                         }
                     });
 
-                    if (fastUfo.hits > 0 && checkCircleCollision({
+                    if (fastUfo && fastUfo.hits > 0 && checkCircleCollision({
                         x: ship.x + ship.width / 2,
                         y: ship.y + ship.height / 2,
                         radius: ship.width / 2
