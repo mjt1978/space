@@ -45,26 +45,26 @@
         const images = {
             ship: new Image(),
             bullet: new Image(),
-            obstacle: new Image(),
-            ufo: new Image(),
-            fastUfo: new Image(),
+            basicUfo: new Image(),
+            followUfo: new Image(),
+            splitUfo: new Image(),
             background: new Image()
         };
         images.ship.src = "alus.png"; // Paikallinen tiedosto
         images.bullet.src = "rockets_PNG13272.png"; // Paikallinen tiedosto
-        images.obstacle.src = "ufo.png"; // Paikallinen tiedosto
-        images.ufo.src = "ufo2.png"; // Paikallinen tiedosto
-        images.fastUfo.src = "ufo3.png"; // Paikallinen tiedosto
+        images.basicUfo.src = "ufo.png"; // Paikallinen tiedosto
+        images.followUfo.src = "ufo2.png"; // Paikallinen tiedosto
+        images.splitUfo.src = "ufo3.png"; // Paikallinen tiedosto
         images.background.src = "skynews-planet-earth-sun_6072586.jpg"; // Paikallinen tiedosto
 
-        let ship, obstacles, bullets, ufo, fastUfo, keys, obstacleSpeed, canShoot, score, scoreInterval;
+        let ship, obstacles, bullets, basicUfo, followUfo, splitUfo, keys, obstacleSpeed, canShoot, score, scoreInterval;
 
         function init() {
             ship = { x: 150, y: canvas.height / 2, width: 100, height: 100, speed: 5, alive: true };
             obstacles = [];
             bullets = [];
-            ufo = null;
-            fastUfo = null;
+            followUfo = null;
+            splitUfo = null;
             keys = {};
             obstacleSpeed = 5;
             canShoot = true;
@@ -92,12 +92,12 @@
                 });
             }, 1000);
 
-            // Lisätty UFO:n luontiväli
+            // Lisätty seuraavan UFO:n luontiväli
             setInterval(() => {
-                if (!ufo) {
+                if (!followUfo) {
                     const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
                     const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
-                    ufo = {
+                    followUfo = {
                         x: canvas.width,
                         y: Math.random() * (canvas.height - size),
                         width: size,
@@ -109,10 +109,10 @@
 
             // Lisätty nopean UFO:n luontiväli
             setInterval(() => {
-                if (!fastUfo) {
+                if (!splitUfo) {
                     const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
                     const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
-                    fastUfo = {
+                    splitUfo = {
                         x: canvas.width,
                         y: Math.random() * (canvas.height - size),
                         width: size,
@@ -206,84 +206,84 @@
                 }
             });
 
-            if (ufo) {
-                let dx = ship.x - ufo.x;
-                let dy = ship.y - ufo.y;
+            if (followUfo) {
+                let dx = ship.x - followUfo.x;
+                let dy = ship.y - followUfo.y;
                 let dist = Math.sqrt(dx * dx + dy * dy);
 
-                ufo.x += (dx / dist);
-                ufo.y += (dy / dist);
+                followUfo.x += (dx / dist);
+                followUfo.y += (dy / dist);
 
                 bullets.forEach((bullet, bulletIndex) => {
-                    if (ufo && checkCircleCollision({
+                    if (followUfo && checkCircleCollision({
                         x: bullet.x + bullet.width / 2,
                         y: bullet.y + bullet.height / 2,
                         radius: bullet.width / 2
                     }, {
-                        x: ufo.x + ufo.width / 2,
-                        y: ufo.y + ufo.height / 2,
-                        radius: ufo.width / 2
+                        x: followUfo.x + followUfo.width / 2,
+                        y: followUfo.y + followUfo.height / 2,
+                        radius: followUfo.width / 2
                     })) {
                         bullets.splice(bulletIndex, 1);
-                        ufo.hits--;
-                        ufo.width -= ufo.width / (ufo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
-                        ufo.height -= ufo.height / (ufo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
-                        if (ufo.hits <= 0) {
-                            ufo = null;
+                        followUfo.hits--;
+                        followUfo.width -= followUfo.width / (followUfo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
+                        followUfo.height -= followUfo.height / (followUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
+                        if (followUfo.hits <= 0) {
+                            followUfo = null;
                             score += 10;
                             scoreDisplay.textContent = "Pisteet: " + score;
                         }
                     }
                 });
 
-                if (ufo && ufo.hits > 0 && checkCircleCollision({
+                if (followUfo && followUfo.hits > 0 && checkCircleCollision({
                     x: ship.x + ship.width / 2,
                     y: ship.y + ship.height / 2,
                     radius: ship.width / 2
                 }, {
-                    x: ufo.x + ufo.width / 2,
-                    y: ufo.y + ufo.height / 2,
-                    radius: ufo.width / 2
+                    x: followUfo.x + followUfo.width / 2,
+                    y: followUfo.y + followUfo.height / 2,
+                    radius: followUfo.width / 2
                 })) {
                     ship.alive = false;
                 }
             }
 
-            if (fastUfo) {
-                fastUfo.x -= fastUfo.speed;
-                if (fastUfo.x + fastUfo.width < 0) {
-                    fastUfo = null;
+            if (splitUfo) {
+                splitUfo.x -= splitUfo.speed;
+                if (splitUfo.x + splitUfo.width < 0) {
+                    splitUfo = null;
                 } else {
                     bullets.forEach((bullet, bulletIndex) => {
-                        if (fastUfo && checkCircleCollision({
+                        if (splitUfo && checkCircleCollision({
                             x: bullet.x + bullet.width / 2,
                             y: bullet.y + bullet.height / 2,
                             radius: bullet.width / 2
                         }, {
-                            x: fastUfo.x + fastUfo.width / 2,
-                            y: fastUfo.y + fastUfo.height / 2,
-                            radius: fastUfo.width / 2
+                            x: splitUfo.x + splitUfo.width / 2,
+                            y: splitUfo.y + splitUfo.height / 2,
+                            radius: splitUfo.width / 2
                         })) {
                             bullets.splice(bulletIndex, 1);
-                            fastUfo.hits--;
-                            fastUfo.width -= fastUfo.width / (fastUfo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
-                            fastUfo.height -= fastUfo.height / (fastUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
-                            if (fastUfo.hits <= 0) {
-                                fastUfo = null;
+                            splitUfo.hits--;
+                            splitUfo.width -= splitUfo.width / (splitUfo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
+                            splitUfo.height -= splitUfo.height / (splitUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
+                            if (splitUfo.hits <= 0) {
+                                splitUfo = null;
                                 score += 20;
                                 scoreDisplay.textContent = "Pisteet: " + score;
                             }
                         }
                     });
 
-                    if (fastUfo && fastUfo.hits > 0 && checkCircleCollision({
+                    if (splitUfo && splitUfo.hits > 0 && checkCircleCollision({
                         x: ship.x + ship.width / 2,
                         y: ship.y + ship.height / 2,
                         radius: ship.width / 2
                     }, {
-                        x: fastUfo.x + fastUfo.width / 2,
-                        y: fastUfo.y + fastUfo.height / 2,
-                        radius: fastUfo.width / 2
+                        x: splitUfo.x + splitUfo.width / 2,
+                        y: splitUfo.y + splitUfo.height / 2,
+                        radius: splitUfo.width / 2
                     })) {
                         ship.alive = false;
                     }
@@ -301,16 +301,16 @@
 
             obstacles.forEach(ob => {
                 if (ob.hits > 0) {
-                    ctx.drawImage(images.obstacle, ob.x, ob.y, ob.width, ob.height);
+                    ctx.drawImage(images.basicUfo, ob.x, ob.y, ob.width, ob.height);
                 }
             });
 
-            if (ufo && ufo.hits > 0) {
-                ctx.drawImage(images.ufo, ufo.x, ufo.y, ufo.width, ufo.height);
+            if (followUfo && followUfo.hits > 0) {
+                ctx.drawImage(images.followUfo, followUfo.x, followUfo.y, followUfo.width, followUfo.height);
             }
 
-            if (fastUfo && fastUfo.hits > 0) {
-                ctx.drawImage(images.fastUfo, fastUfo.x, fastUfo.y, fastUfo.width, fastUfo.height);
+            if (splitUfo && splitUfo.hits > 0) {
+                ctx.drawImage(images.splitUfo, splitUfo.x, splitUfo.y, splitUfo.width, splitUfo.height);
             }
         }
 
