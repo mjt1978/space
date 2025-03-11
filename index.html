@@ -263,19 +263,19 @@
                             radius: splitUfo.width / 2
                         })) {
                             bullets.splice(bulletIndex, 1);
-                            const newSize = splitUfo.width / 2;
+                            const newSize = splitUfo.width / 1.5; // Hieman suurempi koko jäljellä oleville ufoksi
                             if (newSize > 10) {
                                 splitUfos.push({
-                                    x: splitUfo.x,
-                                    y: splitUfo.y,
+                                    x: splitUfo.x - newSize / 2,
+                                    y: splitUfo.y - newSize / 2,
                                     width: newSize,
                                     height: newSize,
                                     hits: Math.ceil(newSize / 20),
                                     speed: splitUfo.speed
                                 });
                                 splitUfos.push({
-                                    x: splitUfo.x,
-                                    y: splitUfo.y + newSize,
+                                    x: splitUfo.x + newSize / 2,
+                                    y: splitUfo.y + newSize / 2,
                                     width: newSize,
                                     height: newSize,
                                     hits: Math.ceil(newSize / 20),
