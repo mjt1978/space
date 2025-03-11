@@ -263,34 +263,28 @@
                             radius: splitUfo.width / 2
                         })) {
                             bullets.splice(bulletIndex, 1);
-                            splitUfo.hits--;
-                            splitUfo.width -= splitUfo.width / (splitUfo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
-                            splitUfo.height -= splitUfo.height / (splitUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
-                            if (splitUfo.hits <= 0) {
-                                // Halkeaminen kahtia osumasta
-                                const newSize = splitUfo.width / 2;
-                                if (newSize > 10) {
-                                    splitUfos.push({
-                                        x: splitUfo.x,
-                                        y: splitUfo.y,
-                                        width: newSize,
-                                        height: newSize,
-                                        hits: Math.ceil(newSize / 20),
-                                        speed: splitUfo.speed
-                                    });
-                                    splitUfos.push({
-                                        x: splitUfo.x,
-                                        y: splitUfo.y + newSize,
-                                        width: newSize,
-                                        height: newSize,
-                                        hits: Math.ceil(newSize / 20),
-                                        speed: splitUfo.speed
-                                    });
-                                }
-                                splitUfos.splice(index, 1);
-                                score += 20;
-                                scoreDisplay.textContent = "Pisteet: " + score;
+                            const newSize = splitUfo.width / 2;
+                            if (newSize > 10) {
+                                splitUfos.push({
+                                    x: splitUfo.x,
+                                    y: splitUfo.y,
+                                    width: newSize,
+                                    height: newSize,
+                                    hits: Math.ceil(newSize / 20),
+                                    speed: splitUfo.speed
+                                });
+                                splitUfos.push({
+                                    x: splitUfo.x,
+                                    y: splitUfo.y + newSize,
+                                    width: newSize,
+                                    height: newSize,
+                                    hits: Math.ceil(newSize / 20),
+                                    speed: splitUfo.speed
+                                });
                             }
+                            splitUfos.splice(index, 1);
+                            score += 20;
+                            scoreDisplay.textContent = "Pisteet: " + score;
                         }
                     });
 
