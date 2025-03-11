@@ -117,7 +117,8 @@
                         y: Math.random() * (canvas.height - size),
                         width: size,
                         height: size,
-                        hits: hits
+                        hits: hits,
+                        speed: obstacleSpeed * 2 // Kaksi kertaa nopeampi kuin este
                     };
                 }
             }, 15000);
@@ -227,12 +228,30 @@
             }
 
             if (fastUfo) {
-                let dx = ship.x - fastUfo.x;
-                let dy = ship.y - fastUfo.y;
-                let dist = Math.sqrt(dx * dx + dy * dy);
+                fastUfo.x -= fastUfo.speed;
+                if (fastUfo.x + fastUfo.width < 0) fastUfo = null;
 
-                fastUfo.x += (dx / dist) * 2;
-                fastUfo.y += (dy / dist) * 2;
+                bullets.forEach((bullet, bulletIndex) => {
+                    if (checkCircleCollision({
+                        x: bullet.x + bullet.width / 2,
+                        y: bullet.y + bullet.height / 2,
+                        radius: bullet.width / 2
+                    }, {
+                        x: fastUfo.x + fastUfo.width / 2,
+                        y: fastUfo.y + fastUfo.height / 2,
+                        radius: fastUfo.width / 2
+                    })) {
+                        bullets.splice(bulletIndex, 1);
+                        fastUfo.hits--;
+                        fastUfo.width -= fastUfo.width / (fastUfo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
+                        fastUfo.height -= fastUfo.height / (fastUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
+                        if (fastUfo.hits <= 0) {
+                            fastUfo = null;
+                            score += 20;
+                            scoreDisplay.textContent = "Pisteet: " + score;
+                        }
+                    }
+                });
 
                 if (fastUfo.hits > 0 && checkCircleCollision({
                     x: ship.x + ship.width / 2,
@@ -246,48 +265,6 @@
                     ship.alive = false;
                 }
             }
-
-            bullets.forEach((bullet, bulletIndex) => {
-                if (ufo && checkCircleCollision({
-                    x: bullet.x + bullet.width / 2,
-                    y: bullet.y + bullet.height / 2,
-                    radius: bullet.width / 2
-                }, {
-                    x: ufo.x + ufo.width / 2,
-                    y: ufo.y + ufo.height / 2,
-                    radius: ufo.width / 2
-                })) {
-                    bullets.splice(bulletIndex, 1);
-                    ufo.hits--;
-                    ufo.width -= ufo.width / (ufo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
-                    ufo.height -= ufo.height / (ufo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
-                    if (ufo.hits <= 0) {
-                        ufo = null;
-                        score += 10;
-                        scoreDisplay.textContent = "Pisteet: " + score;
-                    }
-                }
-
-                if (fastUfo && checkCircleCollision({
-                    x: bullet.x + bullet.width / 2,
-                    y: bullet.y + bullet.height / 2,
-                    radius: bullet.width / 2
-                }, {
-                    x: fastUfo.x + fastUfo.width / 2,
-                    y: fastUfo.y + fastUfo.height / 2,
-                    radius: fastUfo.width / 2
-                })) {
-                    bullets.splice(bulletIndex, 1);
-                    fastUfo.hits--;
-                    fastUfo.width -= fastUfo.width / (fastUfo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
-                    fastUfo.height -= fastUfo.height / (fastUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
-                    if (fastUfo.hits <= 0) {
-                        fastUfo = null;
-                        score += 20;
-                        scoreDisplay.textContent = "Pisteet: " + score;
-                    }
-                }
-            });
         }
 
         function draw() {
