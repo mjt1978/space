@@ -51,12 +51,22 @@
             ufo3: new Image(),
             background: new Image()
         };
-        images.ship.src = "alus.png"; // Paikallinen tiedosto
-        images.bullet.src = "rockets_PNG13272.png"; // Paikallinen tiedosto
-        images.obstacle.src = "ufo.png"; // Paikallinen tiedosto
-        images.ufo.src = "ufo2.png"; // Paikallinen tiedosto
-        images.ufo3.src = "ufo3.png"; // Paikallinen tiedosto
-        images.background.src = "skynews-planet-earth-sun_6072586.jpg"; // Paikallinen tiedosto
+        images.ship.src = "alus.png";
+        images.bullet.src = "rockets_PNG13272.png";
+        images.obstacle.src = "ufo.png";
+        images.ufo.src = "ufo2.png";
+        images.ufo3.src = "ufo3.png";
+        images.background.src = "skynews-planet-earth-sun_6072586.jpg";
+
+        // Check if images are loaded
+        for (let key in images) {
+            images[key].onload = () => {
+                console.log(`${key} image loaded`);
+            };
+            images[key].onerror = () => {
+                console.error(`Error loading ${key} image`);
+            };
+        }
 
         let ship, obstacles, bullets, ufos, keys, obstacleSpeed, canShoot, score, scoreInterval;
 
@@ -79,10 +89,9 @@
                 }
             }, 1000);
 
-            // Lisätty esteiden luontiväli
             setInterval(() => {
-                const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
-                const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
+                const size = Math.random() * 100 + 20;
+                const hits = Math.ceil(size / 20);
                 obstacles.push({
                     x: canvas.width,
                     y: Math.random() * (canvas.height - size),
@@ -92,11 +101,10 @@
                 });
             }, 1000);
 
-            // Lisätty UFO:n luontiväli
             setInterval(() => {
-                if (ufos.length < 5) { // Rajaa UFOjen määrää
-                    const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
-                    const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
+                if (ufos.length < 5) {
+                    const size = Math.random() * 100 + 20;
+                    const hits = Math.ceil(size / 20);
                     ufos.push({
                         x: canvas.width,
                         y: Math.random() * (canvas.height - size),
@@ -132,12 +140,10 @@
             });
         }
 
-        // Törmäystunnistus ympyrän avulla
         function checkCircleCollision(circle1, circle2) {
             const dx = circle1.x - circle2.x;
             const dy = circle1.y - circle2.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-
             return distance < (circle1.radius + circle2.radius);
         }
 
@@ -168,8 +174,8 @@
                     })) {
                         bullets.splice(bulletIndex, 1);
                         ob.hits--;
-                        ob.width -= ob.width / (ob.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
-                        ob.height -= ob.height / (ob.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
+                        ob.width -= ob.width / (ob.hits + 1);
+                        ob.height -= ob.height / (ob.hits + 1);
                         if (ob.hits <= 0) {
                             obstacles.splice(index, 1);
                             score += 5;
@@ -211,10 +217,10 @@
                     })) {
                         bullets.splice(bulletIndex, 1);
                         ufo.hits--;
-                        ufo.width -= ufo.width / (ufo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
-                        ufo.height -= ufo.height / (ufo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
+                        ufo.width -= ufo.width / (ufo.hits + 1);
+                        ufo.height -= ufo.height / (ufo.hits + 1);
                         if (ufo.hits <= 0) {
-                            if (ufo.width > 20 && ufo.height > 20) { // Jaa kahteen vain, jos UFO on riittävän suuri
+                            if (ufo.width > 20 && ufo.height > 20) {
                                 const newSize = ufo.width / 2;
                                 ufos.push({
                                     x: ufo.x,
