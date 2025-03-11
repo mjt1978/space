@@ -57,14 +57,14 @@
         images.splitUfo.src = "ufo3.png"; // Paikallinen tiedosto
         images.background.src = "skynews-planet-earth-sun_6072586.jpg"; // Paikallinen tiedosto
 
-        let ship, obstacles, bullets, basicUfo, followUfo, splitUfo, keys, obstacleSpeed, canShoot, score, scoreInterval;
+        let ship, obstacles, bullets, basicUfo, followUfo, splitUfos, keys, obstacleSpeed, canShoot, score, scoreInterval;
 
         function init() {
             ship = { x: 150, y: canvas.height / 2, width: 100, height: 100, speed: 5, alive: true };
             obstacles = [];
             bullets = [];
             followUfo = null;
-            splitUfo = null;
+            splitUfos = [];
             keys = {};
             obstacleSpeed = 5;
             canShoot = true;
@@ -109,18 +109,16 @@
 
             // Lisätty nopean UFO:n luontiväli
             setInterval(() => {
-                if (!splitUfo) {
-                    const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
-                    const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
-                    splitUfo = {
-                        x: canvas.width,
-                        y: Math.random() * (canvas.height - size),
-                        width: size,
-                        height: size,
-                        hits: hits,
-                        speed: obstacleSpeed // Sama nopeus kuin esteellä
-                    };
-                }
+                const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
+                const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
+                splitUfos.push({
+                    x: canvas.width,
+                    y: Math.random() * (canvas.height - size),
+                    width: size,
+                    height: size,
+                    hits: hits,
+                    speed: obstacleSpeed // Sama nopeus kuin esteellä
+                });
             }, 5000); // Useammin kuin ennen
         }
 
@@ -249,10 +247,10 @@
                 }
             }
 
-            if (splitUfo) {
+            splitUfos.forEach((splitUfo, index) => {
                 splitUfo.x -= splitUfo.speed;
                 if (splitUfo.x + splitUfo.width < 0) {
-                    splitUfo = null;
+                    splitUfos.splice(index, 1);
                 } else {
                     bullets.forEach((bullet, bulletIndex) => {
                         if (splitUfo && checkCircleCollision({
@@ -269,7 +267,27 @@
                             splitUfo.width -= splitUfo.width / (splitUfo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
                             splitUfo.height -= splitUfo.height / (splitUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
                             if (splitUfo.hits <= 0) {
-                                splitUfo = null;
+                                // Halkeaminen kahtia osumasta
+                                const newSize = splitUfo.width / 2;
+                                if (newSize > 10) {
+                                    splitUfos.push({
+                                        x: splitUfo.x,
+                                        y: splitUfo.y,
+                                        width: newSize,
+                                        height: newSize,
+                                        hits: Math.ceil(newSize / 20),
+                                        speed: splitUfo.speed
+                                    });
+                                    splitUfos.push({
+                                        x: splitUfo.x,
+                                        y: splitUfo.y + newSize,
+                                        width: newSize,
+                                        height: newSize,
+                                        hits: Math.ceil(newSize / 20),
+                                        speed: splitUfo.speed
+                                    });
+                                }
+                                splitUfos.splice(index, 1);
                                 score += 20;
                                 scoreDisplay.textContent = "Pisteet: " + score;
                             }
@@ -288,7 +306,7 @@
                         ship.alive = false;
                     }
                 }
-            }
+            });
         }
 
         function draw() {
@@ -309,9 +327,11 @@
                 ctx.drawImage(images.followUfo, followUfo.x, followUfo.y, followUfo.width, followUfo.height);
             }
 
-            if (splitUfo && splitUfo.hits > 0) {
-                ctx.drawImage(images.splitUfo, splitUfo.x, splitUfo.y, splitUfo.width, splitUfo.height);
-            }
+            splitUfos.forEach(splitUfo => {
+                if (splitUfo.hits > 0) {
+                    ctx.drawImage(images.splitUfo, splitUfo.x, splitUfo.y, splitUfo.width, splitUfo.height);
+                }
+            });
         }
 
         function gameLoop() {
