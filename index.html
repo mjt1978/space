@@ -96,7 +96,7 @@
             setInterval(() => {
                 if (!followUfo) {
                     const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
-                    const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
+                    const hits = Math.ceil(size / 20) * 2; // Kaksi kertaa enemmän osumia
                     followUfo = {
                         x: canvas.width,
                         y: Math.random() * (canvas.height - size),
@@ -118,10 +118,10 @@
                         width: size,
                         height: size,
                         hits: hits,
-                        speed: obstacleSpeed * 2 // Kaksi kertaa nopeampi kuin este
+                        speed: obstacleSpeed // Sama nopeus kuin esteellä
                     };
                 }
-            }, 15000);
+            }, 5000); // Useammin kuin ennen
         }
 
         window.addEventListener("keydown", (e) => {
