@@ -47,34 +47,21 @@
             bullet: new Image(),
             obstacle: new Image(),
             ufo: new Image(),
-            ufo2: new Image(),
-            ufo3: new Image(),
             background: new Image()
         };
-        images.ship.src = "alus.png";
-        images.bullet.src = "rockets_PNG13272.png";
-        images.obstacle.src = "ufo.png";
-        images.ufo.src = "ufo2.png";
-        images.ufo3.src = "ufo3.png";
-        images.background.src = "skynews-planet-earth-sun_6072586.jpg";
+        images.ship.src = "alus.png"; // Paikallinen tiedosto
+        images.bullet.src = "rockets_PNG13272.png"; // Paikallinen tiedosto
+        images.obstacle.src = "ufo.png"; // Paikallinen tiedosto
+        images.ufo.src = "ufo2.png"; // Paikallinen tiedosto
+        images.background.src = "skynews-planet-earth-sun_6072586.jpg"; // Paikallinen tiedosto
 
-        // Check if images are loaded
-        for (let key in images) {
-            images[key].onload = () => {
-                console.log(`${key} image loaded`);
-            };
-            images[key].onerror = () => {
-                console.error(`Error loading ${key} image`);
-            };
-        }
-
-        let ship, obstacles, bullets, ufos, keys, obstacleSpeed, canShoot, score, scoreInterval;
+        let ship, obstacles, bullets, ufo, keys, obstacleSpeed, canShoot, score, scoreInterval;
 
         function init() {
             ship = { x: 150, y: canvas.height / 2, width: 100, height: 100, speed: 5, alive: true };
             obstacles = [];
             bullets = [];
-            ufos = [];
+            ufo = null;
             keys = {};
             obstacleSpeed = 5;
             canShoot = true;
@@ -89,9 +76,10 @@
                 }
             }, 1000);
 
+            // Lisätty esteiden luontiväli
             setInterval(() => {
-                const size = Math.random() * 100 + 20;
-                const hits = Math.ceil(size / 20);
+                const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
+                const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
                 obstacles.push({
                     x: canvas.width,
                     y: Math.random() * (canvas.height - size),
@@ -101,18 +89,18 @@
                 });
             }, 1000);
 
+            // Lisätty UFO:n luontiväli
             setInterval(() => {
-                if (ufos.length < 5) {
-                    const size = Math.random() * 100 + 20;
-                    const hits = Math.ceil(size / 20);
-                    ufos.push({
+                if (!ufo) {
+                    const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
+                    const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
+                    ufo = {
                         x: canvas.width,
                         y: Math.random() * (canvas.height - size),
                         width: size,
                         height: size,
-                        hits: hits,
-                        image: images.ufo2
-                    });
+                        hits: hits
+                    };
                 }
             }, 10000);
         }
@@ -140,10 +128,12 @@
             });
         }
 
+        // Törmäystunnistus ympyrän avulla
         function checkCircleCollision(circle1, circle2) {
             const dx = circle1.x - circle2.x;
             const dy = circle1.y - circle2.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
+
             return distance < (circle1.radius + circle2.radius);
         }
 
@@ -174,8 +164,8 @@
                     })) {
                         bullets.splice(bulletIndex, 1);
                         ob.hits--;
-                        ob.width -= ob.width / (ob.hits + 1);
-                        ob.height -= ob.height / (ob.hits + 1);
+                        ob.width -= ob.width / (ob.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
+                        ob.height -= ob.height / (ob.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
                         if (ob.hits <= 0) {
                             obstacles.splice(index, 1);
                             score += 5;
@@ -197,54 +187,13 @@
                 }
             });
 
-            ufos.forEach((ufo, index) => {
+            if (ufo) {
                 let dx = ship.x - ufo.x;
                 let dy = ship.y - ufo.y;
                 let dist = Math.sqrt(dx * dx + dy * dy);
 
                 ufo.x += (dx / dist) * 2;
                 ufo.y += (dy / dist) * 2;
-
-                bullets.forEach((bullet, bulletIndex) => {
-                    if (checkCircleCollision({
-                        x: bullet.x + bullet.width / 2,
-                        y: bullet.y + bullet.height / 2,
-                        radius: bullet.width / 2
-                    }, {
-                        x: ufo.x + ufo.width / 2,
-                        y: ufo.y + ufo.height / 2,
-                        radius: ufo.width / 2
-                    })) {
-                        bullets.splice(bulletIndex, 1);
-                        ufo.hits--;
-                        ufo.width -= ufo.width / (ufo.hits + 1);
-                        ufo.height -= ufo.height / (ufo.hits + 1);
-                        if (ufo.hits <= 0) {
-                            if (ufo.width > 20 && ufo.height > 20) {
-                                const newSize = ufo.width / 2;
-                                ufos.push({
-                                    x: ufo.x,
-                                    y: ufo.y,
-                                    width: newSize,
-                                    height: newSize,
-                                    hits: Math.ceil(newSize / 20),
-                                    image: images.ufo3
-                                });
-                                ufos.push({
-                                    x: ufo.x,
-                                    y: ufo.y,
-                                    width: newSize,
-                                    height: newSize,
-                                    hits: Math.ceil(newSize / 20),
-                                    image: images.ufo3
-                                });
-                            }
-                            ufos.splice(index, 1);
-                            score += 10;
-                            scoreDisplay.textContent = "Pisteet: " + score;
-                        }
-                    }
-                });
 
                 if (ufo.hits > 0 && checkCircleCollision({
                     x: ship.x + ship.width / 2,
@@ -256,6 +205,28 @@
                     radius: ufo.width / 2
                 })) {
                     ship.alive = false;
+                }
+            }
+
+            bullets.forEach((bullet, bulletIndex) => {
+                if (ufo && checkCircleCollision({
+                    x: bullet.x + bullet.width / 2,
+                    y: bullet.y + bullet.height / 2,
+                    radius: bullet.width / 2
+                }, {
+                    x: ufo.x + ufo.width / 2,
+                    y: ufo.y + ufo.height / 2,
+                    radius: ufo.width / 2
+                })) {
+                    bullets.splice(bulletIndex, 1);
+                    ufo.hits--;
+                    ufo.width -= ufo.width / (ufo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
+                    ufo.height -= ufo.height / (ufo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
+                    if (ufo.hits <= 0) {
+                        ufo = null;
+                        score += 10;
+                        scoreDisplay.textContent = "Pisteet: " + score;
+                    }
                 }
             });
         }
@@ -274,12 +245,9 @@
                 }
             });
 
-            ufos.forEach(ufo => {
-                if (ufo.hits > 0) {
-                    console.log(`Drawing UFO at (${ufo.x}, ${ufo.y}) with size (${ufo.width}, ${ufo.height})`);
-                    ctx.drawImage(ufo.image, ufo.x, ufo.y, ufo.width, ufo.height);
-                }
-            });
+            if (ufo && ufo.hits > 0) {
+                ctx.drawImage(images.ufo, ufo.x, ufo.y, ufo.width, ufo.height);
+            }
         }
 
         function gameLoop() {
