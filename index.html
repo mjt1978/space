@@ -68,6 +68,7 @@
         images.bossShot.src = "boss_shot.png"; // Paikallinen tiedosto
 
         let ship, obstacles, bullets, followUfo, splitUfos, ammoUpgrade, keys, obstacleSpeed, canShoot, score, scoreInterval, bulletUpgradeCollected, bossUfo, bossBullets, bossUfoShootingInterval;
+        let obstacleInterval, followUfoInterval, splitUfoInterval, ammoUpgradeInterval;
 
         function init() {
             ship = { x: 150, y: canvas.height / 2, width: 100, height: 100, speed: 5, alive: true };
@@ -93,8 +94,14 @@
                 }
             }, 1000);
 
+            // Tyhjennä vanhat intervallit
+            clearInterval(obstacleInterval);
+            clearInterval(followUfoInterval);
+            clearInterval(splitUfoInterval);
+            clearInterval(ammoUpgradeInterval);
+
             // Lisätty esteiden luontiväli
-            setInterval(() => {
+            obstacleInterval = setInterval(() => {
                 const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
                 const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
                 obstacles.push({
@@ -107,7 +114,7 @@
             }, 1000);
 
             // Lisätty seuraavan UFO:n luontiväli
-            setInterval(() => {
+            followUfoInterval = setInterval(() => {
                 if (!followUfo) {
                     const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
                     const hits = Math.ceil(size / 20) * 4; // Neljä kertaa enemmän osumia
@@ -122,7 +129,7 @@
             }, 10000);
 
             // Lisätty nopean UFO:n luontiväli
-            setInterval(() => {
+            splitUfoInterval = setInterval(() => {
                 const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
                 const hits = Math.ceil(size / 30); // 50% vähemmän osumia
                 splitUfos.push({
@@ -136,7 +143,7 @@
             }, 5000); // Useammin kuin ennen
 
             // AmmusUpgraden luontiväli
-            setInterval(() => {
+            ammoUpgradeInterval = setInterval(() => {
                 if (!ammoUpgrade && !bulletUpgradeCollected) {
                     const size = 50; // kiinteä koko ammusUpgrade:lle
                     ammoUpgrade = {
@@ -428,95 +435,103 @@
                 }
             }
 
-    // Päivitetään bossUfon ammukset
-    bossBullets.forEach((bullet, index) => {
-        bullet.x += bullet.dx;
-        bullet.y += bullet.dy;
-        if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
-            bossBullets.splice(index, 1);
-        } else if (checkCircleCollision({
-            x: bullet.x + bullet.width / 2,
-            y: bullet.y + bullet.height / 2,
-            radius: bullet.width / 2
-        }, {
-            x: ship.x + ship.width / 2,
-            y: ship.y + ship.height / 2,
-            radius: ship.width / 2
-        })) {
-            ship.alive = false;
+            // Päivitetään bossUfon ammukset
+            bossBullets.forEach((bullet, index) => {
+                bullet.x += bullet.dx;
+                bullet.y += bullet.dy;
+                if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+                    bossBullets.splice(index, 1);
+                } else if (checkCircleCollision({
+                    x: bullet.x + bullet.width / 2,
+                    y: bullet.y + bullet.height / 2,
+                    radius: bullet.width / 2
+                }, {
+                    x: ship.x + ship.width / 2,
+                    y: ship.y + ship.height / 2,
+                    radius: ship.width / 2
+                })) {
+                    ship.alive = false;
+                }
+            });
+
+            if (!ship.alive) {
+                clearInterval(scoreInterval);
+                clearInterval(bossUfoShootingInterval); // Lopeta ampuminen
+                clearInterval(obstacleInterval);
+                clearInterval(followUfoInterval);
+                clearInterval(splitUfoInterval);
+                clearInterval(ammoUpgradeInterval);
+            }
         }
-    });
 
-    if (!ship.alive) {
-        clearInterval(scoreInterval);
-        clearInterval(bossUfoShootingInterval); // Lopeta ampuminen
-    }
-}
+        function draw() {
+            ctx.drawImage(images.background, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(images.ship, ship.x, ship.y, ship.width, ship.height);
 
-function draw() {
-    ctx.drawImage(images.background, 0, 0, canvas.width, canvas.height);
-    ctx.drawImage(images.ship, ship.x, ship.y, ship.width, ship.height);
+            bullets.forEach(bullet => {
+                ctx.drawImage(images.bullet, bullet.x, bullet.y, bullet.width, bullet.height);
+            });
 
-    bullets.forEach(bullet => {
-        ctx.drawImage(images.bullet, bullet.x, bullet.y, bullet.width, bullet.height);
-    });
+            obstacles.forEach(ob => {
+                if (ob.hits > 0) {
+                    ctx.drawImage(images.basicUfo, ob.x, ob.y, ob.width, ob.height);
+                }
+            });
 
-    obstacles.forEach(ob => {
-        if (ob.hits > 0) {
-            ctx.drawImage(images.basicUfo, ob.x, ob.y, ob.width, ob.height);
+            if (followUfo && followUfo.hits > 0) {
+                ctx.drawImage(images.followUfo, followUfo.x, followUfo.y, followUfo.width, followUfo.height);
+            }
+
+            splitUfos.forEach(splitUfo => {
+                if (splitUfo.hits > 0) {
+                    ctx.drawImage(images.splitUfo, splitUfo.x, splitUfo.y, splitUfo.width, splitUfo.height);
+                }
+            });
+
+            if (ammoUpgrade) {
+                ctx.drawImage(images.ammoUpgrade, ammoUpgrade.x, ammoUpgrade.y, ammoUpgrade.width, ammoUpgrade.height);
+            }
+
+            if (bossUfo && bossUfo.hits > 0) {
+                ctx.drawImage(images.bossUfo, bossUfo.x, bossUfo.y, bossUfo.width, bossUfo.height);
+            }
+
+            // Piirretään bossUfon ammukset
+            bossBullets.forEach(bullet => {
+                ctx.drawImage(images.bossShot, bullet.x, bullet.y, bullet.width, bullet.height);
+            });
         }
-    });
 
-    if (followUfo && followUfo.hits > 0) {
-        ctx.drawImage(images.followUfo, followUfo.x, followUfo.y, followUfo.width, followUfo.height);
-    }
-
-    splitUfos.forEach(splitUfo => {
-        if (splitUfo.hits > 0) {
-            ctx.drawImage(images.splitUfo, splitUfo.x, splitUfo.y, splitUfo.width, splitUfo.height);
+        function gameLoop() {
+            if (ship.alive) {
+                update();
+                draw();
+                requestAnimationFrame(gameLoop);
+            } else {
+                clearInterval(scoreInterval);
+                clearInterval(bossUfoShootingInterval); // Lopeta ampuminen
+                clearInterval(obstacleInterval);
+                clearInterval(followUfoInterval);
+                clearInterval(splitUfoInterval);
+                clearInterval(ammoUpgradeInterval);
+                ctx.fillStyle = "white";
+                ctx.font = "30px Arial";
+                ctx.fillText("Game Over", canvas.width / 2 - 80, canvas.height / 2);
+                ctx.fillText("Pisteet: " + score, canvas.width / 2 - 80, canvas.height / 2 + 30);
+                const restartButton = document.createElement("button");
+                restartButton.textContent = "Uudelleen";
+                restartButton.id = "restartButton";
+                document.body.appendChild(restartButton);
+                restartButton.addEventListener("click", () => {
+                    document.body.removeChild(restartButton);
+                    init();
+                    gameLoop();
+                });
+            }
         }
-    });
 
-    if (ammoUpgrade) {
-        ctx.drawImage(images.ammoUpgrade, ammoUpgrade.x, ammoUpgrade.y, ammoUpgrade.width, ammoUpgrade.height);
-    }
-
-    if (bossUfo && bossUfo.hits > 0) {
-        ctx.drawImage(images.bossUfo, bossUfo.x, bossUfo.y, bossUfo.width, bossUfo.height);
-    }
-
-    // Piirretään bossUfon ammukset
-    bossBullets.forEach(bullet => {
-        ctx.drawImage(images.bossShot, bullet.x, bullet.y, bullet.width, bullet.height);
-    });
-}
-
-function gameLoop() {
-    if (ship.alive) {
-        update();
-        draw();
-        requestAnimationFrame(gameLoop);
-    } else {
-        clearInterval(scoreInterval);
-        clearInterval(bossUfoShootingInterval); // Lopeta ampuminen
-        ctx.fillStyle = "white";
-        ctx.font = "30px Arial";
-        ctx.fillText("Game Over", canvas.width / 2 - 80, canvas.height / 2);
-        ctx.fillText("Pisteet: " + score, canvas.width / 2 - 80, canvas.height / 2 + 30);
-        const restartButton = document.createElement("button");
-        restartButton.textContent = "Uudelleen";
-        restartButton.id = "restartButton";
-        document.body.appendChild(restartButton);
-        restartButton.addEventListener("click", () => {
-            document.body.removeChild(restartButton);
-            init();
-            gameLoop();
-        });
-    }
-}
-
-init();
-gameLoop();
+        init();
+        gameLoop();
     </script>
 </body>
 </html>
