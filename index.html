@@ -69,8 +69,6 @@
 
         let ship, obstacles, bullets, followUfo, splitUfos, ammoUpgrade, keys, obstacleSpeed, canShoot, score, scoreInterval, bulletUpgradeCollected, bossUfo, bossBullets, bossUfoShootingInterval;
         let obstacleInterval, followUfoInterval, splitUfoInterval, ammoUpgradeInterval;
-        let level = 1;
-        let levelStartTime;
 
         function init() {
             ship = { x: 150, y: canvas.height / 2, width: 100, height: 100, speed: 5, alive: true };
@@ -82,7 +80,7 @@
             bossUfo = null;
             bossBullets = [];
             keys = {};
-            obstacleSpeed = 5 * Math.pow(1.1, level - 1); // Kasvata nopeutta 10% per taso
+            obstacleSpeed = 5;
             canShoot = true;
             score = 0;
             bulletUpgradeCollected = false;
@@ -102,10 +100,10 @@
             clearInterval(splitUfoInterval);
             clearInterval(ammoUpgradeInterval);
 
-            // Lisätään esteiden luontiväli
+            // Lisätty esteiden luontiväli
             obstacleInterval = setInterval(() => {
                 const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
-                const hits = Math.ceil(size / 20) * Math.pow(1.1, level - 1); // Kasvata kestävyyttä 10% per taso
+                const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
                 obstacles.push({
                     x: canvas.width,
                     y: Math.random() * (canvas.height - size),
@@ -113,13 +111,13 @@
                     height: size,
                     hits: hits
                 });
-            }, 1000 / Math.pow(1.1, level - 1)); // Kasvata ilmestymisnopeutta 10% per taso
+            }, 1000);
 
-            // Lisätään seuraavan UFO:n luontiväli
+            // Lisätty seuraavan UFO:n luontiväli
             followUfoInterval = setInterval(() => {
                 if (!followUfo) {
                     const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
-                    const hits = Math.ceil(size / 20) * 4 * Math.pow(1.1, level - 1); // Neljä kertaa enemmän osumia ja kasvaa 10% per taso
+                    const hits = Math.ceil(size / 20) * 4; // Neljä kertaa enemmän osumia
                     followUfo = {
                         x: canvas.width,
                         y: Math.random() * (canvas.height - size),
@@ -128,12 +126,12 @@
                         hits: hits
                     };
                 }
-            }, 10000 / Math.pow(1.1, level - 1)); // Kasvata ilmestymisnopeutta 10% per taso
+            }, 10000);
 
-            // Lisätään nopean UFO:n luontiväli
+            // Lisätty nopean UFO:n luontiväli
             splitUfoInterval = setInterval(() => {
                 const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
-                const hits = Math.ceil(size / 30) * Math.pow(1.1, level - 1); // 50% vähemmän osumia ja kasvaa 10% per taso
+                const hits = Math.ceil(size / 30); // 50% vähemmän osumia
                 splitUfos.push({
                     x: canvas.width,
                     y: Math.random() * (canvas.height - size),
@@ -142,11 +140,11 @@
                     hits: hits,
                     speed: obstacleSpeed // Sama nopeus kuin esteellä
                 });
-            }, 5000 / Math.pow(1.1, level - 1)); // Useammin kuin ennen ja kasvaa 10% per taso
+            }, 5000); // Useammin kuin ennen
 
             // AmmusUpgraden luontiväli
             ammoUpgradeInterval = setInterval(() => {
-                if (!ammoUpgrade) {
+                if (!ammoUpgrade && !bulletUpgradeCollected) {
                     const size = 50; // kiinteä koko ammusUpgrade:lle
                     ammoUpgrade = {
                         x: canvas.width,
@@ -157,9 +155,6 @@
                     };
                 }
             }, 10000);
-
-            // Näytetään tasoteksti
-            levelStartTime = Date.now();
         }
 
         window.addEventListener("keydown", (e) => {
@@ -179,8 +174,8 @@
             bullets.push({
                 x: ship.x + ship.width,
                 y: ship.y + ship.height / 2 - 5,
-                width: 10,
-                height: 10,
+                width: bulletUpgradeCollected ? 15 : 10, // 50% suurempi koko, jos upgrade kerätty
+                height: bulletUpgradeCollected ? 15 : 10, // 50% suurempi koko, jos upgrade kerätty
                 speed: 7,
                 damage: bulletUpgradeCollected ? 1.5 : 1 // 50% enemmän tuhoa, jos upgrade kerätty
             });
@@ -330,7 +325,7 @@
                                     y: splitUfo.y - newSize,
                                     width: newSize,
                                     height: newSize,
-                                    hits: Math.ceil(newSize / 30) * Math.pow(1.1, level - 1), // 50% vähemmän osumia ja kasvaa 10% per taso
+                                    hits: Math.ceil(newSize / 30), // 50% vähemmän osumia
                                     speed: splitUfo.speed
                                 });
                                 splitUfos.push({
@@ -338,7 +333,7 @@
                                     y: splitUfo.y + newSize,
                                     width: newSize,
                                     height: newSize,
-                                    hits: Math.ceil(newSize / 30) * Math.pow(1.1, level - 1), // 50% vähemmän osumia ja kasvaa 10% per taso
+                                    hits: Math.ceil(newSize / 30), // 50% vähemmän osumia
                                     speed: splitUfo.speed
                                 });
                             }
@@ -381,9 +376,9 @@
             }
 
             // Tarkistetaan, onko pelaaja saavuttanut 400 pistettä ja lisätään bossUfo
-            if (score >= 400 * level && !bossUfo) {
+            if (score >= 400 && !bossUfo) {
                 const size = 300; // Kolme kertaa suurempi kuin suurimmat nykyiset UFOt
-                const hits = Math.ceil(size / 20) * 4 * Math.pow(1.1, level - 1); // Neljä kertaa enemmän osumia ja kasvaa 10% per taso
+                const hits = Math.ceil(size / 20) * 4; // Neljä kertaa enemmän osumia
                 bossUfo = {
                     x: canvas.width,
                     y: Math.random() * (canvas.height - size),
@@ -422,7 +417,6 @@
                             score += 50; // Lisää enemmän pisteitä bossUfo:sta
                             scoreDisplay.textContent = "Pisteet: " + score;
                             clearInterval(bossUfoShootingInterval); // Lopeta ampuminen
-                            nextLevel();
                         }
                     }
                 });
@@ -506,18 +500,6 @@
             bossBullets.forEach(bullet => {
                 ctx.drawImage(images.bossShot, bullet.x, bullet.y, bullet.width, bullet.height);
             });
-
-            // Näytetään tasoteksti, jos alle 3 sekuntia kulunut tason alusta
-            if (Date.now() - levelStartTime < 3000) {
-                ctx.fillStyle = "white";
-                ctx.font = "40px Arial";
-                ctx.fillText("Level " + level, canvas.width / 2 - 70, canvas.height / 2);
-            }
-        }
-
-        function nextLevel() {
-            level++;
-            init();
         }
 
         function gameLoop() {
@@ -542,7 +524,6 @@
                 document.body.appendChild(restartButton);
                 restartButton.addEventListener("click", () => {
                     document.body.removeChild(restartButton);
-                    level = 1;
                     init();
                     gameLoop();
                 });
