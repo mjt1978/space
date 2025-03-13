@@ -33,15 +33,25 @@
         #restartButton:hover {
             background-color: #45a049;
         }
+        #ammoCount {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-size: 20px;
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
     <div id="score">Pisteet: 0</div>
+    <div id="ammoCount">Ammupäivitykset: 0</div>
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const scoreDisplay = document.getElementById("score");
+        const ammoCountDisplay = document.getElementById("ammoCount");
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
@@ -67,7 +77,7 @@
         images.bossUfo.src = "ufo4.png"; // Paikallinen tiedosto
         images.bossShot.src = "boss_shot.png"; // Paikallinen tiedosto
 
-        let ship, obstacles, bullets, followUfo, splitUfos, ammoUpgrade, keys, obstacleSpeed, canShoot, score, scoreInterval, bulletUpgradeCollected, bossUfo, bossBullets, bossUfoShootingInterval;
+        let ship, obstacles, bullets, followUfo, splitUfos, ammoUpgrade, keys, obstacleSpeed, canShoot, score, scoreInterval, bulletSize, bulletPower, ammoUpgradeCount, bossUfo, bossBullets, bossUfoShootingInterval;
         let obstacleInterval, followUfoInterval, splitUfoInterval, ammoUpgradeInterval;
 
         function init() {
@@ -83,8 +93,11 @@
             obstacleSpeed = 5;
             canShoot = true;
             score = 0;
-            bulletUpgradeCollected = false;
+            bulletSize = 15; // 50% larger bullet size
+            bulletPower = 1;
+            ammoUpgradeCount = 0;
             scoreDisplay.textContent = "Pisteet: 0";
+            ammoCountDisplay.textContent = "Ammupäivitykset: 0";
 
             clearInterval(scoreInterval);
             scoreInterval = setInterval(() => {
@@ -143,18 +156,18 @@
             }, 5000); // Useammin kuin ennen
 
             // AmmusUpgraden luontiväli
-            ammoUpgradeInterval = setInterval(() => {
-                if (!ammoUpgrade && !bulletUpgradeCollected) {
-                    const size = 50; // kiinteä koko ammusUpgrade:lle
-                    ammoUpgrade = {
-                        x: canvas.width,
-                        y: Math.random() * (canvas.height - size),
-                        width: size,
-                        height: size,
-                        speed: obstacleSpeed * 2 // 100% nopeammin kuin basicUfo
-                    };
-                }
-            }, 10000);
+            ammoUpgradeInterval = setTimeout(spawnAmmoUpgrade, 10000);
+        }
+
+        function spawnAmmoUpgrade() {
+            const size = 50; // kiinteä koko ammusUpgrade:lle
+            ammoUpgrade = {
+                x: canvas.width,
+                y: Math.random() * (canvas.height - size),
+                width: size,
+                height: size,
+                speed: obstacleSpeed * 2 // 100% nopeammin kuin basicUfo
+            };
         }
 
         window.addEventListener("keydown", (e) => {
@@ -173,11 +186,11 @@
         function shoot() {
             bullets.push({
                 x: ship.x + ship.width,
-                y: ship.y + ship.height / 2 - 5,
-                width: bulletUpgradeCollected ? 15 : 10, // 50% suurempi koko, jos upgrade kerätty
-                height: bulletUpgradeCollected ? 15 : 10, // 50% suurempi koko, jos upgrade kerätty
+                y: ship.y + ship.height / 2 - bulletSize / 2,
+                width: bulletSize,
+                height: bulletSize,
                 speed: 7,
-                damage: bulletUpgradeCollected ? 1.5 : 1 // 50% enemmän tuhoa, jos upgrade kerätty
+                damage: bulletPower
             });
         }
 
@@ -361,6 +374,7 @@
                 ammoUpgrade.x -= ammoUpgrade.speed;
                 if (ammoUpgrade.x + ammoUpgrade.width < 0) {
                     ammoUpgrade = null;
+                    ammoUpgradeInterval = setTimeout(spawnAmmoUpgrade, 15000); // Reappear after 50% longer delay
                 } else if (checkCircleCollision({
                     x: ship.x + ship.width / 2,
                     y: ship.y + ship.height / 2,
@@ -370,8 +384,7 @@
                     y: ammoUpgrade.y + ammoUpgrade.height / 2,
                     radius: ammoUpgrade.width / 2
                 })) {
-                    bulletUpgradeCollected = true;
-                    ammoUpgrade = null;
+                    ammoUpgradeCollected();
                 }
             }
 
@@ -528,6 +541,15 @@
                     gameLoop();
                 });
             }
+        }
+
+        function ammoUpgradeCollected() {
+            bulletPower *= 1.25; // Increase bullet power by 25%
+            ammoUpgradeCount += 1;
+            ammoCountDisplay.textContent = "Ammupäivitykset: " + ammoUpgradeCount;
+            bulletSize = 15; // Reset bullet size to original larger size (50% larger than initial size)
+            ammoUpgrade = null;
+            ammoUpgradeInterval = setTimeout(spawnAmmoUpgrade, 15000); // Reappear after 50% longer delay
         }
 
         init();
