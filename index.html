@@ -406,8 +406,8 @@
                         bossUfo.hits -= bullet.damage;
                         bossUfo.width -= bossUfo.width / (bossUfo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
                         bossUfo.height -= bossUfo.height / (bossUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
-                if (bossUfo.hits <= 0) {
-                    bossUfo = null;
+                        if (bossUfo.hits <= 0) {
+                            bossUfo = null;
                     score += 50; // Lisää enemmän pisteitä bossUfo:sta
                     scoreDisplay.textContent = "Pisteet: " + score;
                     clearInterval(bossUfoShootingInterval); // Lopeta ampuminen
