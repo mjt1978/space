@@ -544,12 +544,15 @@
                 if (existingButton) {
                     document.body.removeChild(existingButton);
                 }
-                const restartButton = document.createElement("button");
+                 const restartButton = document.createElement("button");
                 restartButton.textContent = "Uudelleen";
                 restartButton.id = "restartButton";
                 document.body.appendChild(restartButton);
                 restartButton.addEventListener("click", () => {
-                location.reload();
+                document.body.removeChild(restartButton);
+                resetGame();
+                init();
+                gameLoop();
                 });
             }
         }
