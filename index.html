@@ -549,10 +549,7 @@
                 restartButton.id = "restartButton";
                 document.body.appendChild(restartButton);
                 restartButton.addEventListener("click", () => {
-                    document.body.removeChild(restartButton);
-                    resetGame();
-                    init();
-                    gameLoop();
+                location.reload();
                 });
             }
         }
