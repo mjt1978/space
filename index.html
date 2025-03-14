@@ -180,10 +180,6 @@
             clearInterval(splitUfoInterval);
             clearInterval(ammoUpgradeInterval);
 
-            // Poista mahdolliset tapahtumakuuntelijat
-            window.removeEventListener("keydown", handleKeyDown);
-            window.removeEventListener("keyup", handleKeyUp);
-
             // Nollaa kaikki pelin muuttujat
             ship = { x: 150, y: canvas.height / 2, width: 100, height: 100, speed: 5, alive: true };
             obstacles = [];
@@ -199,87 +195,20 @@
             score = 0;
             bulletUpgradeCollected = false;
             scoreDisplay.textContent = "Pisteet: 0";
-
-            // Alusta intervallit uudelleen
-            obstacleInterval = setInterval(() => {
-                const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
-                const hits = Math.ceil(size / 20); // Osumien määrä suhteessa kokoon
-                obstacles.push({
-                    x: canvas.width,
-                    y: Math.random() * (canvas.height - size),
-                    width: size,
-                    height: size,
-                    hits: hits
-                });
-            }, 1000);
-
-            followUfoInterval = setInterval(() => {
-                if (!followUfo) {
-                    const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
-                    const hits = Math.ceil(size / 20) * 4; // Neljä kertaa enemmän osumia
-                    followUfo = {
-                        x: canvas.width,
-                        y: Math.random() * (canvas.height - size),
-                        width: size,
-                        height: size,
-                        hits: hits
-                    };
-                }
-            }, 10000);
-
-            splitUfoInterval = setInterval(() => {
-                const size = Math.random() * 100 + 20; // Satunnainen koko 20 - 120 välillä
-                const hits = Math.ceil(size / 30); // 50% vähemmän osumia
-                splitUfos.push({
-                    x: canvas.width,
-                    y: Math.random() * (canvas.height - size),
-                    width: size,
-                    height: size,
-                    hits: hits,
-                    speed: obstacleSpeed // Sama nopeus kuin esteellä
-                });
-            }, 5000);
-
-            ammoUpgradeInterval = setInterval(() => {
-                if (!ammoUpgrade && !bulletUpgradeCollected) {
-                    const size = 50; // kiinteä koko ammusUpgrade:lle
-                    ammoUpgrade = {
-                        x: canvas.width,
-                        y: Math.random() * (canvas.height - size),
-                        width: size,
-                        height: size,
-                        speed: obstacleSpeed * 2 // 100% nopeammin kuin basicUfo
-                    };
-                }
-            }, 10000);
-
-            scoreInterval = setInterval(() => {
-                if (ship.alive) {
-                    score += 1;
-                    scoreDisplay.textContent = "Pisteet: " + score;
-                }
-            }, 1000);
-
-            // Lisää tapahtumakuuntelijat takaisin
-            window.addEventListener("keydown", handleKeyDown);
-            window.addEventListener("keyup", handleKeyUp);
         }
 
-        function handleKeyDown(e) {
+        window.addEventListener("keydown", (e) => {
             keys[e.key] = true;
             if (e.key === " " && canShoot) {
                 shoot();
                 canShoot = false;
             }
-        }
+        });
 
-        function handleKeyUp(e) {
+        window.addEventListener("keyup", (e) => {
             keys[e.key] = false;
             if (e.key === " ") canShoot = true;
-        }
-
-        window.addEventListener("keydown", handleKeyDown);
-        window.addEventListener("keyup", handleKeyUp);
+        });
 
         function shoot() {
             bullets.push({
@@ -434,7 +363,7 @@
                         }
                     });
 
-                                       if (splitUfo && splitUfo.hits > 0 && checkCollision({
+                    if (splitUfo && splitUfo.hits > 0 && checkCollision({
                         x: ship.x + ship.width / 2,
                         y: ship.y + ship.height / 2,
                         radius: ship.width / 2
@@ -480,7 +409,7 @@
                 bossUfoShootingInterval = setInterval(bossUfoShoot, 3000); // Ampuu kolmen sekunnin välein
             }
 
-            // Päivitetään bossUfo
+// Päivitetään bossUfo
             if (bossUfo) {
                 let dx = ship.x - bossUfo.x;
                 let dy = ship.y - bossUfo.y;
@@ -615,15 +544,15 @@
                 if (existingButton) {
                     document.body.removeChild(existingButton);
                 }
-                const restartButton = document.createElement("button");
+                 const restartButton = document.createElement("button");
                 restartButton.textContent = "Uudelleen";
                 restartButton.id = "restartButton";
                 document.body.appendChild(restartButton);
                 restartButton.addEventListener("click", () => {
-                    document.body.removeChild(restartButton);
-                    resetGame();
-                    init();
-                    gameLoop();
+                document.body.removeChild(restartButton);
+                resetGame();
+                init();
+                gameLoop();
                 });
             }
         }
