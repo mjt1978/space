@@ -108,6 +108,33 @@
                 }
             }, 1000);
 
+    
+    function resetGame() {
+    // Pysäytä kaikki intervallit
+    clearInterval(scoreInterval);
+    clearInterval(bossUfoShootingInterval);
+    clearInterval(obstacleInterval);
+    clearInterval(followUfoInterval);
+    clearInterval(splitUfoInterval);
+    clearInterval(ammoUpgradeInterval);
+
+    // Nollaa kaikki pelin muuttujat
+    ship = { x: 150, y: canvas.height / 2, width: 100, height: 100, speed: 5, alive: true };
+    obstacles = [];
+    bullets = [];
+    followUfo = null;
+    splitUfos = [];
+    ammoUpgrade = null;
+    bossUfo = null;
+    bossBullets = [];
+    keys = {};
+    obstacleSpeed = 5;
+    canShoot = true;
+    score = 0;
+    bulletUpgradeCollected = false;
+    scoreDisplay.textContent = "Pisteet: 0";
+    }
+
             // Tyhjennä vanhat intervallit
             clearInterval(obstacleInterval);
             clearInterval(followUfoInterval);
@@ -524,6 +551,7 @@
                 document.body.appendChild(restartButton);
                 restartButton.addEventListener("click", () => {
                     document.body.removeChild(restartButton);
+                    resetGame();
                     init();
                     gameLoop();
                 });
