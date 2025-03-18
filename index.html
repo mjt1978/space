@@ -69,7 +69,6 @@
 
         let ship, obstacles, bullets, followUfo, splitUfos, ammoUpgrade, keys, obstacleSpeed, canShoot, score, scoreInterval, bulletUpgradeCollected, bossUfo, bossBullets, bossUfoShootingInterval;
         let obstacleInterval, followUfoInterval, splitUfoInterval, ammoUpgradeInterval;
-        let restartButtonClicks = 0;
 
         // Kuvalatauksen varmistus
         let imagesLoaded = 0;
@@ -79,21 +78,8 @@
             img.onload = () => {
                 imagesLoaded++;
                 if (imagesLoaded === totalImages) {
-                    // Näytetään uudelleenkäynnistysnappula sivun latautuessa ensimmäisen kerran
-                    const restartButton = document.createElement("button");
-                    restartButton.textContent = "Uudelleen";
-                    restartButton.id = "restartButton";
-                    document.body.appendChild(restartButton);
-                    restartButton.addEventListener("click", () => {
-                        restartButtonClicks++;
-                        if (restartButtonClicks >= 2) {
-                            document.body.removeChild(restartButton);
-                        }
-                        obstacleSpeed += 2; // Nopeutetaan peliä
-                        resetGame();
-                        init();
-                        gameLoop();
-                    });
+                    init();
+                    gameLoop();
                 }
             };
         });
@@ -108,6 +94,7 @@
             bossUfo = null;
             bossBullets = [];
             keys = {};
+            obstacleSpeed = 5;
             canShoot = true;
             score = 0;
             bulletUpgradeCollected = false;
@@ -203,6 +190,7 @@
             bossUfo = null;
             bossBullets = [];
             keys = {};
+            obstacleSpeed = 5;
             canShoot = true;
             score = 0;
             bulletUpgradeCollected = false;
@@ -421,7 +409,7 @@
                 bossUfoShootingInterval = setInterval(bossUfoShoot, 3000); // Ampuu kolmen sekunnin välein
             }
 
-            // Päivitetään bossUfo
+// Päivitetään bossUfo
             if (bossUfo) {
                 let dx = ship.x - bossUfo.x;
                 let dy = ship.y - bossUfo.y;
@@ -443,7 +431,7 @@
                         bullets.splice(bulletIndex, 1);
                         bossUfo.hits -= bullet.damage;
                         bossUfo.width -= bossUfo.width / (bossUfo.hits + 1); // Pienennä leveys suhteessa jäljellä oleviin osumiin
-bossUfo.height -= bossUfo.height / (bossUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
+                        bossUfo.height -= bossUfo.height / (bossUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
                         if (bossUfo.hits <= 0) {
                             bossUfo = null;
                             score += 50; // Lisää enemmän pisteitä bossUfo:sta
@@ -556,22 +544,22 @@ bossUfo.height -= bossUfo.height / (bossUfo.hits + 1); // Pienennä korkeus suht
                 if (existingButton) {
                     document.body.removeChild(existingButton);
                 }
-                const restartButton = document.createElement("button");
+                 const restartButton = document.createElement("button");
                 restartButton.textContent = "Uudelleen";
                 restartButton.id = "restartButton";
                 document.body.appendChild(restartButton);
                 restartButton.addEventListener("click", () => {
-                    restartButtonClicks++;
-                    if (restartButtonClicks >= 2) {
-                        document.body.removeChild(restartButton);
-                    }
-                    obstacleSpeed += 2; // Nopeutetaan peliä
-                    resetGame();
-                    init();
-                    gameLoop();
+                document.body.removeChild(restartButton);
+                resetGame();
+                init();
+                gameLoop();
                 });
             }
         }
+
+        // Alustetaan peli ja käynnistetään pelisilmukka
+        init();
+        gameLoop();
 
         function bossUfoShoot() {
             if (bossUfo && ship.alive) {
@@ -590,24 +578,6 @@ bossUfo.height -= bossUfo.height / (bossUfo.hits + 1); // Pienennä korkeus suht
                 });
             }
         }
-
-        // Näytetään uudelleenkäynnistysnappula sivun latautuessa ensimmäisen kerran
-        window.addEventListener("load", () => {
-            const restartButton = document.createElement("button");
-            restartButton.textContent = "Uudelleen";
-            restartButton.id = "restartButton";
-            document.body.appendChild(restartButton);
-            restartButton.addEventListener("click", () => {
-                restartButtonClicks++;
-                if (restartButtonClicks >= 2) {
-                    document.body.removeChild(restartButton);
-                }
-                obstacleSpeed += 2; // Nopeutetaan peliä
-                resetGame();
-                init();
-                gameLoop();
-            });
-        });
     </script>
 </body>
 </html>
