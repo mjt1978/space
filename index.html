@@ -78,8 +78,16 @@
             img.onload = () => {
                 imagesLoaded++;
                 if (imagesLoaded === totalImages) {
-                    init();
-                    gameLoop();
+                    // Näytetään uudelleenkäynnistysnappula sivun latautuessa ensimmäisen kerran
+                    const restartButton = document.createElement("button");
+                    restartButton.textContent = "Uudelleen";
+                    restartButton.id = "restartButton";
+                    document.body.appendChild(restartButton);
+                    restartButton.addEventListener("click", () => {
+                        document.body.removeChild(restartButton);
+                        init();
+                        gameLoop();
+                    });
                 }
             };
         });
@@ -434,14 +442,14 @@
                         bossUfo.height -= bossUfo.height / (bossUfo.hits + 1); // Pienennä korkeus suhteessa jäljellä oleviin osumiin
                         if (bossUfo.hits <= 0) {
                             bossUfo = null;
-                            score += 50; // Lisää enemmän pisteitä bossUfo:sta
+score += 50; // Lisää enemmän pisteitä bossUfo:sta
                             scoreDisplay.textContent = "Pisteet: " + score;
                             clearInterval(bossUfoShootingInterval); // Lopeta ampuminen
                         }
                     }
                 });
 
-if (bossUfo && bossUfo.hits > 0 && checkCollision({
+                if (bossUfo && bossUfo.hits > 0 && checkCollision({
                     x: ship.x + ship.width / 2,
                     y: ship.y + ship.height / 2,
                     radius: ship.width / 2
@@ -578,6 +586,19 @@ if (bossUfo && bossUfo.hits > 0 && checkCollision({
                 });
             }
         }
+
+        // Näytetään uudelleenkäynnistysnappula sivun latautuessa ensimmäisen kerran
+        window.addEventListener("load", () => {
+            const restartButton = document.createElement("button");
+            restartButton.textContent = "Uudelleen";
+            restartButton.id = "restartButton";
+            document.body.appendChild(restartButton);
+            restartButton.addEventListener("click", () => {
+                document.body.removeChild(restartButton);
+                init();
+                gameLoop();
+            });
+        });
     </script>
 </body>
 </html>
