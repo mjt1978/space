@@ -14,10 +14,32 @@
         canvas {
             display: block;
         }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            text-align: center;
+        }
+        #gameOver h1 {
+            font-size: 48px;
+            color: red;
+            margin: 0;
+        }
+        #gameOver button {
+            font-size: 24px;
+            padding: 10px 20px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
+    <div id="gameOver">
+        <h1>Game Over</h1>
+        <button onclick="restartGame()">Restart</button>
+    </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -122,6 +144,31 @@
             delete keys[e.key];
         });
 
+        function checkCollision(obj1, obj2) {
+            const distX = obj1.x + obj1.width / 2 - (obj2.x + obj2.width / 2);
+            const distY = obj1.y + obj1.height / 2 - (obj2.y + obj2.height / 2);
+            const distance = Math.sqrt(distX * distX + distY * distY);
+
+            return distance < obj1.width / 2 + obj2.width / 2;
+        }
+
+        function showGameOver() {
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        function hideGameOver() {
+            document.getElementById('gameOver').style.display = 'none';
+        }
+
+        function restartGame() {
+            player.x = 50;
+            player.y = canvas.height / 2;
+            enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 100, 100);
+            bullets = [];
+            hideGameOver();
+            requestAnimationFrame(update);
+        }
+
         function update() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -151,6 +198,12 @@
             }
 
             bullets = bullets.filter(bullet => !bullet.isDestroyed);
+
+            if (checkCollision(player, enemy)) {
+                showGameOver();
+                return;
+            }
+
             requestAnimationFrame(update);
         }
 
