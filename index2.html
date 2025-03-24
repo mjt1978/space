@@ -93,6 +93,9 @@
                         this.explosionFrame++;
                         if (this.explosionFrame > 10) {
                             this.isDestroyed = true;
+                            if (this instanceof Player) {
+                                showGameOver();
+                            }
                         }
                     } else {
                         ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
@@ -316,7 +319,6 @@
                 if (checkCollision(player, bullet)) {
                     player.exploding = true;
                     player.explosionFrame = 0;
-                    showGameOver();
                     return;
                 }
             });
@@ -327,7 +329,6 @@
             if (checkCollision(player, enemy)) {
                 player.exploding = true;
                 player.explosionFrame = 0;
-                showGameOver();
                 return;
             }
 
