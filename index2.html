@@ -94,6 +94,7 @@
             constructor(image, x, y, width, height) {
                 super(image, x, y, width, height);
                 this.speed = 7;
+                this.canShoot = true; // Lisää tämä rivi
             }
 
             move() {
@@ -101,6 +102,13 @@
                 if (keys['ArrowDown'] && this.y < canvas.height - this.height) this.y += this.speed;
                 if (keys['ArrowLeft'] && this.x > 0) this.x -= this.speed;
                 if (keys['ArrowRight'] && this.x < canvas.width - this.width) this.x += this.speed;
+            }
+
+            shoot() {
+                if (this.canShoot) {
+                    bullets.push(new Bullet(bulletImage, this.x + this.width, this.y + this.height / 2 - 5, 20, 10));
+                    this.canShoot = false;
+                }
             }
         }
 
@@ -198,11 +206,14 @@
         window.addEventListener('keydown', (e) => {
             keys[e.key] = true;
             if (e.key === ' ' && gameRunning) {
-                bullets.push(new Bullet(bulletImage, player.x + player.width, player.y + player.height / 2 - 5, 20, 10));
+                player.shoot(); // Käytä shoot-funktiota
             }
         });
         window.addEventListener('keyup', (e) => {
             delete keys[e.key];
+            if (e.key === ' ') {
+                player.canShoot = true; // Nollaa canShoot kun välilyönti vapautetaan
+            }
         });
 
         function checkCollision(obj1, obj2) {
