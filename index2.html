@@ -14,13 +14,15 @@
         canvas {
             display: block;
         }
-        #gameOver {
+        #gameOver, #scoreboard {
             position: absolute;
-            top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
+            transform: translateX(-50%);
             text-align: center;
+        }
+        #gameOver {
+            top: 50%;
+            display: none;
         }
         #gameOver h1 {
             font-size: 48px;
@@ -32,10 +34,16 @@
             padding: 10px 20px;
             margin-top: 20px;
         }
+        #scoreboard {
+            top: 10px;
+            font-size: 24px;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
+    <div id="scoreboard">Score: 0</div>
     <div id="gameOver">
         <h1>Game Over</h1>
         <button onclick="restartGame()">Restart</button>
@@ -57,6 +65,9 @@
 
         const enemyBulletImage = new Image();
         enemyBulletImage.src = 'boss_shot.png';
+
+        let score = 0;
+        let scoreInterval = null;
 
         class GameObject {
             constructor(image, x, y, width, height) {
@@ -94,7 +105,7 @@
             constructor(image, x, y, width, height) {
                 super(image, x, y, width, height);
                 this.speed = 7;
-                this.canShoot = true; // Lisää tämä rivi
+                this.canShoot = true;
             }
 
             move() {
@@ -139,6 +150,8 @@
                 this.health -= 1;
                 if (this.health <= 0) {
                     this.exploding = true;
+                    score += 10;
+                    updateScore();
                 }
             }
 
@@ -196,6 +209,10 @@
             }
         }
 
+        function updateScore() {
+            document.getElementById('scoreboard').innerText = `Score: ${score}`;
+        }
+
         const player = new Player(playerImage, 50, canvas.height / 2, 100, 100);
         let enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
         let bullets = [];
@@ -227,6 +244,7 @@
         function showGameOver() {
             document.getElementById('gameOver').style.display = 'block';
             gameRunning = false;
+            clearInterval(scoreInterval);
         }
 
         function hideGameOver() {
@@ -244,7 +262,15 @@
             enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
             bullets = [];
             enemyBullets = [];
+            score = 0;
+            updateScore();
             hideGameOver();
+            scoreInterval = setInterval(() => {
+                if (gameRunning) {
+                    score++;
+                    updateScore();
+                }
+            }, 1000);
             requestAnimationFrame(update);
         }
 
@@ -305,6 +331,13 @@
 
             requestAnimationFrame(update);
         }
+
+        scoreInterval = setInterval(() => {
+            if (gameRunning) {
+                score++;
+                updateScore();
+            }
+        }, 1000);
 
         update();
     </script>
