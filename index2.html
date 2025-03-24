@@ -88,7 +88,7 @@
         class Enemy extends GameObject {
             constructor(image, x, y, width, height) {
                 super(image, x, y, width, height);
-                this.health = 3;
+                this.health = 6;
                 this.speed = 3;
             }
 
@@ -109,7 +109,7 @@
             respawn() {
                 this.x = canvas.width - this.width;
                 this.y = Math.random() * (canvas.height - this.height);
-                this.health = 3;
+                this.health = 6;
                 this.speed *= 1.1;
                 this.isDestroyed = false;
             }
@@ -130,7 +130,7 @@
         }
 
         const player = new Player(playerImage, 50, canvas.height / 2, 100, 100);
-        let enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 100, 100);
+        let enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
         let bullets = [];
 
         let keys = {};
@@ -163,7 +163,7 @@
         function restartGame() {
             player.x = 50;
             player.y = canvas.height / 2;
-            enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 100, 100);
+            enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
             bullets = [];
             hideGameOver();
             requestAnimationFrame(update);
