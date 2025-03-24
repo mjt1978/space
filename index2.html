@@ -49,8 +49,9 @@
         const playerImage = new Image();
         playerImage.src = 'alus.png';
 
+        const originalEnemyImageSrc = 'ufo2.png';
         const enemyImage = new Image();
-        enemyImage.src = 'ufo2.png';
+        enemyImage.src = originalEnemyImageSrc;
 
         const bulletImage = new Image();
         bulletImage.src = 'rockets_PNG13272.png';
@@ -247,6 +248,7 @@
             player.exploding = false;
             player.explosionFrame = 0;
 
+            enemyImage.src = originalEnemyImageSrc;
             enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
             bullets = [];
             enemyBullets = [];
