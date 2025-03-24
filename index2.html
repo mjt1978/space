@@ -55,11 +55,11 @@
                 this.speed = 7;
             }
 
-            move(direction) {
-                if (direction === 'ArrowUp' && this.y > 0) this.y -= this.speed;
-                if (direction === 'ArrowDown' && this.y < canvas.height - this.height) this.y += this.speed;
-                if (direction === 'ArrowLeft' && this.x > 0) this.x -= this.speed;
-                if (direction === 'ArrowRight' && this.x < canvas.width - this.width) this.x += this.speed;
+            move() {
+                if (keys['ArrowUp'] && this.y > 0) this.y -= this.speed;
+                if (keys['ArrowDown'] && this.y < canvas.height - this.height) this.y += this.speed;
+                if (keys['ArrowLeft'] && this.x > 0) this.x -= this.speed;
+                if (keys['ArrowRight'] && this.x < canvas.width - this.width) this.x += this.speed;
             }
         }
 
@@ -107,9 +107,9 @@
             }
         }
 
-        const player = new Player(playerImage, 50, canvas.height / 2, 50, 50);
-        let enemy = new Enemy(enemyImage, canvas.width - 100, Math.random() * (canvas.height - 50), 50, 50);
-        const bullets = [];
+        const player = new Player(playerImage, 50, canvas.height / 2, 100, 100);
+        let enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 100, 100);
+        let bullets = [];
 
         let keys = {};
         window.addEventListener('keydown', (e) => {
@@ -125,9 +125,7 @@
         function update() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight']) {
-                player.move(Object.keys(keys).find(key => keys[key] === true));
-            }
+            player.move();
             player.draw();
 
             bullets.forEach(bullet => {
