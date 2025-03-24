@@ -55,6 +55,9 @@
         const bulletImage = new Image();
         bulletImage.src = 'rockets_PNG13272.png';
 
+        const enemyBulletImage = new Image();
+        enemyBulletImage.src = 'boss_shot.png';
+
         class GameObject {
             constructor(image, x, y, width, height) {
                 this.image = image;
@@ -90,13 +93,20 @@
                 super(image, x, y, width, height);
                 this.health = 6;
                 this.speed = 3;
+                this.fireCooldown = 60; // Cooldown time for firing
+                this.fireCounter = 0;
             }
 
             follow(player) {
-                if (this.x > player.x) this.x -= this.speed;
-                if (this.x < player.x) this.x += this.speed;
-                if (this.y > player.y) this.y -= this.speed;
-                if (this.y < player.y) this.y += this.speed;
+                const playerCenterX = player.x + player.width / 2;
+                const playerCenterY = player.y + player.height / 2;
+                const enemyCenterX = this.x + this.width / 2;
+                const enemyCenterY = this.y + this.height / 2;
+
+                if (enemyCenterX > playerCenterX) this.x -= this.speed;
+                if (enemyCenterX < playerCenterX) this.x += this.speed;
+                if (enemyCenterY > playerCenterY) this.y -= this.speed;
+                if (enemyCenterY < playerCenterY) this.y += this.speed;
             }
 
             takeDamage() {
@@ -112,6 +122,19 @@
                 this.health = 6;
                 this.speed *= 1.1;
                 this.isDestroyed = false;
+            }
+
+            fire(player) {
+                if (this.fireCounter <= 0) {
+                    const bulletX = this.x + this.width / 2;
+                    const bulletY = this.y + this.height / 2;
+                    const angle = Math.atan2(player.y - bulletY, player.x - bulletX);
+
+                    enemyBullets.push(new EnemyBullet(enemyBulletImage, bulletX, bulletY, 15, 15, angle));
+                    this.fireCounter = this.fireCooldown;
+                } else {
+                    this.fireCounter--;
+                }
             }
         }
 
@@ -129,9 +152,26 @@
             }
         }
 
+        class EnemyBullet extends GameObject {
+            constructor(image, x, y, width, height, angle) {
+                super(image, x, y, width, height);
+                this.angle = angle;
+                this.speed = 5;
+            }
+
+            move() {
+                this.x += this.speed * Math.cos(this.angle);
+                this.y += this.speed * Math.sin(this.angle);
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.isDestroyed = true;
+                }
+            }
+        }
+
         const player = new Player(playerImage, 50, canvas.height / 2, 100, 100);
         let enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
         let bullets = [];
+        let enemyBullets = [];
 
         let keys = {};
         window.addEventListener('keydown', (e) => {
@@ -165,6 +205,7 @@
             player.y = canvas.height / 2;
             enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
             bullets = [];
+            enemyBullets = [];
             hideGameOver();
             requestAnimationFrame(update);
         }
@@ -194,10 +235,24 @@
                 enemy.respawn();
             } else {
                 enemy.follow(player);
+                enemy.fire(player);
                 enemy.draw();
             }
 
+            enemyBullets.forEach(bullet => {
+                bullet.move();
+                bullet.draw();
+            });
+
+            enemyBullets.filter(bullet => !bullet.isDestroyed).forEach(bullet => {
+                if (checkCollision(player, bullet)) {
+                    showGameOver();
+                    return;
+                }
+            });
+
             bullets = bullets.filter(bullet => !bullet.isDestroyed);
+            enemyBullets = enemyBullets.filter(bullet => !bullet.isDestroyed);
 
             if (checkCollision(player, enemy)) {
                 showGameOver();
