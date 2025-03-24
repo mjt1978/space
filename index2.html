@@ -14,15 +14,13 @@
         canvas {
             display: block;
         }
-        #gameOver, #scoreboard {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-        }
         #gameOver {
+            position: absolute;
             top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             display: none;
+            text-align: center;
         }
         #gameOver h1 {
             font-size: 48px;
@@ -34,16 +32,10 @@
             padding: 10px 20px;
             margin-top: 20px;
         }
-        #scoreboard {
-            top: 10px;
-            font-size: 24px;
-            color: white;
-        }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
-    <div id="scoreboard">Score: 0</div>
     <div id="gameOver">
         <h1>Game Over</h1>
         <button onclick="restartGame()">Restart</button>
@@ -65,9 +57,6 @@
 
         const enemyBulletImage = new Image();
         enemyBulletImage.src = 'boss_shot.png';
-
-        let score = 0;
-        let scoreInterval = null;
 
         class GameObject {
             constructor(image, x, y, width, height) {
@@ -93,9 +82,6 @@
                         this.explosionFrame++;
                         if (this.explosionFrame > 10) {
                             this.isDestroyed = true;
-                            if (this instanceof Player) {
-                                showGameOver();
-                            }
                         }
                     } else {
                         ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
@@ -108,9 +94,7 @@
             constructor(image, x, y, width, height) {
                 super(image, x, y, width, height);
                 this.speed = 7;
-                this.canShoot = true;
-                this.exploding = false;
-                this.explosionFrame = 0;
+                this.canShoot = true; // Lisää tämä rivi
             }
 
             move() {
@@ -155,8 +139,6 @@
                 this.health -= 1;
                 if (this.health <= 0) {
                     this.exploding = true;
-                    score += 10;
-                    updateScore();
                 }
             }
 
@@ -174,10 +156,8 @@
                 if (this.fireCounter <= 0) {
                     const bulletX = this.x + this.width / 2;
                     const bulletY = this.y + this.height / 2;
-                    const playerCenterX = player.x + player.width / 2;
-                    const playerCenterY = player.y + player.height / 2;
-                    const angle = Math.atan2(playerCenterY - bulletY, playerCenterX - bulletX);
-                    
+                    const angle = Math.atan2(player.y - bulletY, player.x - bulletX);
+
                     enemyBullets.push(new EnemyBullet(enemyBulletImage, bulletX, bulletY, 15, 15, angle));
                     this.fireCounter = this.fireCooldown;
                 } else {
@@ -216,10 +196,6 @@
             }
         }
 
-        function updateScore() {
-            document.getElementById('scoreboard').innerText = `Score: ${score}`;
-        }
-
         const player = new Player(playerImage, 50, canvas.height / 2, 100, 100);
         let enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
         let bullets = [];
@@ -230,13 +206,13 @@
         window.addEventListener('keydown', (e) => {
             keys[e.key] = true;
             if (e.key === ' ' && gameRunning) {
-                player.shoot();
+                player.shoot(); // Käytä shoot-funktiota
             }
         });
         window.addEventListener('keyup', (e) => {
             delete keys[e.key];
             if (e.key === ' ') {
-                player.canShoot = true;
+                player.canShoot = true; // Nollaa canShoot kun välilyönti vapautetaan
             }
         });
 
@@ -251,7 +227,6 @@
         function showGameOver() {
             document.getElementById('gameOver').style.display = 'block';
             gameRunning = false;
-            clearInterval(scoreInterval);
         }
 
         function hideGameOver() {
@@ -269,15 +244,7 @@
             enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
             bullets = [];
             enemyBullets = [];
-            score = 0;
-            updateScore();
             hideGameOver();
-            scoreInterval = setInterval(() => {
-                if (gameRunning) {
-                    score++;
-                    updateScore();
-                }
-            }, 1000);
             requestAnimationFrame(update);
         }
 
@@ -321,6 +288,8 @@
                 if (checkCollision(player, bullet)) {
                     player.exploding = true;
                     player.explosionFrame = 0;
+                    showGameOver();
+                    return;
                 }
             });
 
@@ -330,17 +299,12 @@
             if (checkCollision(player, enemy)) {
                 player.exploding = true;
                 player.explosionFrame = 0;
+                showGameOver();
+                return;
             }
 
             requestAnimationFrame(update);
         }
-
-        scoreInterval = setInterval(() => {
-            if (gameRunning) {
-                score++;
-                updateScore();
-            }
-        }, 1000);
 
         update();
     </script>
