@@ -103,10 +103,12 @@
                 const enemyCenterX = this.x + this.width / 2;
                 const enemyCenterY = this.y + this.height / 2;
 
-                if (enemyCenterX > playerCenterX) this.x -= this.speed;
-                if (enemyCenterX < playerCenterX) this.x += this.speed;
-                if (enemyCenterY > playerCenterY) this.y -= this.speed;
-                if (enemyCenterY < playerCenterY) this.y += this.speed;
+                const deltaX = playerCenterX - enemyCenterX;
+                const deltaY = playerCenterY - enemyCenterY;
+                const angle = Math.atan2(deltaY, deltaX);
+
+                this.x += this.speed * Math.cos(angle);
+                this.y += this.speed * Math.sin(angle);
             }
 
             takeDamage() {
@@ -172,11 +174,12 @@
         let enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
         let bullets = [];
         let enemyBullets = [];
+        let gameRunning = true;
 
         let keys = {};
         window.addEventListener('keydown', (e) => {
             keys[e.key] = true;
-            if (e.key === ' ') {
+            if (e.key === ' ' && gameRunning) {
                 bullets.push(new Bullet(bulletImage, player.x + player.width, player.y + player.height / 2 - 5, 20, 10));
             }
         });
@@ -194,10 +197,12 @@
 
         function showGameOver() {
             document.getElementById('gameOver').style.display = 'block';
+            gameRunning = false;
         }
 
         function hideGameOver() {
             document.getElementById('gameOver').style.display = 'none';
+            gameRunning = true;
         }
 
         function restartGame() {
@@ -211,6 +216,8 @@
         }
 
         function update() {
+            if (!gameRunning) return;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             player.move();
