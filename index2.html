@@ -58,6 +58,8 @@
         const enemyBulletImage = new Image();
         enemyBulletImage.src = 'boss_shot.png';
 
+        let destroyedUFOs = 0;
+
         class GameObject {
             constructor(image, x, y, width, height) {
                 this.image = image;
@@ -139,6 +141,10 @@
                 this.health -= 1;
                 if (this.health <= 0) {
                     this.exploding = true;
+                    destroyedUFOs += 1;
+                    if (destroyedUFOs >= 5) {
+                        enemyImage.src = 'ufo4.png';
+                    }
                 }
             }
 
@@ -244,6 +250,7 @@
             enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
             bullets = [];
             enemyBullets = [];
+            destroyedUFOs = 0; // Reset destroyed UFO count
             hideGameOver();
             requestAnimationFrame(update);
         }
