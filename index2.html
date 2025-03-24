@@ -169,8 +169,10 @@
                 if (this.fireCounter <= 0) {
                     const bulletX = this.x + this.width / 2;
                     const bulletY = this.y + this.height / 2;
-                    const angle = Math.atan2(player.y - bulletY, player.x - bulletX);
-
+                    const playerCenterX = player.x + player.width / 2;
+                    const playerCenterY = player.y + player.height / 2;
+                    const angle = Math.atan2(playerCenterY - bulletY, playerCenterX - bulletX);
+                    
                     enemyBullets.push(new EnemyBullet(enemyBulletImage, bulletX, bulletY, 15, 15, angle));
                     this.fireCounter = this.fireCooldown;
                 } else {
