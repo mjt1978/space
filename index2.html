@@ -109,6 +109,8 @@
                 super(image, x, y, width, height);
                 this.speed = 7;
                 this.canShoot = true;
+                this.exploding = false;
+                this.explosionFrame = 0;
             }
 
             move() {
@@ -228,13 +230,13 @@
         window.addEventListener('keydown', (e) => {
             keys[e.key] = true;
             if (e.key === ' ' && gameRunning) {
-                player.shoot(); // Käytä shoot-funktiota
+                player.shoot();
             }
         });
         window.addEventListener('keyup', (e) => {
             delete keys[e.key];
             if (e.key === ' ') {
-                player.canShoot = true; // Nollaa canShoot kun välilyönti vapautetaan
+                player.canShoot = true;
             }
         });
 
@@ -319,7 +321,6 @@
                 if (checkCollision(player, bullet)) {
                     player.exploding = true;
                     player.explosionFrame = 0;
-                    return;
                 }
             });
 
@@ -329,7 +330,6 @@
             if (checkCollision(player, enemy)) {
                 player.exploding = true;
                 player.explosionFrame = 0;
-                return;
             }
 
             requestAnimationFrame(update);
