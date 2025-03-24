@@ -67,10 +67,26 @@
                 this.height = height;
                 this.speed = 5;
                 this.isDestroyed = false;
+                this.exploding = false;
+                this.explosionFrame = 0;
             }
 
             draw() {
-                ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+                if (!this.isDestroyed) {
+                    if (this.exploding) {
+                        ctx.save();
+                        ctx.globalAlpha = (this.explosionFrame % 2 === 0) ? 1 : 0.5;
+                        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+                        ctx.globalAlpha = 1;
+                        ctx.restore();
+                        this.explosionFrame++;
+                        if (this.explosionFrame > 10) {
+                            this.isDestroyed = true;
+                        }
+                    } else {
+                        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+                    }
+                }
             }
         }
 
@@ -114,7 +130,7 @@
             takeDamage() {
                 this.health -= 1;
                 if (this.health <= 0) {
-                    this.isDestroyed = true;
+                    this.exploding = true;
                 }
             }
 
@@ -124,6 +140,8 @@
                 this.health = 6;
                 this.speed *= 1.1;
                 this.isDestroyed = false;
+                this.exploding = false;
+                this.explosionFrame = 0;
             }
 
             fire(player) {
@@ -253,6 +271,8 @@
 
             enemyBullets.filter(bullet => !bullet.isDestroyed).forEach(bullet => {
                 if (checkCollision(player, bullet)) {
+                    player.exploding = true;
+                    player.explosionFrame = 0;
                     showGameOver();
                     return;
                 }
@@ -262,6 +282,8 @@
             enemyBullets = enemyBullets.filter(bullet => !bullet.isDestroyed);
 
             if (checkCollision(player, enemy)) {
+                player.exploding = true;
+                player.explosionFrame = 0;
                 showGameOver();
                 return;
             }
