@@ -226,6 +226,10 @@
         function restartGame() {
             player.x = 50;
             player.y = canvas.height / 2;
+            player.isDestroyed = false;
+            player.exploding = false;
+            player.explosionFrame = 0;
+
             enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
             bullets = [];
             enemyBullets = [];
