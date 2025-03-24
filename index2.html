@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFO Ammuskelu Peli</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-image: url('skynews-planet-earth-sun_6072586.jpg');
+            background-size: cover;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const playerImage = new Image();
+        playerImage.src = 'alus.png';
+
+        const enemyImage = new Image();
+        enemyImage.src = 'ufo2.png';
+
+        const bulletImage = new Image();
+        bulletImage.src = 'rockets_PNG13272.png';
+
+        class GameObject {
+            constructor(image, x, y, width, height) {
+                this.image = image;
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.speed = 5;
+                this.isDestroyed = false;
+            }
+
+            draw() {
+                ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+            }
+        }
+
+        class Player extends GameObject {
+            constructor(image, x, y, width, height) {
+                super(image, x, y, width, height);
+                this.speed = 7;
+            }
+
+            move(direction) {
+                if (direction === 'ArrowUp' && this.y > 0) this.y -= this.speed;
+                if (direction === 'ArrowDown' && this.y < canvas.height - this.height) this.y += this.speed;
+                if (direction === 'ArrowLeft' && this.x > 0) this.x -= this.speed;
+                if (direction === 'ArrowRight' && this.x < canvas.width - this.width) this.x += this.speed;
+            }
+        }
+
+        class Enemy extends GameObject {
+            constructor(image, x, y, width, height) {
+                super(image, x, y, width, height);
+                this.health = 3;
+                this.speed = 3;
+            }
+
+            follow(player) {
+                if (this.x > player.x) this.x -= this.speed;
+                if (this.x < player.x) this.x += this.speed;
+                if (this.y > player.y) this.y -= this.speed;
+                if (this.y < player.y) this.y += this.speed;
+            }
+
+            takeDamage() {
+                this.health -= 1;
+                if (this.health <= 0) {
+                    this.isDestroyed = true;
+                }
+            }
+
+            respawn() {
+                this.x = canvas.width - this.width;
+                this.y = Math.random() * (canvas.height - this.height);
+                this.health = 3;
+                this.speed *= 1.1;
+                this.isDestroyed = false;
+            }
+        }
+
+        class Bullet extends GameObject {
+            constructor(image, x, y, width, height) {
+                super(image, x, y, width, height);
+                this.speed = 10;
+            }
+
+            move() {
+                this.x += this.speed;
+                if (this.x > canvas.width) {
+                    this.isDestroyed = true;
+                }
+            }
+        }
+
+        const player = new Player(playerImage, 50, canvas.height / 2, 50, 50);
+        let enemy = new Enemy(enemyImage, canvas.width - 100, Math.random() * (canvas.height - 50), 50, 50);
+        const bullets = [];
+
+        let keys = {};
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === ' ') {
+                bullets.push(new Bullet(bulletImage, player.x + player.width, player.y + player.height / 2 - 5, 20, 10));
+            }
+        });
+        window.addEventListener('keyup', (e) => {
+            delete keys[e.key];
+        });
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight']) {
+                player.move(Object.keys(keys).find(key => keys[key] === true));
+            }
+            player.draw();
+
+            bullets.forEach(bullet => {
+                bullet.move();
+                bullet.draw();
+            });
+
+            bullets.filter(bullet => !bullet.isDestroyed).forEach(bullet => {
+                if (bullet.x < enemy.x + enemy.width &&
+                    bullet.x + bullet.width > enemy.x &&
+                    bullet.y < enemy.y + enemy.height &&
+                    bullet.y + bullet.height > enemy.y) {
+                    bullet.isDestroyed = true;
+                    enemy.takeDamage();
+                }
+            });
+
+            if (enemy.isDestroyed) {
+                enemy.respawn();
+            } else {
+                enemy.follow(player);
+                enemy.draw();
+            }
+
+            bullets = bullets.filter(bullet => !bullet.isDestroyed);
+            requestAnimationFrame(update);
+        }
+
+        update();
+    </script>
+</body>
+</html>
