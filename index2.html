@@ -15,6 +15,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            font-family: Arial, sans-serif;
         }
 
         #startScreen {
@@ -25,20 +26,35 @@
         #startScreen h1 {
             font-size: 64px;
             margin-bottom: 40px;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
         }
 
         #startScreen button {
             font-size: 24px;
             padding: 10px 20px;
             margin: 10px;
+            cursor: pointer;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: 2px solid white;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        #startScreen button:hover {
+            background-color: rgba(255, 255, 255, 0.7);
+            color: black;
         }
 
         #gameContainer {
             display: none;
+            position: relative;
         }
 
         canvas {
             display: block;
+            border: 2px solid white;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
         }
 
         #gameOver,
@@ -49,13 +65,18 @@
             transform: translate(-50%, -50%);
             display: none;
             text-align: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 10px;
+            border: 2px solid white;
         }
 
         #gameOver h1,
         #levelCompleted h1 {
             font-size: 48px;
             color: red;
-            margin: 0;
+            margin: 0 0 20px 0;
+            text-shadow: 0 0 5px white;
         }
 
         #gameOver button,
@@ -63,6 +84,16 @@
             font-size: 24px;
             padding: 10px 20px;
             margin-top: 20px;
+            cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        #gameOver button:hover,
+        #levelCompleted button:hover {
+            background-color: white;
         }
 
         #ufoCounter {
@@ -71,6 +102,20 @@
             left: 10px;
             font-size: 24px;
             color: white;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        #levelInfo {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -78,41 +123,152 @@
 <body>
     <div id="startScreen">
         <h1>Space Crush</h1>
-        <button onclick="startGame(1)">Taso 1</button>
-        <button onclick="startGame(2)">Taso 2</button>
-        <button onclick="startGame(3)">Taso 3</button>
-        <button onclick="startGame(4)">Taso 4</button>
-        <button onclick="startGame(5)">Taso 5</button>
+        <div id="levelButtons"></div>
     </div>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         <div id="ufoCounter">Tuhotut Ufot: 0</div>
+        <div id="levelInfo">Taso: 1</div>
         <div id="gameOver">
             <h1>Game Over</h1>
-            <button onclick="restartGame()">Restart</button>
+            <button onclick="restartGame()">Uusi yritys</button>
         </div>
         <div id="levelCompleted">
-            <h1>Level Completed</h1>
-            <button onclick="restartGame()">Restart</button>
+            <h1>Taso Suoritettu!</h1>
+            <button onclick="nextLevel()">Seuraava taso</button>
         </div>
     </div>
     <script>
+        // Pelin globaalit asetukset
+        const GAME_CONFIG = {
+            playerSpeed: 7,
+            bulletSpeed: 10,
+            enemyBulletSpeed: 5,
+            finalEnemyBulletSpeed: 10,
+            enemyFireCooldown: 60,
+            playerSize: { width: 100, height: 100 },
+            enemySizes: {
+                small: { width: 50, height: 50 },
+                medium: { width: 100, height: 100 },
+                large: { width: 200, height: 200 },
+                xlarge: { width: 400, height: 400 }
+            }
+        };
+
+        // Tasojen määrittely
+        const LEVELS = [
+            {
+                id: 1,
+                name: "Helppo",
+                description: "Tuhotaan yksi UFO!",
+                enemies: [
+                    {
+                        type: "medium",
+                        count: 1,
+                        health: 6,
+                        speed: 3,
+                        image: 'ufo2.png',
+                        isSplitting: false,
+                        isFinalEnemy: false,
+                        requiredKills: 1
+                    }
+                ]
+            },
+            {
+                id: 2,
+                name: "Keskitaso",
+                description: "Iso UFO jakautuu kahteen!",
+                enemies: [
+                    {
+                        type: "xlarge",
+                        count: 1,
+                        health: 18,
+                        speed: 3,
+                        image: 'ufo5.png',
+                        isSplitting: true,
+                        isFinalEnemy: false,
+                        requiredKills: 3
+                    }
+                ]
+            },
+            {
+                id: 3,
+                name: "Haastava",
+                description: "Monta pientä UFOa!",
+                enemies: [
+                    {
+                        type: "small",
+                        count: 5,
+                        health: 3,
+                        speed: 4,
+                        image: 'ufo4.png',
+                        isSplitting: false,
+                        isFinalEnemy: false,
+                        requiredKills: 5
+                    }
+                ]
+            },
+            {
+                id: 4,
+                    name: "Boss Battle",
+                    description: "Lopullinen taistelu!",
+                    enemies: [
+                        {
+                            type: "large",
+                            count: 1,
+                            health: 24,
+                            speed: 2,
+                            image: 'ufo3.png',
+                            isSplitting: false,
+                            isFinalEnemy: true,
+                            requiredKills: 1
+                        }
+                    ]
+                },
+            {
+                id: 5,
+                name: "Tulva",
+                description: "Lukuisia vihollisia!",
+                enemies: [
+                    {
+                        type: "small",
+                        count: 10,
+                        health: 2,
+                        speed: 5,
+                        image: 'ufo2.png',
+                        isSplitting: false,
+                        isFinalEnemy: false,
+                        requiredKills: 10
+                    },
+                    {
+                        type: "medium",
+                        count: 2,
+                        health: 6,
+                        speed: 3,
+                        image: 'ufo4.png',
+                        isSplitting: true,
+                        isFinalEnemy: false,
+                        requiredKills: 4
+                    }
+                ]
+            }
+        ];
+
+        // Alustetaan DOM-elementit
         const startScreen = document.getElementById('startScreen');
         const gameContainer = document.getElementById('gameContainer');
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const levelButtonsContainer = document.getElementById('levelButtons');
+        const ufoCounter = document.getElementById('ufoCounter');
+        const levelInfo = document.getElementById('levelInfo');
+
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
+        // Ladataan kuvat
         const playerImage = new Image();
         playerImage.src = 'alus.png';
-
-        const originalEnemyImageSrc = 'ufo2.png';
-        const midEnemyImageSrc = 'ufo4.png';
-        const finalEnemyImageSrc = 'ufo3.png';
-        const largerEnemyImageSrc = 'ufo5.png';
-        const enemyImage = new Image();
-        enemyImage.src = originalEnemyImageSrc;
 
         const bulletImage = new Image();
         bulletImage.src = 'rockets_PNG13272.png';
@@ -120,10 +276,18 @@
         const enemyBulletImage = new Image();
         enemyBulletImage.src = 'boss_shot.png';
 
+        // Pelitilamuuttujat
+        let player;
+        let enemies = [];
+        let bullets = [];
+        let enemyBullets = [];
+        let gameRunning = true;
+        let currentLevel = 1;
         let destroyedUFOs = 0;
         let levelCompleted = false;
-        let currentLevel = 1;
+        let keys = {};
 
+        // Pelioliot
         class GameObject {
             constructor(image, x, y, width, height) {
                 this.image = image;
@@ -159,7 +323,7 @@
         class Player extends GameObject {
             constructor(image, x, y, width, height) {
                 super(image, x, y, width, height);
-                this.speed = 7;
+                this.speed = GAME_CONFIG.playerSpeed;
                 this.canShoot = true;
             }
 
@@ -172,21 +336,28 @@
 
             shoot() {
                 if (this.canShoot) {
-                    bullets.push(new Bullet(bulletImage, this.x + this.width, this.y + this.height / 2 - 5, 20, 10));
+                    bullets.push(new Bullet(
+                        bulletImage, 
+                        this.x + this.width, 
+                        this.y + this.height / 2 - 5, 
+                        20, 
+                        10,
+                        GAME_CONFIG.bulletSpeed
+                    ));
                     this.canShoot = false;
                 }
             }
         }
 
         class Enemy extends GameObject {
-            constructor(image, x, y, width, height, health = 6, speed = 3) {
+            constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy) {
                 super(image, x, y, width, height);
                 this.health = health;
                 this.speed = speed;
-                this.fireCooldown = 60;
+                this.fireCooldown = GAME_CONFIG.enemyFireCooldown;
                 this.fireCounter = 0;
-                this.isSplitting = false;
-                this.isFinalEnemy = false;
+                this.isSplitting = isSplitting;
+                this.isFinalEnemy = isFinalEnemy;
             }
 
             follow(player) {
@@ -215,19 +386,37 @@
                     } else {
                         this.exploding = true;
                         destroyedUFOs += 1;
-                        document.getElementById('ufoCounter').textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
-                        if (destroyedUFOs >= 15 && currentLevel === 1) {
-                            levelCompleted = true;
-                            showLevelCompleted();
-                        }
+                        ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+                        checkLevelCompletion();
                     }
                 }
             }
 
             split() {
                 this.isDestroyed = true;
-                enemies.push(new Enemy(enemyImage, this.x, this.y, this.width / 2, this.height / 2));
-                enemies.push(new Enemy(enemyImage, this.x, this.y, this.width / 2, this.height / 2));
+                const newSize = GAME_CONFIG.enemySizes.medium;
+                enemies.push(new Enemy(
+                    this.image, 
+                    this.x, 
+                    this.y, 
+                    newSize.width, 
+                    newSize.height, 
+                    Math.floor(this.health / 2), 
+                    this.speed + 1,
+                    false,
+                    false
+                ));
+                enemies.push(new Enemy(
+                    this.image, 
+                    this.x, 
+                    this.y, 
+                    newSize.width, 
+                    newSize.height, 
+                    Math.floor(this.health / 2), 
+                    this.speed + 1,
+                    false,
+                    false
+                ));
             }
 
             fire(player) {
@@ -236,7 +425,15 @@
                     const bulletY = this.y + this.height / 2;
                     const angle = Math.atan2(player.y - bulletY, player.x - bulletX);
 
-                    enemyBullets.push(new EnemyBullet(enemyBulletImage, bulletX, bulletY, 15, 15, angle, this.isFinalEnemy ? 10 : 5));
+                    enemyBullets.push(new EnemyBullet(
+                        enemyBulletImage, 
+                        bulletX, 
+                        bulletY, 
+                        15, 
+                        15, 
+                        angle, 
+                        this.isFinalEnemy ? GAME_CONFIG.finalEnemyBulletSpeed : GAME_CONFIG.enemyBulletSpeed
+                    ));
                     this.fireCounter = this.fireCooldown / (this.isFinalEnemy ? 2 : 1);
                 } else {
                     this.fireCounter--;
@@ -245,9 +442,9 @@
         }
 
         class Bullet extends GameObject {
-            constructor(image, x, y, width, height) {
+            constructor(image, x, y, width, height, speed) {
                 super(image, x, y, width, height);
-                this.speed = 10;
+                this.speed = speed;
             }
 
             move() {
@@ -259,7 +456,7 @@
         }
 
         class EnemyBullet extends GameObject {
-            constructor(image, x, y, width, height, angle, speed = 5) {
+            constructor(image, x, y, width, height, angle, speed) {
                 super(image, x, y, width, height);
                 this.angle = angle;
                 this.speed = speed;
@@ -274,34 +471,154 @@
             }
         }
 
-        const player = new Player(playerImage, 50, canvas.height / 2, 100, 100);
-        let enemies = [];
-        let bullets = [];
-        let enemyBullets = [];
-        let gameRunning = true;
+        // Tason alustus
+        function initializeLevel(levelId) {
+            const level = LEVELS.find(l => l.id === levelId);
+            if (!level) return;
 
-        let keys = {};
-        window.addEventListener('keydown', (e) => {
-            keys[e.key] = true;
-            if (e.key === ' ' && gameRunning) {
-                player.shoot();
-            }
-        });
-        window.addEventListener('keyup', (e) => {
-            delete keys[e.key];
-            if (e.key === ' ') {
-                player.canShoot = true;
-            }
-        });
+            currentLevel = levelId;
+            levelInfo.textContent = `Taso: ${levelId} - ${level.name}`;
+            destroyedUFOs = 0;
+            ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+            levelCompleted = false;
 
-        function checkCollision(obj1, obj2) {
-            const distX = obj1.x + obj1.width / 2 - (obj2.x + obj2.width / 2);
-            const distY = obj1.y + obj1.height / 2 - (obj2.y + obj2.height / 2);
-            const distance = Math.sqrt(distX * distX + distY * distY);
+            // Alustetaan pelaaja
+            const playerSize = GAME_CONFIG.playerSize;
+            player = new Player(
+                playerImage, 
+                50, 
+                canvas.height / 2 - playerSize.height / 2, 
+                playerSize.width, 
+                playerSize.height
+            );
 
-            return distance < obj1.width / 2 + obj2.width / 2;
+            // Alustetaan viholliset
+            enemies = [];
+            level.enemies.forEach(enemyConfig => {
+                for (let i = 0; i < enemyConfig.count; i++) {
+                    const size = GAME_CONFIG.enemySizes[enemyConfig.type];
+                    const x = canvas.width - size.width - 50 - (i * 50);
+                    const y = Math.random() * (canvas.height - size.height);
+                    
+                    const enemy = new Enemy(
+                        new Image(), // Luodaan uusi kuvaolio jokaiselle viholliselle
+                        x,
+                        y,
+                        size.width,
+                        size.height,
+                        enemyConfig.health,
+                        enemyConfig.speed,
+                        enemyConfig.isSplitting,
+                        enemyConfig.isFinalEnemy
+                    );
+                    
+                    enemy.image.src = enemyConfig.image;
+                    enemies.push(enemy);
+                }
+            });
+
+            bullets = [];
+            enemyBullets = [];
         }
 
+        // Tarkistetaan onko tason vaatimus täytetty
+        function checkLevelCompletion() {
+            const level = LEVELS.find(l => l.id === currentLevel);
+            if (!level) return;
+
+            let totalRequiredKills = 0;
+            let totalKillsNeeded = 0;
+            
+            level.enemies.forEach(enemyConfig => {
+                totalKillsNeeded += enemyConfig.requiredKills;
+            });
+
+            if (destroyedUFOs >= totalKillsNeeded) {
+                showLevelCompleted();
+            }
+        }
+
+        // Törmäystarkistus
+        function checkCollision(obj1, obj2) {
+            return obj1.x < obj2.x + obj2.width &&
+                   obj1.x + obj1.width > obj2.x &&
+                   obj1.y < obj2.y + obj2.height &&
+                   obj1.y + obj1.height > obj2.y;
+        }
+
+        // Päivityssilmukka
+        function update() {
+            if (!gameRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Päivitetään pelaaja
+            player.move();
+            player.draw();
+
+            // Päivitetään ammukset
+            bullets.forEach(bullet => {
+                bullet.move();
+                bullet.draw();
+            });
+
+            // Tarkistetaan ammusten ja vihollisten törmäykset
+            bullets = bullets.filter(bullet => {
+                if (bullet.isDestroyed) return false;
+                
+                let hit = false;
+                enemies.forEach(enemy => {
+                    if (!enemy.isDestroyed && checkCollision(bullet, enemy)) {
+                        bullet.isDestroyed = true;
+                        enemy.takeDamage();
+                        hit = true;
+                    }
+                });
+                
+                return !hit;
+            });
+
+            // Päivitetään viholliset
+            enemies = enemies.filter(enemy => {
+                if (enemy.isDestroyed) return false;
+                
+                enemy.follow(player);
+                enemy.fire(player);
+                enemy.draw();
+                
+                // Tarkistetaan törmäys pelaajaan
+                if (checkCollision(player, enemy)) {
+                    player.exploding = true;
+                    player.explosionFrame = 0;
+                    showGameOver();
+                    return true;
+                }
+                
+                return true;
+            });
+
+            // Päivitetään vihollisten ammukset
+            enemyBullets = enemyBullets.filter(bullet => {
+                if (bullet.isDestroyed) return false;
+                
+                bullet.move();
+                bullet.draw();
+                
+                // Tarkistetaan törmäys pelaajaan
+                if (checkCollision(player, bullet)) {
+                    player.exploding = true;
+                    player.explosionFrame = 0;
+                    showGameOver();
+                    return true;
+                }
+                
+                return true;
+            });
+
+            requestAnimationFrame(update);
+        }
+
+        // Käyttöliittymän toiminnot
         function showGameOver() {
             document.getElementById('gameOver').style.display = 'block';
             gameRunning = false;
@@ -366,101 +683,77 @@
         }
 
         function restartGame() {
-            player.x = 50;
-            player.y = canvas.height / 2;
-            player.isDestroyed = false;
-            player.exploding = false;
-            player.explosionFrame = 0;
-
-            enemyImage.src = originalEnemyImageSrc;
-            enemies = [];
-            if (currentLevel === 1) {
-                enemies.push(new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200));
-            } else if (currentLevel === 2) {
-                const largeEnemy = new Enemy(largerEnemyImageSrc, canvas.width - 200, Math.random() * (canvas.height - 200), 400, 400, 18, 3);
-                largeEnemy.isSplitting = true;
-                enemies.push(largeEnemy);
-            }
-            bullets = [];
-            enemyBullets = [];
-            destroyedUFOs = 0;
-            levelCompleted = false;
-            document.getElementById('ufoCounter').textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+            initializeLevel(currentLevel);
             hideGameOver();
             hideLevelCompleted();
             requestAnimationFrame(update);
         }
 
-        function startGame(level) {
-            currentLevel = level;
-            startScreen.style.display = 'none';
-            gameContainer.style.display = 'block';
-            restartGame();
+        function nextLevel() {
+            const nextLevel = currentLevel + 1;
+            if (nextLevel <= LEVELS.length) {
+                currentLevel = nextLevel;
+                initializeLevel(currentLevel);
+                hideLevelCompleted();
+                requestAnimationFrame(update);
+            } else {
+                // Kaikki tasot suoritettu
+                document.getElementById('levelCompleted').innerHTML = `
+                    <h1>Kaikki tasot suoritettu!</h1>
+                    <p>Onneksi olkoon, voitit pelin!</p>
+                    <button onclick="returnToMenu()">Päävalikkoon</button>
+                `;
+            }
         }
 
-        function update() {
-            if (!gameRunning) return;
+        function returnToMenu() {
+            gameContainer.style.display = 'none';
+            startScreen.style.display = 'block';
+            hideLevelCompleted();
+        }
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            player.move();
-            player.draw();
-
-            bullets.forEach(bullet => {
-                bullet.move();
-                bullet.draw();
-            });
-
-            bullets.filter(bullet => !bullet.isDestroyed).forEach(bullet => {
-                enemies.forEach(enemy => {
-                    if (bullet.x < enemy.x + enemy.width &&
-                        bullet.x + bullet.width > enemy.x &&
-                        bullet.y < enemy.y + enemy.height &&
-                        bullet.y + bullet.height > enemy.y) {
-                        bullet.isDestroyed = true;
-                        enemy.takeDamage();
-                    }
-                });
-            });
-
-            enemies = enemies.filter(enemy => !enemy.isDestroyed);
-
-            enemies.forEach(enemy => {
-                enemy.follow(player);
-                enemy.fire(player);
-                enemy.draw();
-            });
-
-            enemyBullets.forEach(bullet => {
-                bullet.move();
-                bullet.draw();
-            });
-
-            enemyBullets.filter(bullet => !bullet.isDestroyed).forEach(bullet => {
-                if (checkCollision(player, bullet)) {
-                    player.exploding = true;
-                    player.explosionFrame = 0;
-                    showGameOver();
-                    return;
-                }
-            });
-
-            bullets = bullets.filter(bullet => !bullet.isDestroyed);
-            enemyBullets = enemyBullets.filter(bullet => !bullet.isDestroyed);
-
-            enemies.forEach(enemy => {
-                if (checkCollision(player, enemy)) {
-                    player.exploding = true;
-                    player.explosionFrame = 0;
-                    showGameOver();
-                    return;
-                }
-            });
-
+        function startGame(levelId) {
+            currentLevel = levelId;
+            startScreen.style.display = 'none';
+            gameContainer.style.display = 'block';
+            initializeLevel(levelId);
             requestAnimationFrame(update);
         }
 
-        update();
+        // Alustetaan tasovalikko
+        function initializeLevelButtons() {
+            LEVELS.forEach(level => {
+                const button = document.createElement('button');
+                button.textContent = `Taso ${level.id}: ${level.name}`;
+                button.onclick = () => startGame(level.id);
+                button.title = level.description;
+                levelButtonsContainer.appendChild(button);
+            });
+        }
+
+        // Näppäimistön kuuntelijat
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === ' ' && gameRunning) {
+                player.shoot();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            delete keys[e.key];
+            if (e.key === ' ') {
+                player.canShoot = true;
+            }
+        });
+
+        // Resize-kuuntelija
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Alustetaan peli
+        initializeLevelButtons();
     </script>
 </body>
 
