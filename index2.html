@@ -64,6 +64,7 @@
         const originalEnemyImageSrc = 'ufo2.png';
         const midEnemyImageSrc = 'ufo4.png';
         const finalEnemyImageSrc = 'ufo3.png';
+        const level2EnemyImageSrc = 'ufo5.png';
         const enemyImage = new Image();
         enemyImage.src = originalEnemyImageSrc;
 
@@ -75,6 +76,7 @@
 
         let destroyedUFOs = 0;
         let levelCompleted = false;
+        let level = 1;
 
         class GameObject {
             constructor(image, x, y, width, height) {
@@ -131,11 +133,11 @@
         }
 
         class Enemy extends GameObject {
-            constructor(image, x, y, width, height) {
+            constructor(image, x, y, width, height, health = 6, speed = 3, fireCooldown = 60) {
                 super(image, x, y, width, height);
-                this.health = 6;
-                this.speed = 3;
-                this.fireCooldown = 60; // Cooldown time for firing
+                this.health = health;
+                this.speed = speed;
+                this.fireCooldown = fireCooldown; // Cooldown time for firing
                 this.fireCounter = 0;
             }
 
@@ -269,7 +271,12 @@
         function showLevelCompleted() {
             document.getElementById('levelCompleted').style.display = 'block';
             gameRunning = false;
-            startEndAnimation();
+            setTimeout(() => {
+                startEndAnimation();
+                setTimeout(() => {
+                    startLevel2();
+                }, 5000);
+            }, 5000);
         }
 
         function hideLevelCompleted() {
@@ -319,7 +326,124 @@
             moveToCenter();
         }
 
+        function startLevel2() {
+            level = 2;
+            enemyImage.src = level2EnemyImageSrc;
+            enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 400, 400, 18, 2); // Ufo kaksi kertaa suurempi ja hitaampi
+            bullets = [];
+            enemyBullets = [];
+            destroyedUFOs = 0;
+            levelCompleted = false;
+            document.getElementById('ufoCounter').textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+            hideGameOver();
+            hideLevelCompleted();
+            requestAnimationFrame(updateLevel2);
+        }
+
+        function updateLevel2() {
+            if (!gameRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            player.move();
+            player.draw();
+
+            bullets.forEach(bullet => {
+                bullet.move();
+                bullet.draw();
+            });
+
+            bullets.filter(bullet => !bullet.isDestroyed).forEach(bullet => {
+                if (bullet.x < enemy.x + enemy.width &&
+                    bullet.x + bullet.width > enemy.x &&
+                    bullet.y < enemy.y + enemy.height &&
+                    bullet.y + bullet.height > enemy.y) {
+                    bullet.isDestroyed = true;
+                    enemy.takeDamage();
+                }
+            });
+
+            if (enemy.isDestroyed) {
+                spawnSplitEnemies();
+            } else {
+                enemy.follow(player);
+                enemy.fire(player);
+                enemy.draw();
+            }
+
+            enemyBullets.forEach(bullet => {
+                bullet.move();
+                bullet.draw();
+            });
+
+            enemyBullets.filter(bullet => !bullet.isDestroyed).forEach(bullet => {
+                if (checkCollision(player, bullet)) {
+                    player.exploding = true;
+                    player.explosionFrame = 0;
+                    showGameOver();
+                    return;
+                }
+            });
+
+            bullets = bullets.filter(bullet => !bullet.isDestroyed);
+            enemyBullets = enemyBullets.filter(bullet => !bullet.isDestroyed);
+
+            if (checkCollision(player, enemy)) {
+                player.exploding = true;
+                player.explosionFrame = 0;
+                showGameOver();
+                return;
+            }
+
+            requestAnimationFrame(updateLevel2);
+        }
+
+        function spawnSplitEnemies() {
+            const splitEnemies = [];
+            for (let i = 0; i < 2; i++) {
+                const newEnemy = new Enemy(enemyImage, enemy.x, enemy.y, 200, 200, 6, 3);
+                splitEnemies.push(newEnemy);
+            }
+
+            let finalEnemy = null;
+            splitEnemies.forEach((splitEnemy, index) => {
+                if (index < 3) {
+                    splitEnemy.takeDamage = () => {
+                        splitEnemy.isDestroyed = true;
+                        destroyedUFOs += 1;
+                        document.getElementById('ufoCounter').textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+                    };
+                } else {
+                    finalEnemy = splitEnemy;
+                    finalEnemy.takeDamage = () => {
+                        finalEnemy.health -= 1;
+                        if (finalEnemy.health <= 0) {
+                            finalEnemy.exploding = true;
+                            destroyedUFOs += 1;
+                            document.getElementById('ufoCounter').textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+                            if (destroyedUFOs >= 15) {
+                                levelCompleted = true;
+                                showLevelCompleted();
+                            }
+                        }
+                    };
+                    finalEnemy.fireCooldown /= 2;
+                }
+            });
+
+            requestAnimationFrame(() => {
+                splitEnemies.forEach(splitEnemy => {
+                    if (!splitEnemy.isDestroyed) {
+                        splitEnemy.follow(player);
+                        splitEnemy.fire(player);
+                        splitEnemy.draw();
+                    }
+                });
+            });
+        }
+
         function restartGame() {
+            level = 1;
             player.x = 50;
             player.y = canvas.height / 2;
             player.isDestroyed = false;
