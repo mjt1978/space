@@ -14,7 +14,7 @@
         canvas {
             display: block;
         }
-        #gameOver {
+        #gameOver, #levelCompleted {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -22,12 +22,12 @@
             display: none;
             text-align: center;
         }
-        #gameOver h1 {
+        #gameOver h1, #levelCompleted h1 {
             font-size: 48px;
             color: red;
             margin: 0;
         }
-        #gameOver button {
+        #gameOver button, #levelCompleted button {
             font-size: 24px;
             padding: 10px 20px;
             margin-top: 20px;
@@ -46,6 +46,10 @@
     <div id="ufoCounter">Tuhotut Ufot: 0</div>
     <div id="gameOver">
         <h1>Game Over</h1>
+        <button onclick="restartGame()">Restart</button>
+    </div>
+    <div id="levelCompleted">
+        <h1>Level Completed</h1>
         <button onclick="restartGame()">Restart</button>
     </div>
     <script>
@@ -70,6 +74,7 @@
         enemyBulletImage.src = 'boss_shot.png';
 
         let destroyedUFOs = 0;
+        let levelCompleted = false;
 
         class GameObject {
             constructor(image, x, y, width, height) {
@@ -155,10 +160,15 @@
                     this.exploding = true;
                     destroyedUFOs += 1;
                     document.getElementById('ufoCounter').textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+                    if (destroyedUFOs >= 15) {
+                        levelCompleted = true;
+                        showLevelCompleted();
+                    }
                 }
             }
 
             respawn() {
+                if (levelCompleted) return;
                 this.x = canvas.width - this.width;
                 this.y = Math.random() * (canvas.height - this.height);
                 this.health = 6;
@@ -256,6 +266,39 @@
             gameRunning = true;
         }
 
+        function showLevelCompleted() {
+            document.getElementById('levelCompleted').style.display = 'block';
+            gameRunning = false;
+            startEndAnimation();
+        }
+
+        function hideLevelCompleted() {
+            document.getElementById('levelCompleted').style.display = 'none';
+            gameRunning = true;
+        }
+
+        function startEndAnimation() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            let scale = 1;
+            const scaleSpeed = 0.05;
+
+            function animate() {
+                if (scale < 10) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    const newWidth = player.width * scale;
+                    const newHeight = player.height * scale;
+                    const newX = centerX - newWidth / 2;
+                    const newY = centerY - newHeight / 2;
+                    ctx.drawImage(player.image, newX, newY, newWidth, newHeight);
+                    scale += scaleSpeed;
+                    requestAnimationFrame(animate);
+                }
+            }
+
+            animate();
+        }
+
         function restartGame() {
             player.x = 50;
             player.y = canvas.height / 2;
@@ -268,8 +311,10 @@
             bullets = [];
             enemyBullets = [];
             destroyedUFOs = 0; // Reset destroyed UFO count
+            levelCompleted = false; // Reset level completed status
             document.getElementById('ufoCounter').textContent = `Tuhotut Ufot: ${destroyedUFOs}`; // Reset counter display
             hideGameOver();
+            hideLevelCompleted();
             requestAnimationFrame(update);
         }
 
