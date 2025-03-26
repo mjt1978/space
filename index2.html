@@ -280,10 +280,30 @@
         function startEndAnimation() {
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            let scale = 1;
+            const moveSpeed = 5;
             const scaleSpeed = 0.05;
+            let scale = 1;
 
-            function animate() {
+            function moveToCenter() {
+                const dx = centerX - (player.x + player.width / 2);
+                const dy = centerY - (player.y + player.height / 2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance > moveSpeed) {
+                    const angle = Math.atan2(dy, dx);
+                    player.x += moveSpeed * Math.cos(angle);
+                    player.y += moveSpeed * Math.sin(angle);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    player.draw();
+                    requestAnimationFrame(moveToCenter);
+                } else {
+                    player.x = centerX - player.width / 2;
+                    player.y = centerY - player.height / 2;
+                    animateScaling();
+                }
+            }
+
+            function animateScaling() {
                 if (scale < 10) {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     const newWidth = player.width * scale;
@@ -292,11 +312,11 @@
                     const newY = centerY - newHeight / 2;
                     ctx.drawImage(player.image, newX, newY, newWidth, newHeight);
                     scale += scaleSpeed;
-                    requestAnimationFrame(animate);
+                    requestAnimationFrame(animateScaling);
                 }
             }
 
-            animate();
+            moveToCenter();
         }
 
         function restartGame() {
