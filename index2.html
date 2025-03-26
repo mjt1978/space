@@ -156,8 +156,8 @@
             // Elliptisen törmäysalueen säätöparametrit
             collisionEllipse: {
                 // Kuinka paljon ellipse on pienempi kuin sprite (0-1)
-                widthRatio: 1,
-                heightRatio: 1
+                widthRatio: 1,  // Muutettu arvoksi 1
+                heightRatio: 1   // Muutettu arvoksi 1
             }
         };
 
@@ -293,6 +293,7 @@
         let levelCompleted = false;
         let keys = {};
         let isAnimating = false;
+        let animationFrameId = null;
 
         // Pelioliot
         class GameObject {
@@ -650,7 +651,7 @@
                 return true;
             });
 
-            requestAnimationFrame(update);
+            animationFrameId = requestAnimationFrame(update);
         }
 
         // Käyttöliittymän toiminnot
@@ -702,7 +703,7 @@
                     enemyBullets.forEach(bullet => bullet.draw());
                     
                     player.draw();
-                    requestAnimationFrame(moveToCenter);
+                    animationFrameId = requestAnimationFrame(moveToCenter);
                 } else {
                     player.x = centerX - player.width / 2;
                     player.y = centerY - player.height / 2;
@@ -725,7 +726,7 @@
                     const newY = centerY - newHeight / 2;
                     ctx.drawImage(player.image, newX, newY, newWidth, newHeight);
                     scale += scaleSpeed;
-                    requestAnimationFrame(animateScaling);
+                    animationFrameId = requestAnimationFrame(animateScaling);
                 } else {
                     isAnimating = false;
                 }
@@ -734,22 +735,31 @@
             moveToCenter();
         }
 
+        function cancelAnimation() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            isAnimating = false;
+        }
+
         function restartGame() {
+            cancelAnimation();
             initializeLevel(currentLevel);
             hideGameOver();
             hideLevelCompleted();
-            requestAnimationFrame(update);
+            update();
         }
 
         function nextLevel() {
-            if (isAnimating) return;
+            cancelAnimation();
             
             const nextLevel = currentLevel + 1;
             if (nextLevel <= LEVELS.length) {
                 currentLevel = nextLevel;
                 initializeLevel(currentLevel);
                 hideLevelCompleted();
-                requestAnimationFrame(update);
+                update();
             } else {
                 // Kaikki tasot suoritettu
                 document.getElementById('levelCompleted').innerHTML = `
@@ -761,17 +771,19 @@
         }
 
         function returnToMenu() {
+            cancelAnimation();
             gameContainer.style.display = 'none';
             startScreen.style.display = 'block';
             hideLevelCompleted();
         }
 
         function startGame(levelId) {
+            cancelAnimation();
             currentLevel = levelId;
             startScreen.style.display = 'none';
             gameContainer.style.display = 'block';
             initializeLevel(levelId);
-            requestAnimationFrame(update);
+            update();
         }
 
         // Alustetaan tasovalikko
