@@ -32,10 +32,18 @@
             padding: 10px 20px;
             margin-top: 20px;
         }
+        #ufoCounter {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
+    <div id="ufoCounter">Tuhotut Ufot: 0</div>
     <div id="gameOver">
         <h1>Game Over</h1>
         <button onclick="restartGame()">Restart</button>
@@ -144,6 +152,7 @@
                 if (this.health <= 0) {
                     this.exploding = true;
                     destroyedUFOs += 1;
+                    document.getElementById('ufoCounter').textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
                 }
             }
 
@@ -255,6 +264,7 @@
             bullets = [];
             enemyBullets = [];
             destroyedUFOs = 0; // Reset destroyed UFO count
+            document.getElementById('ufoCounter').textContent = `Tuhotut Ufot: ${destroyedUFOs}`; // Reset counter display
             hideGameOver();
             requestAnimationFrame(update);
         }
