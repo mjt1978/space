@@ -422,7 +422,7 @@
                 enemies.push(new Enemy(
                     this.image, 
                     this.x, 
-                    Math.max(50, this.y - 100),  // Ylempi UFO
+                    Math.max(50, this.y),  // Ylempi UFO
                     newSize.width, 
                     newSize.height, 
                     6,  // Puolet alkuperäisestä healthistä
@@ -434,7 +434,7 @@
                 enemies.push(new Enemy(
                     this.image, 
                     this.x, 
-                    Math.min(canvas.height - newSize.height - 50, this.y + 100),  // Alempi UFO
+                    Math.min(canvas.height - newSize.height - 50, this.y + 200),  // Alempi UFO
                     newSize.width, 
                     newSize.height, 
                     6,  // Puolet alkuperäisestä healthistä
