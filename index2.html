@@ -58,7 +58,8 @@
         playerImage.src = 'alus.png';
 
         const originalEnemyImageSrc = 'ufo2.png';
-        const newEnemyImageSrc = 'ufo4.png';
+        const midEnemyImageSrc = 'ufo4.png';
+        const finalEnemyImageSrc = 'ufo3.png';
         const enemyImage = new Image();
         enemyImage.src = originalEnemyImageSrc;
 
@@ -166,8 +167,10 @@
                 this.exploding = false;
                 this.explosionFrame = 0;
 
-                if (destroyedUFOs >= 5) {
-                    this.image.src = newEnemyImageSrc;
+                if (destroyedUFOs >= 5 && destroyedUFOs < 10) {
+                    this.image.src = midEnemyImageSrc;
+                } else if (destroyedUFOs >= 10) {
+                    this.image.src = finalEnemyImageSrc;
                 }
             }
 
