@@ -152,6 +152,12 @@
                 medium: { width: 100, height: 100 },
                 large: { width: 200, height: 200 },
                 xlarge: { width: 400, height: 400 }
+            },
+            // Elliptisen törmäysalueen säätöparametrit
+            collisionEllipse: {
+                // Kuinka paljon ellipse on pienempi kuin sprite (0-1)
+                widthRatio: 0.7,
+                heightRatio: 0.7
             }
         };
 
@@ -286,6 +292,7 @@
         let destroyedUFOs = 0;
         let levelCompleted = false;
         let keys = {};
+        let isAnimating = false;
 
         // Pelioliot
         class GameObject {
@@ -318,6 +325,16 @@
                     }
                 }
             }
+
+            // Palauttaa ellipsin parametrit törmäystarkistusta varten
+            getEllipse() {
+                return {
+                    x: this.x + this.width / 2,
+                    y: this.y + this.height / 2,
+                    radiusX: this.width * GAME_CONFIG.collisionEllipse.widthRatio / 2,
+                    radiusY: this.height * GAME_CONFIG.collisionEllipse.heightRatio / 2
+                };
+            }
         }
 
         class Player extends GameObject {
@@ -328,6 +345,8 @@
             }
 
             move() {
+                if (isAnimating) return;
+                
                 if (keys['ArrowUp'] && this.y > 0) this.y -= this.speed;
                 if (keys['ArrowDown'] && this.y < canvas.height - this.height) this.y += this.speed;
                 if (keys['ArrowLeft'] && this.x > 0) this.x -= this.speed;
@@ -335,7 +354,7 @@
             }
 
             shoot() {
-                if (this.canShoot) {
+                if (this.canShoot && !isAnimating) {
                     bullets.push(new Bullet(
                         bulletImage, 
                         this.x + this.width, 
@@ -361,6 +380,8 @@
             }
 
             follow(player) {
+                if (isAnimating) return;
+                
                 const playerCenterX = player.x + player.width / 2;
                 const playerCenterY = player.y + player.height / 2;
                 const enemyCenterX = this.x + this.width / 2;
@@ -396,14 +417,11 @@
                 this.isDestroyed = true;
                 const newSize = GAME_CONFIG.enemySizes.medium;
                 
-                // Luodaan kaksi uutta UFOa eri suuntiin
-                const angle1 = Math.random() * Math.PI * 2;
-                const angle2 = angle1 + Math.PI; // Vastakkaiseen suuntaan
-                
+                // Luodaan kaksi uutta UFOa eri korkeuksiin
                 enemies.push(new Enemy(
                     this.image, 
                     this.x, 
-                    this.y, 
+                    Math.max(50, this.y - 100),  // Ylempi UFO
                     newSize.width, 
                     newSize.height, 
                     6,  // Puolet alkuperäisestä healthistä
@@ -415,7 +433,7 @@
                 enemies.push(new Enemy(
                     this.image, 
                     this.x, 
-                    this.y, 
+                    Math.min(canvas.height - newSize.height - 50, this.y + 100),  // Alempi UFO
                     newSize.width, 
                     newSize.height, 
                     6,  // Puolet alkuperäisestä healthistä
@@ -426,10 +444,10 @@
             }
 
             fire(player) {
-                if (this.fireCounter <= 0) {
+                if (this.fireCounter <= 0 && !isAnimating) {
                     const bulletX = this.x + this.width / 2;
                     const bulletY = this.y + this.height / 2;
-                    const angle = Math.atan2(player.y - bulletY, player.x - bulletX);
+                    const angle = Math.atan2(player.y + player.height/2 - bulletY, player.x + player.width/2 - bulletX);
 
                     enemyBullets.push(new EnemyBullet(
                         enemyBulletImage, 
@@ -454,6 +472,7 @@
             }
 
             move() {
+                if (isAnimating) return;
                 this.x += this.speed;
                 if (this.x > canvas.width) {
                     this.isDestroyed = true;
@@ -469,6 +488,7 @@
             }
 
             move() {
+                if (isAnimating) return;
                 this.x += this.speed * Math.cos(this.angle);
                 this.y += this.speed * Math.sin(this.angle);
                 if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
@@ -487,6 +507,7 @@
             destroyedUFOs = 0;
             ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
             levelCompleted = false;
+            isAnimating = false;
 
             // Alustetaan pelaaja
             const playerSize = GAME_CONFIG.playerSize;
@@ -544,12 +565,20 @@
             }
         }
 
-        // Törmäystarkistus
-        function checkCollision(obj1, obj2) {
-            return obj1.x < obj2.x + obj2.width &&
-                   obj1.x + obj1.width > obj2.x &&
-                   obj1.y < obj2.y + obj2.height &&
-                   obj1.y + obj1.height > obj2.y;
+        // Elliptinen törmäystarkistus
+        function checkEllipseCollision(obj1, obj2) {
+            const ellipse1 = obj1.getEllipse();
+            const ellipse2 = obj2.getEllipse();
+            
+            // Laske etäisyys ellipsien keskipisteiden välillä
+            const dx = ellipse2.x - ellipse1.x;
+            const dy = ellipse2.y - ellipse1.y;
+            
+            // Tarkista törmäys elliptisellä alueella
+            const distanceSquared = (dx * dx) / (ellipse1.radiusX + ellipse2.radiusX) ** 2 + 
+                                   (dy * dy) / (ellipse1.radiusY + ellipse2.radiusY) ** 2;
+            
+            return distanceSquared <= 1;
         }
 
         // Päivityssilmukka
@@ -574,7 +603,7 @@
                 
                 let hit = false;
                 enemies.forEach(enemy => {
-                    if (!enemy.isDestroyed && checkCollision(bullet, enemy)) {
+                    if (!enemy.isDestroyed && checkEllipseCollision(bullet, enemy)) {
                         bullet.isDestroyed = true;
                         enemy.takeDamage();
                         hit = true;
@@ -593,7 +622,7 @@
                 enemy.draw();
                 
                 // Tarkistetaan törmäys pelaajaan
-                if (checkCollision(player, enemy)) {
+                if (checkEllipseCollision(player, enemy)) {
                     player.exploding = true;
                     player.explosionFrame = 0;
                     showGameOver();
@@ -611,7 +640,7 @@
                 bullet.draw();
                 
                 // Tarkistetaan törmäys pelaajaan
-                if (checkCollision(player, bullet)) {
+                if (checkEllipseCollision(player, bullet)) {
                     player.exploding = true;
                     player.explosionFrame = 0;
                     showGameOver();
@@ -636,6 +665,8 @@
         }
 
         function showLevelCompleted() {
+            if (levelCompleted) return;
+            levelCompleted = true;
             document.getElementById('levelCompleted').style.display = 'block';
             gameRunning = false;
             startEndAnimation();
@@ -647,6 +678,7 @@
         }
 
         function startEndAnimation() {
+            isAnimating = true;
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
             const moveSpeed = 5;
@@ -663,6 +695,12 @@
                     player.x += moveSpeed * Math.cos(angle);
                     player.y += moveSpeed * Math.sin(angle);
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Piirrä muut pelielementit
+                    enemies.forEach(enemy => enemy.draw());
+                    bullets.forEach(bullet => bullet.draw());
+                    enemyBullets.forEach(bullet => bullet.draw());
+                    
                     player.draw();
                     requestAnimationFrame(moveToCenter);
                 } else {
@@ -675,6 +713,12 @@
             function animateScaling() {
                 if (scale < 10) {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Piirrä muut pelielementit
+                    enemies.forEach(enemy => enemy.draw());
+                    bullets.forEach(bullet => bullet.draw());
+                    enemyBullets.forEach(bullet => bullet.draw());
+                    
                     const newWidth = player.width * scale;
                     const newHeight = player.height * scale;
                     const newX = centerX - newWidth / 2;
@@ -682,6 +726,8 @@
                     ctx.drawImage(player.image, newX, newY, newWidth, newHeight);
                     scale += scaleSpeed;
                     requestAnimationFrame(animateScaling);
+                } else {
+                    isAnimating = false;
                 }
             }
 
@@ -696,6 +742,8 @@
         }
 
         function nextLevel() {
+            if (isAnimating) return;
+            
             const nextLevel = currentLevel + 1;
             if (nextLevel <= LEVELS.length) {
                 currentLevel = nextLevel;
@@ -740,7 +788,7 @@
         // Näppäimistön kuuntelijat
         window.addEventListener('keydown', (e) => {
             keys[e.key] = true;
-            if (e.key === ' ' && gameRunning) {
+            if (e.key === ' ' && gameRunning && !isAnimating) {
                 player.shoot();
             }
         });
