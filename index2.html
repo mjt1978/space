@@ -1,20 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UFO Ammuskelu Peli</title>
+    <title>Space Crush</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
             background-image: url('skynews-planet-earth-sun_6072586.jpg');
             background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
+
+        #startScreen {
+            text-align: center;
+            color: white;
+        }
+
+        #startScreen h1 {
+            font-size: 64px;
+            margin-bottom: 40px;
+        }
+
+        #startScreen button {
+            font-size: 24px;
+            padding: 10px 20px;
+            margin: 10px;
+        }
+
+        #gameContainer {
+            display: none;
+        }
+
         canvas {
             display: block;
         }
-        #gameOver, #levelCompleted {
+
+        #gameOver,
+        #levelCompleted {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -22,16 +50,21 @@
             display: none;
             text-align: center;
         }
-        #gameOver h1, #levelCompleted h1 {
+
+        #gameOver h1,
+        #levelCompleted h1 {
             font-size: 48px;
             color: red;
             margin: 0;
         }
-        #gameOver button, #levelCompleted button {
+
+        #gameOver button,
+        #levelCompleted button {
             font-size: 24px;
             padding: 10px 20px;
             margin-top: 20px;
         }
+
         #ufoCounter {
             position: absolute;
             top: 10px;
@@ -41,18 +74,31 @@
         }
     </style>
 </head>
+
 <body>
-    <canvas id="gameCanvas"></canvas>
-    <div id="ufoCounter">Tuhotut Ufot: 0</div>
-    <div id="gameOver">
-        <h1>Game Over</h1>
-        <button onclick="restartGame()">Restart</button>
+    <div id="startScreen">
+        <h1>Space Crush</h1>
+        <button onclick="startGame(1)">Taso 1</button>
+        <button onclick="startGame(2)">Taso 2</button>
+        <button onclick="startGame(3)">Taso 3</button>
+        <button onclick="startGame(4)">Taso 4</button>
+        <button onclick="startGame(5)">Taso 5</button>
     </div>
-    <div id="levelCompleted">
-        <h1>Level Completed</h1>
-        <button onclick="restartGame()">Restart</button>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ufoCounter">Tuhotut Ufot: 0</div>
+        <div id="gameOver">
+            <h1>Game Over</h1>
+            <button onclick="restartGame()">Restart</button>
+        </div>
+        <div id="levelCompleted">
+            <h1>Level Completed</h1>
+            <button onclick="restartGame()">Restart</button>
+        </div>
     </div>
     <script>
+        const startScreen = document.getElementById('startScreen');
+        const gameContainer = document.getElementById('gameContainer');
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
@@ -75,6 +121,7 @@
 
         let destroyedUFOs = 0;
         let levelCompleted = false;
+        let currentLevel = 1;
 
         class GameObject {
             constructor(image, x, y, width, height) {
@@ -338,6 +385,13 @@
             requestAnimationFrame(update);
         }
 
+        function startGame(level) {
+            currentLevel = level;
+            startScreen.style.display = 'none';
+            gameContainer.style.display = 'block';
+            restartGame();
+        }
+
         function update() {
             if (!gameRunning) return;
 
@@ -399,4 +453,5 @@
         update();
     </script>
 </body>
+
 </html>
