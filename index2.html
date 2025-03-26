@@ -110,6 +110,7 @@
         const originalEnemyImageSrc = 'ufo2.png';
         const midEnemyImageSrc = 'ufo4.png';
         const finalEnemyImageSrc = 'ufo3.png';
+        const largerEnemyImageSrc = 'ufo5.png';
         const enemyImage = new Image();
         enemyImage.src = originalEnemyImageSrc;
 
@@ -159,7 +160,7 @@
             constructor(image, x, y, width, height) {
                 super(image, x, y, width, height);
                 this.speed = 7;
-                this.canShoot = true; // Lisää tämä rivi
+                this.canShoot = true;
             }
 
             move() {
@@ -178,12 +179,14 @@
         }
 
         class Enemy extends GameObject {
-            constructor(image, x, y, width, height) {
+            constructor(image, x, y, width, height, health = 6, speed = 3) {
                 super(image, x, y, width, height);
-                this.health = 6;
-                this.speed = 3;
-                this.fireCooldown = 60; // Cooldown time for firing
+                this.health = health;
+                this.speed = speed;
+                this.fireCooldown = 60;
                 this.fireCounter = 0;
+                this.isSplitting = false;
+                this.isFinalEnemy = false;
             }
 
             follow(player) {
@@ -201,34 +204,30 @@
             }
 
             takeDamage() {
-                if (this.exploding) return; // Estää tuhoutuneen ufon tuhoamisen uudestaan
+                if (this.exploding) return;
                 this.health -= 1;
                 if (this.health <= 0) {
-                    this.exploding = true;
-                    destroyedUFOs += 1;
-                    document.getElementById('ufoCounter').textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
-                    if (destroyedUFOs >= 15) {
-                        levelCompleted = true;
+                    if (this.isSplitting) {
+                        this.split();
+                    } else if (this.isFinalEnemy) {
+                        this.exploding = true;
                         showLevelCompleted();
+                    } else {
+                        this.exploding = true;
+                        destroyedUFOs += 1;
+                        document.getElementById('ufoCounter').textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+                        if (destroyedUFOs >= 15 && currentLevel === 1) {
+                            levelCompleted = true;
+                            showLevelCompleted();
+                        }
                     }
                 }
             }
 
-            respawn() {
-                if (levelCompleted) return;
-                this.x = canvas.width - this.width;
-                this.y = Math.random() * (canvas.height - this.height);
-                this.health = 6;
-                this.speed *= 1.1;
-                this.isDestroyed = false;
-                this.exploding = false;
-                this.explosionFrame = 0;
-
-                if (destroyedUFOs >= 5 && destroyedUFOs < 10) {
-                    this.image.src = midEnemyImageSrc;
-                } else if (destroyedUFOs >= 10) {
-                    this.image.src = finalEnemyImageSrc;
-                }
+            split() {
+                this.isDestroyed = true;
+                enemies.push(new Enemy(enemyImage, this.x, this.y, this.width / 2, this.height / 2));
+                enemies.push(new Enemy(enemyImage, this.x, this.y, this.width / 2, this.height / 2));
             }
 
             fire(player) {
@@ -237,8 +236,8 @@
                     const bulletY = this.y + this.height / 2;
                     const angle = Math.atan2(player.y - bulletY, player.x - bulletX);
 
-                    enemyBullets.push(new EnemyBullet(enemyBulletImage, bulletX, bulletY, 15, 15, angle));
-                    this.fireCounter = this.fireCooldown;
+                    enemyBullets.push(new EnemyBullet(enemyBulletImage, bulletX, bulletY, 15, 15, angle, this.isFinalEnemy ? 10 : 5));
+                    this.fireCounter = this.fireCooldown / (this.isFinalEnemy ? 2 : 1);
                 } else {
                     this.fireCounter--;
                 }
@@ -260,10 +259,10 @@
         }
 
         class EnemyBullet extends GameObject {
-            constructor(image, x, y, width, height, angle) {
+            constructor(image, x, y, width, height, angle, speed = 5) {
                 super(image, x, y, width, height);
                 this.angle = angle;
-                this.speed = 5;
+                this.speed = speed;
             }
 
             move() {
@@ -276,7 +275,7 @@
         }
 
         const player = new Player(playerImage, 50, canvas.height / 2, 100, 100);
-        let enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
+        let enemies = [];
         let bullets = [];
         let enemyBullets = [];
         let gameRunning = true;
@@ -285,13 +284,13 @@
         window.addEventListener('keydown', (e) => {
             keys[e.key] = true;
             if (e.key === ' ' && gameRunning) {
-                player.shoot(); // Käytä shoot-funktiota
+                player.shoot();
             }
         });
         window.addEventListener('keyup', (e) => {
             delete keys[e.key];
             if (e.key === ' ') {
-                player.canShoot = true; // Nollaa canShoot kun välilyönti vapautetaan
+                player.canShoot = true;
             }
         });
 
@@ -374,12 +373,19 @@
             player.explosionFrame = 0;
 
             enemyImage.src = originalEnemyImageSrc;
-            enemy = new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200); // Vihollisufon koko kaksinkertaiseksi
+            enemies = [];
+            if (currentLevel === 1) {
+                enemies.push(new Enemy(enemyImage, canvas.width - 150, Math.random() * (canvas.height - 100), 200, 200));
+            } else if (currentLevel === 2) {
+                const largeEnemy = new Enemy(largerEnemyImageSrc, canvas.width - 200, Math.random() * (canvas.height - 200), 400, 400, 18, 3);
+                largeEnemy.isSplitting = true;
+                enemies.push(largeEnemy);
+            }
             bullets = [];
             enemyBullets = [];
-            destroyedUFOs = 0; // Reset destroyed UFO count
-            levelCompleted = false; // Reset level completed status
-            document.getElementById('ufoCounter').textContent = `Tuhotut Ufot: ${destroyedUFOs}`; // Reset counter display
+            destroyedUFOs = 0;
+            levelCompleted = false;
+            document.getElementById('ufoCounter').textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
             hideGameOver();
             hideLevelCompleted();
             requestAnimationFrame(update);
@@ -406,22 +412,24 @@
             });
 
             bullets.filter(bullet => !bullet.isDestroyed).forEach(bullet => {
-                if (bullet.x < enemy.x + enemy.width &&
-                    bullet.x + bullet.width > enemy.x &&
-                    bullet.y < enemy.y + enemy.height &&
-                    bullet.y + bullet.height > enemy.y) {
-                    bullet.isDestroyed = true;
-                    enemy.takeDamage();
-                }
+                enemies.forEach(enemy => {
+                    if (bullet.x < enemy.x + enemy.width &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemy.height &&
+                        bullet.y + bullet.height > enemy.y) {
+                        bullet.isDestroyed = true;
+                        enemy.takeDamage();
+                    }
+                });
             });
 
-            if (enemy.isDestroyed) {
-                enemy.respawn();
-            } else {
+            enemies = enemies.filter(enemy => !enemy.isDestroyed);
+
+            enemies.forEach(enemy => {
                 enemy.follow(player);
                 enemy.fire(player);
                 enemy.draw();
-            }
+            });
 
             enemyBullets.forEach(bullet => {
                 bullet.move();
@@ -440,12 +448,14 @@
             bullets = bullets.filter(bullet => !bullet.isDestroyed);
             enemyBullets = enemyBullets.filter(bullet => !bullet.isDestroyed);
 
-            if (checkCollision(player, enemy)) {
-                player.exploding = true;
-                player.explosionFrame = 0;
-                showGameOver();
-                return;
-            }
+            enemies.forEach(enemy => {
+                if (checkCollision(player, enemy)) {
+                    player.exploding = true;
+                    player.explosionFrame = 0;
+                    showGameOver();
+                    return;
+                }
+            });
 
             requestAnimationFrame(update);
         }
