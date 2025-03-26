@@ -271,12 +271,11 @@
         function showLevelCompleted() {
             document.getElementById('levelCompleted').style.display = 'block';
             gameRunning = false;
-            setTimeout(() => {
-                startEndAnimation();
+            startEndAnimation(() => {
                 setTimeout(() => {
                     startLevel2();
                 }, 5000);
-            }, 5000);
+            });
         }
 
         function hideLevelCompleted() {
@@ -284,7 +283,7 @@
             gameRunning = true;
         }
 
-        function startEndAnimation() {
+        function startEndAnimation(callback) {
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
             const moveSpeed = 5;
@@ -306,11 +305,11 @@
                 } else {
                     player.x = centerX - player.width / 2;
                     player.y = centerY - player.height / 2;
-                    animateScaling();
+                    animateScaling(callback);
                 }
             }
 
-            function animateScaling() {
+            function animateScaling(callback) {
                 if (scale < 10) {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     const newWidth = player.width * scale;
@@ -319,7 +318,9 @@
                     const newY = centerY - newHeight / 2;
                     ctx.drawImage(player.image, newX, newY, newWidth, newHeight);
                     scale += scaleSpeed;
-                    requestAnimationFrame(animateScaling);
+                    requestAnimationFrame(() => animateScaling(callback));
+                } else {
+                    callback();
                 }
             }
 
@@ -364,7 +365,7 @@
             });
 
             if (enemy.isDestroyed) {
-                spawnSplitEnemies();
+                spawnSplitEnemies(enemy.x, enemy.y);
             } else {
                 enemy.follow(player);
                 enemy.fire(player);
@@ -398,10 +399,10 @@
             requestAnimationFrame(updateLevel2);
         }
 
-        function spawnSplitEnemies() {
+        function spawnSplitEnemies(x, y) {
             const splitEnemies = [];
             for (let i = 0; i < 2; i++) {
-                const newEnemy = new Enemy(enemyImage, enemy.x, enemy.y, 200, 200, 6, 3);
+                const newEnemy = new Enemy(enemyImage, x, y, 200, 200, 6, 3);
                 splitEnemies.push(newEnemy);
             }
 
