@@ -394,57 +394,61 @@
                 this.y += this.speed * Math.sin(angle);
             }
 
-            takeDamage() {
-                if (this.exploding) return;
-                this.health -= 1;
-                if (this.health <= 0) {
-                    if (this.isSplitting) {
-                        this.split();
-                    } else if (this.isFinalEnemy) {
-                        this.exploding = true;
-                        showLevelCompleted();
-                    } else {
-                        this.exploding = true;
-                        destroyedUFOs += 1;
-                        ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
-                        checkLevelCompletion();
-                    }
-                }
-            }
+takeDamage() {
+    if (this.exploding) return;
+    this.health -= 1;
+    if (this.health <= 0) {
+        if (this.isSplitting) {
+            this.split();
+        } else if (this.isFinalEnemy) {
+            this.exploding = true;
+            showLevelCompleted();
+        } else {
+            this.exploding = true;
+            destroyedUFOs += 1;
+            ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+            checkLevelCompletion();
+        }
+    }
+}
 
-            split() {
-                this.isDestroyed = true;
-                const newSize = GAME_CONFIG.enemySizes.medium;
-                
-                // Lasketaan uusien UFOjen sijainnit
-                const newX = this.x + (this.width - newSize.width) / 2; // X-akselilla keskelle
-                const topUfoY = this.y; // Ylemmän UFO yläreuna alkuperäisen yläreunassa
-                const bottomUfoY = this.y + this.height - newSize.height; // Alemman UFO alareuna alkuperäisen alareunassa
-                
-                enemies.push(new Enemy(
-                    this.image, 
-                    newX,
-                    topUfoY,
-                    newSize.width, 
-                    newSize.height, 
-                    6,
-                    this.speed + 1,
-                    false,
-                    false
-                ));
-                
-                enemies.push(new Enemy(
-                    this.image, 
-                    newX,
-                    bottomUfoY,
-                    newSize.width, 
-                    newSize.height, 
-                    6,
-                    this.speed + 1,
-                    false,
-                    false
-                ));
-            }
+split() {
+    this.isDestroyed = true;
+    const newSize = {
+        width: this.width * 0.5,
+        height: this.height * 0.5
+    };
+    
+    // Ylöspäin menevä UFO
+    enemies.push(new Enemy(
+        this.image, 
+        this.x + (this.width - newSize.width) / 2,
+        this.y - newSize.height,
+        newSize.width, 
+        newSize.height, 
+        Math.ceil(this.health / 2),
+        this.speed + 1,
+        false,
+        false
+    ));
+    
+    // Alaspäin menevä UFO
+    enemies.push(new Enemy(
+        this.image, 
+        this.x + (this.width - newSize.width) / 2,
+        this.y + this.height,
+        newSize.width, 
+        newSize.height, 
+        Math.ceil(this.health / 2),
+        this.speed + 1,
+        false,
+        false
+    ));
+    
+    destroyedUFOs += 1;
+    ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+    checkLevelCompletion();
+}
 
             fire(player) {
                 if (this.fireCounter <= 0 && !isAnimating) {
