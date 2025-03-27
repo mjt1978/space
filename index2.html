@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Crush</title>
     <style>
-                body {
+        body {
             margin: 0;
             overflow: hidden;
             background-image: url('background2.jpg');
@@ -118,6 +119,7 @@
         }
     </style>
 </head>
+
 <body>
     <div id="startScreen">
         <h1>Space Crush</h1>
@@ -136,7 +138,6 @@
             <button onclick="nextLevel()">Seuraava taso</button>
         </div>
     </div>
-    
     <script>
         // Pelin globaalit asetukset
         const GAME_CONFIG = {
@@ -152,6 +153,7 @@
                 large: { width: 200, height: 200 },
                 xlarge: { width: 400, height: 400 }
             },
+            // Elliptisen törmäysalueen säätöparametrit
             collisionEllipse: {
                 widthRatio: 1,
                 heightRatio: 1
@@ -180,7 +182,7 @@
             {
                 id: 2,
                 name: "Keskitaso",
-                description: "Iso UFO jakautuu kahteen pienempään! Molemmat pitää tuhota!",
+                description: "Iso UFO jakautuu kahteen pienempään!",
                 enemies: [
                     {
                         type: "xlarge",
@@ -231,7 +233,7 @@
             {
                 id: 5,
                 name: "Tulva",
-                description: "Lukuisia vihollisia! Jakautuvat UFOt vaativat molempien osien tuhoamisen!",
+                description: "Lukuisia vihollisia!",
                 enemies: [
                     {
                         type: "small",
@@ -374,7 +376,6 @@
                 this.fireCounter = 0;
                 this.isSplitting = isSplitting;
                 this.isFinalEnemy = isFinalEnemy;
-                this.isSplitChild = false;
             }
 
             follow(player) {
@@ -397,46 +398,52 @@
                 if (this.exploding) return;
                 this.health -= 1;
                 if (this.health <= 0) {
-                    this.exploding = true;
-                    if (this.isSplitting && !this.isSplitChild) {
+                    if (this.isSplitting) {
                         this.split();
                     } else if (this.isFinalEnemy) {
+                        this.exploding = true;
                         showLevelCompleted();
+                    } else {
+                        this.exploding = true;
+                        destroyedUFOs += 1;
+                        ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+                        checkLevelCompletion();
                     }
-                    // Kaikki tuhoutumiset (mukaan lukien jakautuneet) kasvattavat laskuria
-                    destroyedUFOs += 1;
-                    ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
-                    checkLevelCompletion();
                 }
             }
 
             split() {
+                this.isDestroyed = true;
                 const newSize = GAME_CONFIG.enemySizes.medium;
                 
-                // Luo kaksi ufoa eri suuntiin
-                const createSplitUFO = (offsetY) => {
-                    const newX = this.x + (this.width - newSize.width) / 2;
-                    const newY = this.y + offsetY;
-                    
-                    if (newY >= 0 && newY <= canvas.height - newSize.height) {
-                        const enemy = new Enemy(
-                            this.image, 
-                            newX,
-                            newY,
-                            newSize.width, 
-                            newSize.height, 
-                            6,
-                            this.speed + 1,
-                            false,
-                            false
-                        );
-                        enemy.isSplitChild = true;
-                        enemies.push(enemy);
-                    }
-                };
-
-                createSplitUFO(-newSize.height); // Ylös
-                createSplitUFO(this.height);     // Alas
+                // Lasketaan uusien UFOjen sijainnit
+                const newX = this.x + (this.width - newSize.width) / 2; // X-akselilla keskelle
+                const topUfoY = this.y; // Ylemmän UFO yläreuna alkuperäisen yläreunassa
+                const bottomUfoY = this.y + this.height - newSize.height; // Alemman UFO alareuna alkuperäisen alareunassa
+                
+                enemies.push(new Enemy(
+                    this.image, 
+                    newX,
+                    topUfoY,
+                    newSize.width, 
+                    newSize.height, 
+                    6,
+                    this.speed + 1,
+                    false,
+                    false
+                ));
+                
+                enemies.push(new Enemy(
+                    this.image, 
+                    newX,
+                    bottomUfoY,
+                    newSize.width, 
+                    newSize.height, 
+                    6,
+                    this.speed + 1,
+                    false,
+                    false
+                ));
             }
 
             fire(player) {
@@ -548,14 +555,14 @@
             const level = LEVELS.find(l => l.id === currentLevel);
             if (!level) return;
 
-            const killsNeeded = level.enemies.reduce((sum, e) => sum + e.requiredKills, 0);
+            let totalKillsNeeded = 0;
+            let totalKillsAchieved = destroyedUFOs;
             
-            console.log(`Tarkistetaan taso ${currentLevel}:`);
-            console.log(`- Tuhottuja UFOja: ${destroyedUFOs}/${killsNeeded}`);
-            console.log(`- UFOja jäljellä: ${enemies.filter(e => !e.isDestroyed).length}`);
-            
-            if (destroyedUFOs >= killsNeeded) {
-                console.log("Taso suoritettu!");
+            level.enemies.forEach(enemyConfig => {
+                totalKillsNeeded += enemyConfig.requiredKills;
+            });
+
+            if (totalKillsAchieved >= totalKillsNeeded) {
                 showLevelCompleted();
             }
         }
@@ -581,13 +588,11 @@
             player.move();
             player.draw();
 
-            // Päivitä ja piirrä ammukset
             bullets.forEach(bullet => {
                 bullet.move();
                 bullet.draw();
             });
 
-            // Poista tuhoutuneet ammukset ja tarkista osumat
             bullets = bullets.filter(bullet => {
                 if (bullet.isDestroyed) return false;
                 
@@ -603,7 +608,6 @@
                 return !hit;
             });
 
-            // Päivitä ja piirrä viholliset
             enemies = enemies.filter(enemy => {
                 if (enemy.isDestroyed) return false;
                 
@@ -615,13 +619,12 @@
                     player.exploding = true;
                     player.explosionFrame = 0;
                     showGameOver();
-                    return false;
+                    return true;
                 }
                 
                 return true;
             });
 
-            // Päivitä ja piirrä vihollisten ammukset
             enemyBullets = enemyBullets.filter(bullet => {
                 if (bullet.isDestroyed) return false;
                 
@@ -632,7 +635,7 @@
                     player.exploding = true;
                     player.explosionFrame = 0;
                     showGameOver();
-                    return false;
+                    return true;
                 }
                 
                 return true;
@@ -801,4 +804,5 @@
         initializeLevelButtons();
     </script>
 </body>
+
 </html>
