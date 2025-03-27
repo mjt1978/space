@@ -417,14 +417,14 @@
                 const newSize = GAME_CONFIG.enemySizes.medium;
                 
                 // Lasketaan uusien UFOjen sijainnit
-                const newX = this.x + (this.width - newSize.width) / 2; // X-akselilla keskelle
-                const topUfoY = this.y; // Ylemmän UFO yläreuna alkuperäisen yläreunassa
-                const bottomUfoY = this.y + this.height - newSize.height; // Alemman UFO alareuna alkuperäisen alareunassa
+                const newX = this.x + (this.width - newSize.width) / 2;
+                const spacing = 20; // Väli UFOjen välille
                 
+                // Ylempi UFO
                 enemies.push(new Enemy(
                     this.image, 
                     newX,
-                    topUfoY,
+                    this.y,
                     newSize.width, 
                     newSize.height, 
                     6,
@@ -433,10 +433,11 @@
                     false
                 ));
                 
+                // Alempi UFO
                 enemies.push(new Enemy(
                     this.image, 
                     newX,
-                    bottomUfoY,
+                    this.y + this.height - newSize.height,
                     newSize.width, 
                     newSize.height, 
                     6,
@@ -444,6 +445,9 @@
                     false,
                     false
                 ));
+                
+                destroyedUFOs += 1;
+                ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
             }
 
             fire(player) {
