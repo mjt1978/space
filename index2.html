@@ -153,7 +153,6 @@
                 large: { width: 200, height: 200 },
                 xlarge: { width: 400, height: 400 }
             },
-            // Elliptisen törmäysalueen säätöparametrit
             collisionEllipse: {
                 widthRatio: 1,
                 heightRatio: 1
@@ -376,6 +375,7 @@
                 this.fireCounter = 0;
                 this.isSplitting = isSplitting;
                 this.isFinalEnemy = isFinalEnemy;
+                this.isSplitChild = false;
             }
 
             follow(player) {
@@ -394,61 +394,63 @@
                 this.y += this.speed * Math.sin(angle);
             }
 
-takeDamage() {
-    if (this.exploding) return;
-    this.health -= 1;
-    if (this.health <= 0) {
-        if (this.isSplitting) {
-            this.split();
-        } else if (this.isFinalEnemy) {
-            this.exploding = true;
-            showLevelCompleted();
-        } else {
-            this.exploding = true;
-            destroyedUFOs += 1;
-            ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
-            checkLevelCompletion();
-        }
-    }
-}
+            takeDamage() {
+                if (this.exploding) return;
+                this.health -= 1;
+                if (this.health <= 0) {
+                    if (this.isSplitting && !this.isSplitChild) {
+                        this.split();
+                    } else if (this.isFinalEnemy) {
+                        this.exploding = true;
+                        showLevelCompleted();
+                    } else {
+                        this.exploding = true;
+                        if (!this.isSplitChild) {
+                            destroyedUFOs += 1;
+                            ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+                        }
+                        checkLevelCompletion();
+                    }
+                }
+            }
 
-split() {
-    this.isDestroyed = true;
-    const newSize = {
-        width: this.width * 0.5,
-        height: this.height * 0.5
-    };
-    
-    // Ylöspäin menevä UFO
-    enemies.push(new Enemy(
-        this.image, 
-        this.x + (this.width - newSize.width) / 2,
-        this.y - newSize.height,
-        newSize.width, 
-        newSize.height, 
-        Math.ceil(this.health / 2),
-        this.speed + 1,
-        false,
-        false
-    ));
-    
-    // Alaspäin menevä UFO
-    enemies.push(new Enemy(
-        this.image, 
-        this.x + (this.width - newSize.width) / 2,
-        this.y + this.height,
-        newSize.width, 
-        newSize.height, 
-        Math.ceil(this.health / 2),
-        this.speed + 1,
-        false,
-        false
-    ));
-    
-    destroyedUFOs += 1;
-    ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
-    checkLevelCompletion();
-}
+            split() {
+                this.isDestroyed = true;
+                const newSize = {
+                    width: this.width * 0.5,
+                    height: this.height * 0.5
+                };
+                
+                // Ylöspäin menevä UFO
+                const topUfo = new Enemy(
+                    this.image, 
+                    this.x + (this.width - newSize.width) / 2,
+                    this.y - newSize.height,
+                    newSize.width, 
+                    newSize.height, 
+                    Math.ceil(this.health / 2),
+                    this.speed + 1,
+                    false,
+                    false
+                );
+                topUfo.isSplitChild = true;
+                enemies.push(topUfo);
+                
+                // Alaspäin menevä UFO
+                const bottomUfo = new Enemy(
+                    this.image, 
+                    this.x + (this.width - newSize.width) / 2,
+                    this.y + this.height,
+                    newSize.width, 
+                    newSize.height, 
+                    Math.ceil(this.health / 2),
+                    this.speed + 1,
+                    false,
+                    false
+                );
+                bottomUfo.isSplitChild = true;
+                enemies.push(bottomUfo);
+            }
 
             fire(player) {
                 if (this.fireCounter <= 0 && !isAnimating) {
@@ -562,8 +564,16 @@ split() {
             let totalKillsNeeded = 0;
             let totalKillsAchieved = destroyedUFOs;
             
+            // Laske tarvittavat tuhot
             level.enemies.forEach(enemyConfig => {
                 totalKillsNeeded += enemyConfig.requiredKills;
+            });
+            
+            // Laske tuhotut jakautuneet UFOt
+            enemies.forEach(enemy => {
+                if (enemy.isDestroyed && enemy.isSplitChild) {
+                    totalKillsAchieved += 1;
+                }
             });
 
             if (totalKillsAchieved >= totalKillsNeeded) {
