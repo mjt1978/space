@@ -181,7 +181,7 @@
             {
                 id: 2,
                 name: "Keskitaso",
-                description: "Iso UFO jakautuu kahteen pienempään!",
+                description: "Iso UFO jakautuu kahteen pienempään! Molemmat pitää tuhota!",
                 enemies: [
                     {
                         type: "xlarge",
@@ -232,7 +232,7 @@
             {
                 id: 5,
                 name: "Tulva",
-                description: "Lukuisia vihollisia!",
+                description: "Lukuisia vihollisia! Jakautuvat UFOt vaativat molempien osien tuhoamisen!",
                 enemies: [
                     {
                         type: "small",
@@ -375,6 +375,8 @@
                 this.fireCounter = 0;
                 this.isSplitting = isSplitting;
                 this.isFinalEnemy = isFinalEnemy;
+                this.isSplitForm = false;
+                this.splitParentId = null;
             }
 
             follow(player) {
@@ -397,7 +399,7 @@
                 if (this.exploding) return;
                 this.health -= 1;
                 if (this.health <= 0) {
-                    if (this.isSplitting) {
+                    if (this.isSplitting && !this.isSplitForm) {
                         this.split();
                     } else if (this.isFinalEnemy) {
                         this.exploding = true;
@@ -414,6 +416,7 @@
             split() {
                 this.isDestroyed = true;
                 const newSize = GAME_CONFIG.enemySizes.medium;
+                const parentId = Date.now(); // Uniikki ID jakautumiselle
                 
                 // Lasketaan uusien UFOjen sijainnit erikseen ylös ja alas
                 const newX1 = this.x + (this.width - newSize.width) / 2;
@@ -423,7 +426,7 @@
                 
                 // Lisätään vain jos uudet sijainnit ovat ruudun sisällä
                 if (newY1 >= 0) {
-                    enemies.push(new Enemy(
+                    const enemy1 = new Enemy(
                         this.image, 
                         newX1,
                         newY1,
@@ -433,11 +436,14 @@
                         this.speed + 1,
                         false,
                         false
-                    ));
+                    );
+                    enemy1.isSplitForm = true;
+                    enemy1.splitParentId = parentId;
+                    enemies.push(enemy1);
                 }
                 
                 if (newY2 <= canvas.height - newSize.height) {
-                    enemies.push(new Enemy(
+                    const enemy2 = new Enemy(
                         this.image, 
                         newX2,
                         newY2,
@@ -447,12 +453,11 @@
                         this.speed + 1,
                         false,
                         false
-                    ));
+                    );
+                    enemy2.isSplitForm = true;
+                    enemy2.splitParentId = parentId;
+                    enemies.push(enemy2);
                 }
-                
-                destroyedUFOs += 1;
-                ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
-                checkLevelCompletion();
             }
 
             fire(player) {
@@ -571,7 +576,12 @@
                 totalKillsNeeded += enemyConfig.requiredKills;
             });
 
-            if (totalKillsAchieved >= totalKillsNeeded) {
+            // Tarkistetaan että kaikki jakautumattomat UFOt on tuhottu
+            // ja että ei ole aktiivisia jakautuneita UFOja
+            const activeEnemies = enemies.filter(e => !e.isDestroyed).length;
+            const activeSplitEnemies = enemies.filter(e => e.isSplitForm && !e.isDestroyed).length;
+            
+            if (totalKillsAchieved >= totalKillsNeeded && activeEnemies === 0) {
                 showLevelCompleted();
             }
         }
