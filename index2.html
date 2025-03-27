@@ -153,7 +153,6 @@
                 large: { width: 200, height: 200 },
                 xlarge: { width: 400, height: 400 }
             },
-            // Elliptisen törmäysalueen säätöparametrit
             collisionEllipse: {
                 widthRatio: 1,
                 heightRatio: 1
@@ -416,34 +415,44 @@
                 this.isDestroyed = true;
                 const newSize = GAME_CONFIG.enemySizes.medium;
                 
-                // Lasketaan uusien UFOjen sijainnit
-                const newX = this.x + (this.width - newSize.width) / 2; // X-akselilla keskelle
-                const topUfoY = this.y; // Ylemmän UFO yläreuna alkuperäisen yläreunassa
-                const bottomUfoY = this.y + this.height - newSize.height; // Alemman UFO alareuna alkuperäisen alareunassa
+                // Lasketaan uusien UFOjen sijainnit erikseen ylös ja alas
+                const newX1 = this.x + (this.width - newSize.width) / 2;
+                const newX2 = this.x + (this.width - newSize.width) / 2;
+                const newY1 = this.y - newSize.height; // Ylempi UFO yläpuolelle
+                const newY2 = this.y + this.height;    // Alempi UFO alapuolelle
                 
-                enemies.push(new Enemy(
-                    this.image, 
-                    newX,
-                    topUfoY,
-                    newSize.width, 
-                    newSize.height, 
-                    6,
-                    this.speed + 1,
-                    false,
-                    false
-                ));
+                // Lisätään vain jos uudet sijainnit ovat ruudun sisällä
+                if (newY1 >= 0) {
+                    enemies.push(new Enemy(
+                        this.image, 
+                        newX1,
+                        newY1,
+                        newSize.width, 
+                        newSize.height, 
+                        6,
+                        this.speed + 1,
+                        false,
+                        false
+                    ));
+                }
                 
-                enemies.push(new Enemy(
-                    this.image, 
-                    newX,
-                    bottomUfoY,
-                    newSize.width, 
-                    newSize.height, 
-                    6,
-                    this.speed + 1,
-                    false,
-                    false
-                ));
+                if (newY2 <= canvas.height - newSize.height) {
+                    enemies.push(new Enemy(
+                        this.image, 
+                        newX2,
+                        newY2,
+                        newSize.width, 
+                        newSize.height, 
+                        6,
+                        this.speed + 1,
+                        false,
+                        false
+                    ));
+                }
+                
+                destroyedUFOs += 1;
+                ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+                checkLevelCompletion();
             }
 
             fire(player) {
