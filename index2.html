@@ -1,143 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Crush</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-image: url('background2.jpg');
-            background-size: cover;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-        }
-
-        #startScreen {
-            text-align: center;
-            color: white;
-        }
-
-        #startScreen h1 {
-            font-size: 64px;
-            margin-bottom: 40px;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
-        }
-
-        #startScreen button {
-            font-size: 24px;
-            padding: 10px 20px;
-            margin: 10px;
-            cursor: pointer;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: 2px solid white;
-            border-radius: 5px;
-            transition: all 0.3s;
-        }
-
-        #startScreen button:hover {
-            background-color: rgba(255, 255, 255, 0.7);
-            color: black;
-        }
-
-        #gameContainer {
-            display: none;
-            position: relative;
-        }
-
-        canvas {
-            display: block;
-            border: 2px solid white;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-        }
-
-        #gameOver,
-        #levelCompleted {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
-            text-align: center;
-            background-color: rgba(0, 0, 0, 0.8);
-            padding: 30px;
-            border-radius: 10px;
-            border: 2px solid white;
-        }
-
-        #gameOver h1,
-        #levelCompleted h1 {
-            font-size: 48px;
-            color: red;
-            margin: 0 0 20px 0;
-            text-shadow: 0 0 5px white;
-        }
-
-        #gameOver button,
-        #levelCompleted button {
-            font-size: 24px;
-            padding: 10px 20px;
-            margin-top: 20px;
-            cursor: pointer;
-            background-color: rgba(255, 255, 255, 0.8);
-            border: none;
-            border-radius: 5px;
-            transition: all 0.3s;
-        }
-
-        #gameOver button:hover,
-        #levelCompleted button:hover {
-            background-color: white;
-        }
-
-        #ufoCounter {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 24px;
-            color: white;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
-
-        #levelInfo {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 24px;
-            color: white;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
+        /* (Keep all your existing styles the same) */
     </style>
 </head>
-
 <body>
-    <div id="startScreen">
-        <h1>Space Crush</h1>
-        <div id="levelButtons"></div>
-    </div>
-    <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
-        <div id="ufoCounter">Tuhotut Ufot: 0</div>
-        <div id="levelInfo">Taso: 1</div>
-        <div id="gameOver">
-            <h1>Game Over</h1>
-            <button onclick="restartGame()">Uusi yritys</button>
-        </div>
-        <div id="levelCompleted">
-            <h1>Taso Suoritettu!</h1>
-            <button onclick="nextLevel()">Seuraava taso</button>
-        </div>
-    </div>
+    <!-- (Keep all your existing HTML the same) -->
+    
     <script>
         // Pelin globaalit asetukset
         const GAME_CONFIG = {
@@ -376,7 +249,6 @@
                 this.isSplitting = isSplitting;
                 this.isFinalEnemy = isFinalEnemy;
                 this.isSplitChild = false;
-                this.splitGroupId = null;
             }
 
             follow(player) {
@@ -395,61 +267,51 @@
                 this.y += this.speed * Math.sin(angle);
             }
 
-takeDamage() {
-    if (this.exploding) return;
-    this.health -= 1;
-    if (this.health <= 0) {
-        if (this.isSplitting && !this.isSplitChild) {
-            this.split();
-        } else if (this.isFinalEnemy) {
-            this.exploding = true;
-            showLevelCompleted();
-        } else {
-            this.exploding = true;
-            destroyedUFOs += 1;
-            ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
-            // Tarkistetaan taso heti kun UFO tuhotaan
-            checkLevelCompletion();
-        }
-    }
-}
+            takeDamage() {
+                if (this.exploding) return;
+                this.health -= 1;
+                if (this.health <= 0) {
+                    this.exploding = true;
+                    if (this.isSplitting && !this.isSplitChild) {
+                        this.split();
+                    } else if (this.isFinalEnemy) {
+                        showLevelCompleted();
+                    }
+                    // Kaikki tuhoutumiset (mukaan lukien jakautuneet) kasvattavat laskuria
+                    destroyedUFOs += 1;
+                    ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+                    checkLevelCompletion();
+                }
+            }
 
-split() {
-    this.isDestroyed = true;
-    const newSize = GAME_CONFIG.enemySizes.medium;
-    const groupId = Date.now();
-    
-    // Luo kaksi ufoa eri suuntiin
-    const createSplitUFO = (offsetY) => {
-        const newX = this.x + (this.width - newSize.width) / 2;
-        const newY = this.y + offsetY;
-        
-        if (newY >= 0 && newY <= canvas.height - newSize.height) {
-            const enemy = new Enemy(
-                this.image, 
-                newX,
-                newY,
-                newSize.width, 
-                newSize.height, 
-                6,
-                this.speed + 1,
-                false,
-                false
-            );
-            enemy.isSplitChild = true;
-            enemy.splitGroupId = groupId;
-            enemies.push(enemy);
-        }
-    };
+            split() {
+                const newSize = GAME_CONFIG.enemySizes.medium;
+                
+                // Luo kaksi ufoa eri suuntiin
+                const createSplitUFO = (offsetY) => {
+                    const newX = this.x + (this.width - newSize.width) / 2;
+                    const newY = this.y + offsetY;
+                    
+                    if (newY >= 0 && newY <= canvas.height - newSize.height) {
+                        const enemy = new Enemy(
+                            this.image, 
+                            newX,
+                            newY,
+                            newSize.width, 
+                            newSize.height, 
+                            6,
+                            this.speed + 1,
+                            false,
+                            false
+                        );
+                        enemy.isSplitChild = true;
+                        enemies.push(enemy);
+                    }
+                };
 
-    createSplitUFO(-newSize.height); // Ylös
-    createSplitUFO(this.height);     // Alas
-    
-    // Laske jakautuminen yhdeksi tuhoksi
-    destroyedUFOs += 1;
-    ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
-    checkLevelCompletion();
-}
+                createSplitUFO(-newSize.height); // Ylös
+                createSplitUFO(this.height);     // Alas
+            }
 
             fire(player) {
                 if (this.fireCounter <= 0 && !isAnimating) {
@@ -556,25 +418,21 @@ split() {
             enemyBullets = [];
         }
 
-function checkLevelCompletion() {
-    const level = LEVELS.find(l => l.id === currentLevel);
-    if (!level) return;
+        function checkLevelCompletion() {
+            const level = LEVELS.find(l => l.id === currentLevel);
+            if (!level) return;
 
-    const allEnemiesDestroyed = enemies.every(e => e.isDestroyed);
-    const killsNeeded = level.enemies.reduce((sum, e) => sum + e.requiredKills, 0);
-    
-    console.log(`Tarkistetaan taso ${currentLevel}:`);
-    console.log(`- Kaikki tuhottu: ${allEnemiesDestroyed}`);
-    console.log(`- Tuhottuja: ${destroyedUFOs}/${killsNeeded}`);
-    console.log(`- UFOja jäljellä: ${enemies.filter(e => !e.isDestroyed).length}`);
-    
-    if (allEnemiesDestroyed && destroyedUFOs >= killsNeeded) {
-        console.log("Taso suoritettu!");
-        showLevelCompleted();
-    } else {
-        console.log("Taso ei vielä suoritettu");
-    }
-}
+            const killsNeeded = level.enemies.reduce((sum, e) => sum + e.requiredKills, 0);
+            
+            console.log(`Tarkistetaan taso ${currentLevel}:`);
+            console.log(`- Tuhottuja UFOja: ${destroyedUFOs}/${killsNeeded}`);
+            console.log(`- UFOja jäljellä: ${enemies.filter(e => !e.isDestroyed).length}`);
+            
+            if (destroyedUFOs >= killsNeeded) {
+                console.log("Taso suoritettu!");
+                showLevelCompleted();
+            }
+        }
 
         function checkEllipseCollision(obj1, obj2) {
             const ellipse1 = obj1.getEllipse();
@@ -597,11 +455,13 @@ function checkLevelCompletion() {
             player.move();
             player.draw();
 
+            // Päivitä ja piirrä ammukset
             bullets.forEach(bullet => {
                 bullet.move();
                 bullet.draw();
             });
 
+            // Poista tuhoutuneet ammukset ja tarkista osumat
             bullets = bullets.filter(bullet => {
                 if (bullet.isDestroyed) return false;
                 
@@ -617,6 +477,7 @@ function checkLevelCompletion() {
                 return !hit;
             });
 
+            // Päivitä ja piirrä viholliset
             enemies = enemies.filter(enemy => {
                 if (enemy.isDestroyed) return false;
                 
@@ -628,12 +489,13 @@ function checkLevelCompletion() {
                     player.exploding = true;
                     player.explosionFrame = 0;
                     showGameOver();
-                    return true;
+                    return false;
                 }
                 
                 return true;
             });
 
+            // Päivitä ja piirrä vihollisten ammukset
             enemyBullets = enemyBullets.filter(bullet => {
                 if (bullet.isDestroyed) return false;
                 
@@ -644,7 +506,7 @@ function checkLevelCompletion() {
                     player.exploding = true;
                     player.explosionFrame = 0;
                     showGameOver();
-                    return true;
+                    return false;
                 }
                 
                 return true;
@@ -813,5 +675,4 @@ function checkLevelCompletion() {
         initializeLevelButtons();
     </script>
 </body>
-
 </html>
