@@ -560,14 +560,19 @@ function checkLevelCompletion() {
     const level = LEVELS.find(l => l.id === currentLevel);
     if (!level) return;
 
-    // Tarkista onko kaikki viholliset tuhottu
     const allEnemiesDestroyed = enemies.every(e => e.isDestroyed);
-    
-    // Tarkista onko tarpeeksi UFOja tuhottu
     const killsNeeded = level.enemies.reduce((sum, e) => sum + e.requiredKills, 0);
     
+    console.log(`Tarkistetaan taso ${currentLevel}:`);
+    console.log(`- Kaikki tuhottu: ${allEnemiesDestroyed}`);
+    console.log(`- Tuhottuja: ${destroyedUFOs}/${killsNeeded}`);
+    console.log(`- UFOja jäljellä: ${enemies.filter(e => !e.isDestroyed).length}`);
+    
     if (allEnemiesDestroyed && destroyedUFOs >= killsNeeded) {
+        console.log("Taso suoritettu!");
         showLevelCompleted();
+    } else {
+        console.log("Taso ei vielä suoritettu");
     }
 }
 
