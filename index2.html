@@ -412,39 +412,51 @@
                 }
             }
 
-            split() {
-                this.isDestroyed = true;
-                const newSize = GAME_CONFIG.enemySizes.medium;
-                
-                // Lasketaan uusien UFOjen sijainnit
-                const newX = this.x + (this.width - newSize.width) / 2; // X-akselilla keskelle
-                const topUfoY = this.y; // Ylemmän UFO yläreuna alkuperäisen yläreunassa
-                const bottomUfoY = this.y + this.height - newSize.height; // Alemman UFO alareuna alkuperäisen alareunassa
-                
-                enemies.push(new Enemy(
-                    this.image, 
-                    newX,
-                    topUfoY,
-                    newSize.width, 
-                    newSize.height, 
-                    6,
-                    this.speed + 1,
-                    false,
-                    false
-                ));
-                
-                enemies.push(new Enemy(
-                    this.image, 
-                    newX,
-                    bottomUfoY,
-                    newSize.width, 
-                    newSize.height, 
-                    6,
-                    this.speed + 1,
-                    false,
-                    false
-                ));
-            }
+split() {
+    this.isDestroyed = true;
+    const originalType = this.type || 'medium'; // Oletetaan medium, jos type ei ole määritelty
+    
+    // Määritellään uudet koot tyypin mukaan
+    let newSize;
+    if (originalType === 'xlarge') {
+        newSize = GAME_CONFIG.enemySizes.large;
+    } else if (originalType === 'large') {
+        newSize = GAME_CONFIG.enemySizes.medium;
+    } else if (originalType === 'medium') {
+        newSize = GAME_CONFIG.enemySizes.small;
+    } else {
+        newSize = GAME_CONFIG.enemySizes.small; // Oletus
+    }
+    
+    // Lasketaan uusien UFOjen sijainnit
+    const topUfoY = this.y - newSize.height / 2; // Ylempi UFO hieman ylempänä
+    const bottomUfoY = this.y + this.height - newSize.height / 2; // Alempi UFO hieman alempana
+    
+    // Luodaan kaksi uutta UFOa
+    enemies.push(new Enemy(
+        this.image, 
+        this.x + (this.width - newSize.width) / 2,
+        topUfoY,
+        newSize.width, 
+        newSize.height, 
+        Math.max(1, Math.floor(this.health / 2)), // Puolet alkuperäisestä healthistä
+        this.speed + 1,
+        false,
+        false
+    ));
+    
+    enemies.push(new Enemy(
+        this.image, 
+        this.x + (this.width - newSize.width) / 2,
+        bottomUfoY,
+        newSize.width, 
+        newSize.height, 
+        Math.max(1, Math.floor(this.health / 2)), // Puolet alkuperäisestä healthistä
+        this.speed + 1,
+        false,
+        false
+    ));
+}
 
             fire(player) {
                 if (this.fireCounter <= 0 && !isAnimating) {
@@ -541,7 +553,7 @@
                         enemyConfig.isSplitting,
                         enemyConfig.isFinalEnemy
                     );
-                    
+                    enemy.type = enemyConfig.type;
                     enemy.image.src = enemyConfig.image;
                     enemies.push(enemy);
                 }
