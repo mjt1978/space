@@ -145,7 +145,6 @@
             bulletSpeed: 10,
             enemyBulletSpeed: 5,
             finalEnemyBulletSpeed: 10,
-            enemyFireCooldown: 60,
             playerSize: { width: 100, height: 100 },
             enemySizes: {
                 small: { width: 50, height: 50 },
@@ -153,7 +152,6 @@
                 large: { width: 200, height: 200 },
                 xlarge: { width: 400, height: 400 }
             },
-            // Elliptisen törmäysalueen säätöparametrit
             collisionEllipse: {
                 widthRatio: 1,
                 heightRatio: 1
@@ -172,6 +170,7 @@
                         count: 2,
                         health: 6,
                         speed: 3,
+                        fireCooldown: 90,
                         image: 'ufo2.png',
                         isSplitting: false,
                         isFinalEnemy: false,
@@ -189,6 +188,7 @@
                         count: 1,
                         health: 12,
                         speed: 2,
+                        fireCooldown: 120,
                         image: 'ufo5.png',
                         isSplitting: true,
                         isFinalEnemy: false,
@@ -206,6 +206,7 @@
                         count: 5,
                         health: 3,
                         speed: 4,
+                        fireCooldown: 60,
                         image: 'ufo4.png',
                         isSplitting: false,
                         isFinalEnemy: false,
@@ -223,20 +224,11 @@
                         count: 1,
                         health: 24,
                         speed: 4,
+                        fireCooldown: 30,
                         image: 'ufo3.png',
                         isSplitting: false,
                         isFinalEnemy: true,
                         requiredKills: 1
-                    },
-                    {
-                        type: "medium",
-                        count: 2,
-                        health: 6,
-                        speed: 3,
-                        image: 'ufo4.png',
-                        isSplitting: true,
-                        isFinalEnemy: false,
-                        requiredKills: 4
                     }
                 ]
             },
@@ -250,6 +242,7 @@
                         count: 10,
                         health: 2,
                         speed: 5,
+                        fireCooldown: 75,
                         image: 'ufo2.png',
                         isSplitting: false,
                         isFinalEnemy: false,
@@ -260,6 +253,7 @@
                         count: 2,
                         health: 6,
                         speed: 3,
+                        fireCooldown: 90,
                         image: 'ufo4.png',
                         isSplitting: true,
                         isFinalEnemy: false,
@@ -378,11 +372,11 @@
         }
 
         class Enemy extends GameObject {
-            constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy) {
+            constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown) {
                 super(image, x, y, width, height);
                 this.health = health;
                 this.speed = speed;
-                this.fireCooldown = GAME_CONFIG.enemyFireCooldown;
+                this.fireCooldown = fireCooldown;
                 this.fireCounter = 0;
                 this.isSplitting = isSplitting;
                 this.isFinalEnemy = isFinalEnemy;
@@ -422,51 +416,50 @@
                 }
             }
 
-split() {
-    this.isDestroyed = true;
-    const originalType = this.type || 'medium'; // Oletetaan medium, jos type ei ole määritelty
-    
-    // Määritellään uudet koot tyypin mukaan
-    let newSize;
-    if (originalType === 'xlarge') {
-        newSize = GAME_CONFIG.enemySizes.large;
-    } else if (originalType === 'large') {
-        newSize = GAME_CONFIG.enemySizes.medium;
-    } else if (originalType === 'medium') {
-        newSize = GAME_CONFIG.enemySizes.small;
-    } else {
-        newSize = GAME_CONFIG.enemySizes.small; // Oletus
-    }
-    
-    // Lasketaan uusien UFOjen sijainnit
-    const topUfoY = this.y - newSize.height / 2; // Ylempi UFO hieman ylempänä
-    const bottomUfoY = this.y + this.height - newSize.height / 2; // Alempi UFO hieman alempana
-    
-    // Luodaan kaksi uutta UFOa
-    enemies.push(new Enemy(
-        this.image, 
-        this.x + (this.width - newSize.width) / 2,
-        topUfoY,
-        newSize.width, 
-        newSize.height, 
-        Math.max(1, Math.floor(this.health / 2)), // Puolet alkuperäisestä healthistä
-        this.speed + 1,
-        false,
-        false
-    ));
-    
-    enemies.push(new Enemy(
-        this.image, 
-        this.x + (this.width - newSize.width) / 2,
-        bottomUfoY,
-        newSize.width, 
-        newSize.height, 
-        Math.max(1, Math.floor(this.health / 2)), // Puolet alkuperäisestä healthistä
-        this.speed + 1,
-        false,
-        false
-    ));
-}
+            split() {
+                this.isDestroyed = true;
+                const originalType = this.type || 'medium';
+                
+                let newSize;
+                if (originalType === 'xlarge') {
+                    newSize = GAME_CONFIG.enemySizes.large;
+                } else if (originalType === 'large') {
+                    newSize = GAME_CONFIG.enemySizes.medium;
+                } else if (originalType === 'medium') {
+                    newSize = GAME_CONFIG.enemySizes.small;
+                } else {
+                    newSize = GAME_CONFIG.enemySizes.small;
+                }
+                
+                const topUfoY = this.y - newSize.height / 2;
+                const bottomUfoY = this.y + this.height - newSize.height / 2;
+                
+                enemies.push(new Enemy(
+                    this.image, 
+                    this.x + (this.width - newSize.width) / 2,
+                    topUfoY,
+                    newSize.width, 
+                    newSize.height, 
+                    Math.max(1, Math.floor(this.health / 2)),
+                    this.speed + 1,
+                    false,
+                    false,
+                    this.fireCooldown
+                ));
+                
+                enemies.push(new Enemy(
+                    this.image, 
+                    this.x + (this.width - newSize.width) / 2,
+                    bottomUfoY,
+                    newSize.width, 
+                    newSize.height, 
+                    Math.max(1, Math.floor(this.health / 2)),
+                    this.speed + 1,
+                    false,
+                    false,
+                    this.fireCooldown
+                ));
+            }
 
             fire(player) {
                 if (this.fireCounter <= 0 && !isAnimating) {
@@ -483,7 +476,7 @@ split() {
                         angle, 
                         this.isFinalEnemy ? GAME_CONFIG.finalEnemyBulletSpeed : GAME_CONFIG.enemyBulletSpeed
                     ));
-                    this.fireCounter = this.fireCooldown / (this.isFinalEnemy ? 2 : 1);
+                    this.fireCounter = this.fireCooldown;
                 } else {
                     this.fireCounter--;
                 }
@@ -561,7 +554,8 @@ split() {
                         enemyConfig.health,
                         enemyConfig.speed,
                         enemyConfig.isSplitting,
-                        enemyConfig.isFinalEnemy
+                        enemyConfig.isFinalEnemy,
+                        enemyConfig.fireCooldown
                     );
                     enemy.type = enemyConfig.type;
                     enemy.image.src = enemyConfig.image;
