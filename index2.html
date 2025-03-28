@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -119,7 +118,6 @@
         }
     </style>
 </head>
-
 <body>
     <div id="startScreen">
         <h1>Space Crush</h1>
@@ -143,8 +141,6 @@
         const GAME_CONFIG = {
             playerSpeed: 7,
             bulletSpeed: 10,
-            enemyBulletSpeed: 5,
-            finalEnemyBulletSpeed: 10,
             playerSize: { width: 100, height: 100 },
             enemySizes: {
                 small: { width: 50, height: 50 },
@@ -171,6 +167,7 @@
                         health: 6,
                         speed: 3,
                         fireCooldown: 90,
+                        bulletSpeed: 4,
                         image: 'ufo2.png',
                         isSplitting: false,
                         isFinalEnemy: false,
@@ -189,6 +186,7 @@
                         health: 12,
                         speed: 2,
                         fireCooldown: 120,
+                        bulletSpeed: 3,
                         image: 'ufo5.png',
                         isSplitting: true,
                         isFinalEnemy: false,
@@ -207,6 +205,7 @@
                         health: 3,
                         speed: 4,
                         fireCooldown: 60,
+                        bulletSpeed: 6,
                         image: 'ufo4.png',
                         isSplitting: false,
                         isFinalEnemy: false,
@@ -225,6 +224,7 @@
                         health: 24,
                         speed: 4,
                         fireCooldown: 30,
+                        bulletSpeed: 8,
                         image: 'ufo3.png',
                         isSplitting: false,
                         isFinalEnemy: true,
@@ -243,6 +243,7 @@
                         health: 2,
                         speed: 5,
                         fireCooldown: 75,
+                        bulletSpeed: 5,
                         image: 'ufo2.png',
                         isSplitting: false,
                         isFinalEnemy: false,
@@ -254,6 +255,7 @@
                         health: 6,
                         speed: 3,
                         fireCooldown: 90,
+                        bulletSpeed: 4,
                         image: 'ufo4.png',
                         isSplitting: true,
                         isFinalEnemy: false,
@@ -372,11 +374,12 @@
         }
 
         class Enemy extends GameObject {
-            constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown) {
+            constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed) {
                 super(image, x, y, width, height);
                 this.health = health;
                 this.speed = speed;
                 this.fireCooldown = fireCooldown;
+                this.bulletSpeed = bulletSpeed;
                 this.fireCounter = 0;
                 this.isSplitting = isSplitting;
                 this.isFinalEnemy = isFinalEnemy;
@@ -444,7 +447,8 @@
                     this.speed + 1,
                     false,
                     false,
-                    this.fireCooldown
+                    this.fireCooldown,
+                    this.bulletSpeed
                 ));
                 
                 enemies.push(new Enemy(
@@ -457,7 +461,8 @@
                     this.speed + 1,
                     false,
                     false,
-                    this.fireCooldown
+                    this.fireCooldown,
+                    this.bulletSpeed
                 ));
             }
 
@@ -474,7 +479,7 @@
                         15, 
                         15, 
                         angle, 
-                        this.isFinalEnemy ? GAME_CONFIG.finalEnemyBulletSpeed : GAME_CONFIG.enemyBulletSpeed
+                        this.bulletSpeed
                     ));
                     this.fireCounter = this.fireCooldown;
                 } else {
@@ -555,7 +560,8 @@
                         enemyConfig.speed,
                         enemyConfig.isSplitting,
                         enemyConfig.isFinalEnemy,
-                        enemyConfig.fireCooldown
+                        enemyConfig.fireCooldown,
+                        enemyConfig.bulletSpeed
                     );
                     enemy.type = enemyConfig.type;
                     enemy.image.src = enemyConfig.image;
@@ -820,5 +826,4 @@
         initializeLevelButtons();
     </script>
 </body>
-
 </html>
