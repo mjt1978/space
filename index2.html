@@ -137,6 +137,42 @@
         </div>
     </div>
     <script>
+        // Sound Pool -luokka äänien hallintaan
+        class SoundPool {
+            constructor(src, poolSize = 5, volume = 0.3) {
+                this.pool = [];
+                this.src = src;
+                this.poolSize = poolSize;
+                this.volume = volume;
+                this.initializePool();
+            }
+
+            initializePool() {
+                for (let i = 0; i < this.poolSize; i++) {
+                    const audio = new Audio(this.src);
+                    audio.volume = this.volume;
+                    audio.load();
+                    this.pool.push(audio);
+                }
+            }
+
+            play() {
+                const availableSound = this.pool.find(sound => sound.paused || sound.ended);
+                if (availableSound) {
+                    availableSound.currentTime = 0;
+                    availableSound.play().catch(e => console.log("Äänen toisto estetty:", e));
+                }
+            }
+        }
+
+        // Ääniefektit
+        const soundEffects = {
+            playerShoot: new SoundPool('blast_ship.mp3', 5, 0.3),
+            enemyShoot: new SoundPool('blast_ufo.mp3', 10, 0.3),
+            playerExplosion: new SoundPool('explosion_ship.mp3', 3, 0.4),
+            enemyExplosion: new SoundPool('explosion_ufo.mp3', 10, 0.3)
+        };
+
         // Pelin globaalit asetukset
         const GAME_CONFIG = {
             playerSpeed: 7,
@@ -287,19 +323,6 @@
         const enemyBulletImage = new Image();
         enemyBulletImage.src = 'boss_shot.png';
 
-        // Ladataan ääniefektit
-        const sounds = {
-            playerShoot: new Audio('blast_ship.mp3'),
-            enemyShoot: new Audio('blast_ufo.mp3'),
-            playerExplosion: new Audio('explosion_ship.mp3'),
-            enemyExplosion: new Audio('explosion_ufo.mp3')
-        };
-
-        // Asetetaan äänien volume
-        Object.values(sounds).forEach(sound => {
-            sound.volume = 0.3;
-        });
-
         // Pelitilamuuttujat
         let player;
         let enemies = [];
@@ -381,8 +404,7 @@
                         10,
                         GAME_CONFIG.bulletSpeed
                     ));
-                    sounds.playerShoot.currentTime = 0;
-                    sounds.playerShoot.play();
+                    soundEffects.playerShoot.play();
                     this.canShoot = false;
                 }
             }
@@ -420,8 +442,7 @@
                 if (this.exploding) return;
                 this.health -= 1;
                 if (this.health <= 0) {
-                    sounds.enemyExplosion.currentTime = 0;
-                    sounds.enemyExplosion.play();
+                    soundEffects.enemyExplosion.play();
                     
                     if (this.isSplitting) {
                         this.split();
@@ -499,8 +520,7 @@
                         angle, 
                         this.bulletSpeed
                     ));
-                    sounds.enemyShoot.currentTime = 0;
-                    sounds.enemyShoot.play();
+                    soundEffects.enemyShoot.play();
                     this.fireCounter = this.fireCooldown;
                 } else {
                     this.fireCounter--;
@@ -687,8 +707,7 @@
         }
 
         function showGameOver() {
-            sounds.playerExplosion.currentTime = 0;
-            sounds.playerExplosion.play();
+            soundEffects.playerExplosion.play();
             document.getElementById('gameOver').style.display = 'block';
             gameRunning = false;
         }
@@ -826,19 +845,25 @@
             });
         }
 
-        // Preload sounds when user interacts with the page
-        function preloadSounds() {
-            Object.values(sounds).forEach(sound => {
-                sound.load();
-                // iOS requires this to enable sound playback
-                document.body.addEventListener('touchstart', () => {}, false);
+        // iOS äänien käyttöönottoa varten
+        function enableAudio() {
+            // Tyhjä äänen toisto "lukitsee" äänien käytön
+            const dummyAudio = new Audio();
+            dummyAudio.volume = 0;
+            dummyAudio.play().then(() => {
+                dummyAudio.pause();
+                dummyAudio.currentTime = 0;
             });
         }
 
-        // Start preloading sounds when page loads
-        window.addEventListener('load', preloadSounds);
-        window.addEventListener('click', preloadSounds);
-        window.addEventListener('keydown', preloadSounds);
+        // Alustetaan peli kun sivu on ladattu
+        window.addEventListener('load', () => {
+            initializeLevelButtons();
+            enableAudio();
+            
+            // Lisätään mahdollisuus äänien käyttöönottoon klikkaamalla
+            document.body.addEventListener('click', enableAudio, { once: true });
+        });
 
         window.addEventListener('keydown', (e) => {
             keys[e.key] = true;
@@ -858,8 +883,6 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         });
-
-        initializeLevelButtons();
     </script>
 </body>
 </html>
