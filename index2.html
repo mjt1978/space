@@ -243,7 +243,7 @@
                         health: 2,
                         speed: 5,
                         fireCooldown: 75,
-                        bulletSpeed: 6,
+                        bulletSpeed: 5,
                         image: 'ufo2.png',
                         isSplitting: false,
                         isFinalEnemy: false,
@@ -286,6 +286,19 @@
 
         const enemyBulletImage = new Image();
         enemyBulletImage.src = 'boss_shot.png';
+
+        // Ladataan ääniefektit
+        const sounds = {
+            playerShoot: new Audio('blast_ship.mp3'),
+            enemyShoot: new Audio('blast_ufo.mp3'),
+            playerExplosion: new Audio('explosion_ship.mp3'),
+            enemyExplosion: new Audio('explosion_ufo.mp3')
+        };
+
+        // Asetetaan äänien volume
+        Object.values(sounds).forEach(sound => {
+            sound.volume = 0.3;
+        });
 
         // Pelitilamuuttujat
         let player;
@@ -368,6 +381,8 @@
                         10,
                         GAME_CONFIG.bulletSpeed
                     ));
+                    sounds.playerShoot.currentTime = 0;
+                    sounds.playerShoot.play();
                     this.canShoot = false;
                 }
             }
@@ -405,6 +420,9 @@
                 if (this.exploding) return;
                 this.health -= 1;
                 if (this.health <= 0) {
+                    sounds.enemyExplosion.currentTime = 0;
+                    sounds.enemyExplosion.play();
+                    
                     if (this.isSplitting) {
                         this.split();
                     } else if (this.isFinalEnemy) {
@@ -481,6 +499,8 @@
                         angle, 
                         this.bulletSpeed
                     ));
+                    sounds.enemyShoot.currentTime = 0;
+                    sounds.enemyShoot.play();
                     this.fireCounter = this.fireCooldown;
                 } else {
                     this.fireCounter--;
@@ -667,6 +687,8 @@
         }
 
         function showGameOver() {
+            sounds.playerExplosion.currentTime = 0;
+            sounds.playerExplosion.play();
             document.getElementById('gameOver').style.display = 'block';
             gameRunning = false;
         }
@@ -803,6 +825,20 @@
                 levelButtonsContainer.appendChild(button);
             });
         }
+
+        // Preload sounds when user interacts with the page
+        function preloadSounds() {
+            Object.values(sounds).forEach(sound => {
+                sound.load();
+                // iOS requires this to enable sound playback
+                document.body.addEventListener('touchstart', () => {}, false);
+            });
+        }
+
+        // Start preloading sounds when page loads
+        window.addEventListener('load', preloadSounds);
+        window.addEventListener('click', preloadSounds);
+        window.addEventListener('keydown', preloadSounds);
 
         window.addEventListener('keydown', (e) => {
             keys[e.key] = true;
