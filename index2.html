@@ -172,6 +172,7 @@
             enemyShoot: new SoundPool('blast_ufo.mp3', 10, 0.3),        // Vihollisten ammunta
             playerExplosion: new SoundPool('explosion_ship.mp3', 10, 0.4), // Pelaajan räjähdys
             enemyExplosion: new SoundPool('explosion_ufo.mp3', 10, 0.3) // Vihollisten räjähdykset
+            ufoSplit: new SoundPool('split.mp3', 10, 0.4) // Vihollisen jakautuminen
         };
 
         // Pelin globaalit asetukset
@@ -460,6 +461,7 @@
             }
 
             split() {
+                soundEffects.ufoSplit.play();  // Soitetaan jakautumisääni
                 this.isDestroyed = true;
                 const originalType = this.type || 'medium';
                 
