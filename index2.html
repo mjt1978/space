@@ -137,10 +137,9 @@
         </div>
     </div>
     <script>
-
         // Sound Pool -luokka äänien hallintaan
         class SoundPool {
-            constructor(src, poolSize = 10, volume = 0.3) {  // Oletuspool koko nyt 10
+            constructor(src, poolSize = 10, volume = 0.3) {
                 this.pool = [];
                 this.src = src;
                 this.poolSize = poolSize;
@@ -161,18 +160,18 @@
                 const availableSound = this.pool.find(sound => sound.paused || sound.ended);
                 if (availableSound) {
                     availableSound.currentTime = 0;
-                    availableSound.play().catch(e => console.log("Äänen toisto estetty:", e));
+                    availableSound.play().catch(e => console.log("Audio play blocked:", e));
                 }
             }
         }
 
-        // Ääniefektit - kaikille nyt 10 instanssia
+        // Ääniefektit
         const soundEffects = {
-            playerShoot: new SoundPool('blast_ship.mp3', 10, 0.3),      // Pelaajan ammunta
-            enemyShoot: new SoundPool('blast_ufo.mp3', 10, 0.3),        // Vihollisten ammunta
-            playerExplosion: new SoundPool('explosion_ship.mp3', 10, 0.4), // Pelaajan räjähdys
-            enemyExplosion: new SoundPool('explosion_ufo.mp3', 10, 0.3) // Vihollisten räjähdykset
-            ufoSplit: new SoundPool('split.mp3', 10, 0.4) // Vihollisen jakautuminen
+            playerShoot: new SoundPool('blast_ship.mp3', 10, 0.3),
+            enemyShoot: new SoundPool('blast_ufo.mp3', 10, 0.3),
+            playerExplosion: new SoundPool('explosion_ship.mp3', 10, 0.4),
+            enemyExplosion: new SoundPool('explosion_ufo.mp3', 10, 0.3),
+            ufoSplit: new SoundPool('split.mp3', 10, 0.4)
         };
 
         // Pelin globaalit asetukset
@@ -461,7 +460,8 @@
             }
 
             split() {
-                soundEffects.ufoSplit.play();  // Soitetaan jakautumisääni
+                soundEffects.ufoSplit.play();
+                
                 this.isDestroyed = true;
                 const originalType = this.type || 'medium';
                 
