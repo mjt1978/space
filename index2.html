@@ -139,11 +139,12 @@
     <script>
         // Sound Pool -luokka äänien hallintaan
         class SoundPool {
-            constructor(src, poolSize = 10, volume = 0.3) {
+            constructor(src, poolSize = 5, volume = 0.3, loop = false) {
                 this.pool = [];
                 this.src = src;
                 this.poolSize = poolSize;
                 this.volume = volume;
+                this.loop = loop;
                 this.initializePool();
             }
 
@@ -151,6 +152,7 @@
                 for (let i = 0; i < this.poolSize; i++) {
                     const audio = new Audio(this.src);
                     audio.volume = this.volume;
+                    audio.loop = this.loop;
                     audio.load();
                     this.pool.push(audio);
                 }
@@ -161,17 +163,27 @@
                 if (availableSound) {
                     availableSound.currentTime = 0;
                     availableSound.play().catch(e => console.log("Audio play blocked:", e));
+                    return availableSound;
                 }
+                return null;
+            }
+
+            stop() {
+                this.pool.forEach(sound => {
+                    sound.pause();
+                    sound.currentTime = 0;
+                });
             }
         }
 
         // Ääniefektit
         const soundEffects = {
-            playerShoot: new SoundPool('blast_ship.mp3', 10, 0.3),
-            enemyShoot: new SoundPool('blast_ufo.mp3', 10, 0.3),
-            playerExplosion: new SoundPool('explosion_ship.mp3', 10, 0.4),
-            enemyExplosion: new SoundPool('explosion_ufo.mp3', 10, 0.3),
-            ufoSplit: new SoundPool('split.mp3', 10, 0.4)
+            playerShoot: new SoundPool('blast_ship.mp3', 5, 0.3),
+            enemyShoot: new SoundPool('blast_ufo.mp3', 5, 0.3),
+            playerExplosion: new SoundPool('explosion_ship.mp3', 3, 0.4),
+            enemyExplosion: new SoundPool('explosion_ufo.mp3', 5, 0.3),
+            ufoSplit: new SoundPool('split.mp3', 5, 0.4),
+            backgroundMusic: new SoundPool('music.mp3', 1, 0.2, true)
         };
 
         // Pelin globaalit asetukset
@@ -336,6 +348,7 @@
         let keys = {};
         let isAnimating = false;
         let animationFrameId = null;
+        let backgroundMusic = null;
 
         // Pelioliot
         class GameObject {
@@ -443,14 +456,15 @@
                 if (this.exploding) return;
                 this.health -= 1;
                 if (this.health <= 0) {
-                    soundEffects.enemyExplosion.play();
-                    
                     if (this.isSplitting) {
+                        soundEffects.ufoSplit.play(); // Soitetaan jakautumisääni
                         this.split();
                     } else if (this.isFinalEnemy) {
+                        soundEffects.enemyExplosion.play();
                         this.exploding = true;
                         showLevelCompleted();
                     } else {
+                        soundEffects.enemyExplosion.play();
                         this.exploding = true;
                         destroyedUFOs += 1;
                         ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
@@ -460,8 +474,6 @@
             }
 
             split() {
-                soundEffects.ufoSplit.play();
-                
                 this.isDestroyed = true;
                 const originalType = this.type || 'medium';
                 
@@ -827,6 +839,7 @@
             gameContainer.style.display = 'none';
             startScreen.style.display = 'block';
             hideLevelCompleted();
+            soundEffects.backgroundMusic.stop();
         }
 
         function startGame(levelId) {
@@ -835,6 +848,7 @@
             startScreen.style.display = 'none';
             gameContainer.style.display = 'block';
             initializeLevel(levelId);
+            backgroundMusic = soundEffects.backgroundMusic.play();
             update();
         }
 
