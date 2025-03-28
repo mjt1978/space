@@ -137,9 +137,10 @@
         </div>
     </div>
     <script>
+
         // Sound Pool -luokka äänien hallintaan
         class SoundPool {
-            constructor(src, poolSize = 5, volume = 0.3) {
+            constructor(src, poolSize = 10, volume = 0.3) {  // Oletuspool koko nyt 10
                 this.pool = [];
                 this.src = src;
                 this.poolSize = poolSize;
@@ -165,12 +166,12 @@
             }
         }
 
-        // Ääniefektit
+        // Ääniefektit - kaikille nyt 10 instanssia
         const soundEffects = {
-            playerShoot: new SoundPool('blast_ship.mp3', 5, 0.3),
-            enemyShoot: new SoundPool('blast_ufo.mp3', 10, 0.3),
-            playerExplosion: new SoundPool('explosion_ship.mp3', 3, 0.4),
-            enemyExplosion: new SoundPool('explosion_ufo.mp3', 10, 0.3)
+            playerShoot: new SoundPool('blast_ship.mp3', 10, 0.3),      // Pelaajan ammunta
+            enemyShoot: new SoundPool('blast_ufo.mp3', 10, 0.3),        // Vihollisten ammunta
+            playerExplosion: new SoundPool('explosion_ship.mp3', 10, 0.4), // Pelaajan räjähdys
+            enemyExplosion: new SoundPool('explosion_ufo.mp3', 10, 0.3) // Vihollisten räjähdykset
         };
 
         // Pelin globaalit asetukset
