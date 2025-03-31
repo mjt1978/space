@@ -102,11 +102,6 @@
             transition: all 0.3s;
         }
 
-        #gameOver button:hover,
-        #levelCompleted button:hover {
-            background-color: white;
-        }
-
         #ufoCounter {
             position: absolute;
             top: 1vh;
@@ -221,68 +216,26 @@
         </div>
     </div>
     <script>
-        // Sound Pool -luokka äänien hallintaan
-class SoundPool {
-    constructor(src, poolSize = 20, volume = 0.3, loop = false) {
-        this.pool = [];
-        this.src = src;
-        this.poolSize = poolSize;
-        this.volume = volume;
-        this.loop = loop;
-        this.initialized = false;
-    }
-
-    async initialize() {
-        if (this.initialized) return;
-        
-        for (let i = 0; i < this.poolSize; i++) {
-            const audio = new Audio(this.src);
-            audio.volume = this.volume;
-            audio.loop = this.loop;
-            audio.load();
-            this.pool.push(audio);
-        }
-        this.initialized = true;
-    }
-
-    async play() {
-        if (!this.initialized) {
-            await this.initialize();
-        }
-
-        const availableSound = this.pool.find(sound => sound.paused || sound.ended);
-        if (availableSound) {
-            try {
-                availableSound.currentTime = 0;
-                await availableSound.play();
-                return availableSound;
-            } catch (e) {
-                console.log("Audio play error:", e);
-                return null;
-            }
-        }
-        return null;
-    }
-
-    stop() {
-        this.pool.forEach(sound => {
-            sound.pause();
-            sound.currentTime = 0;
-        });
-    }
-}
-
         // Ääniefektit
         const soundEffects = {
-            playerShoot: new SoundPool('blast_ship.mp3', 20, 0.3),
-            enemyShoot: new SoundPool('blast_ufo.mp3', 20, 0.3),
-            playerExplosion: new SoundPool('explosion_ship.mp3', 20, 0.4),
-            enemyExplosion: new SoundPool('explosion_ufo.mp3', 20, 0.3),
-            ufoSplit: new SoundPool('split.mp3', 20, 0.9),
-            backgroundMusic: new SoundPool('music.mp3', 1, 0.3, true)
+            playerShoot: new Audio('blast_ship.mp3'),
+            enemyShoot: new Audio('blast_ufo.mp3'),
+            playerExplosion: new Audio('explosion_ship.mp3'),
+            enemyExplosion: new Audio('explosion_ufo.mp3'),
+            ufoSplit: new Audio('split.mp3'),
+            backgroundMusic: new Audio('music.mp3')
         };
 
-        // Pelin globaalit asetukset
+        // Aseta äänien volume
+        Object.values(soundEffects).forEach(sound => {
+            sound.volume = 0.3;
+            if (sound !== soundEffects.backgroundMusic) {
+                sound.load();
+            }
+        });
+        soundEffects.backgroundMusic.loop = true;
+
+        // Pelin asetukset
         const GAME_CONFIG = {
             playerSpeed: 7,
             bulletSpeed: 10,
@@ -293,19 +246,15 @@ class SoundPool {
                 medium: { width: 100, height: 100 },
                 large: { width: 200, height: 200 },
                 xlarge: { width: 400, height: 400 }
-            },
-            collisionEllipse: {
-                widthRatio: 1,
-                heightRatio: 1
             }
         };
 
-        // Tasojen määrittely
+        // Tasot
         const LEVELS = [
             {
                 id: 1,
                 name: "Helppo",
-                description: "Tuhotaan yksi UFO!",
+                description: "Tuhotaan kaksi keskikokoista UFOa!",
                 enemies: [
                     {
                         type: "medium",
@@ -318,15 +267,14 @@ class SoundPool {
                         image: 'ufo2.png',
                         isSplitting: false,
                         isFinalEnemy: false,
-                        requiredKills: 2,
-                        collisionDamage: 2
+                        requiredKills: 2
                     }
                 ]
             },
             {
                 id: 2,
                 name: "Keskitaso",
-                description: "Iso UFO jakautuu kahteen pienempään!",
+                description: "Erittäin iso UFO jakautuu kahteen isoon!",
                 enemies: [
                     {
                         type: "xlarge",
@@ -339,8 +287,7 @@ class SoundPool {
                         image: 'ufo5.png',
                         isSplitting: true,
                         isFinalEnemy: false,
-                        requiredKills: 2,
-                        collisionDamage: 3
+                        requiredKills: 2
                     }
                 ]
             },
@@ -360,8 +307,7 @@ class SoundPool {
                         image: 'ufo4.png',
                         isSplitting: false,
                         isFinalEnemy: false,
-                        requiredKills: 5,
-                        collisionDamage: 1
+                        requiredKills: 5
                     }
                 ]
             },
@@ -381,49 +327,13 @@ class SoundPool {
                         image: 'ufo3.png',
                         isSplitting: false,
                         isFinalEnemy: true,
-                        requiredKills: 1,
-                        collisionDamage: 4
-                    }
-                ]
-            },
-            {
-                id: 5,
-                name: "Tulva",
-                description: "Lukuisia vihollisia!",
-                enemies: [
-                    {
-                        type: "small",
-                        count: 10,
-                        health: 2,
-                        speed: 5,
-                        fireCooldown: 75,
-                        bulletSpeed: 5,
-                        bulletDamage: 1,
-                        image: 'ufo2.png',
-                        isSplitting: false,
-                        isFinalEnemy: false,
-                        requiredKills: 10,
-                        collisionDamage: 1
-                    },
-                    {
-                        type: "medium",
-                        count: 2,
-                        health: 6,
-                        speed: 3,
-                        fireCooldown: 90,
-                        bulletSpeed: 4,
-                        bulletDamage: 1,
-                        image: 'ufo4.png',
-                        isSplitting: true,
-                        isFinalEnemy: false,
-                        requiredKills: 4,
-                        collisionDamage: 2
+                        requiredKills: 1
                     }
                 ]
             }
         ];
 
-        // Alustetaan DOM-elementit
+        // DOM-elementit
         const startScreen = document.getElementById('startScreen');
         const gameContainer = document.getElementById('gameContainer');
         const canvas = document.getElementById('gameCanvas');
@@ -434,58 +344,7 @@ class SoundPool {
         const energyFill = document.getElementById('energyFill');
         const energyText = document.getElementById('energyText');
 
-        // Asetetaan canvasin koko
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            
-            if (player) {
-                const playerSize = calculateSize(GAME_CONFIG.playerSize);
-                player.width = playerSize.width;
-                player.height = playerSize.height;
-                
-                enemies.forEach(enemy => {
-                    const enemyType = enemy.type || 'medium';
-                    const size = calculateSize(GAME_CONFIG.enemySizes[enemyType]);
-                    enemy.width = size.width;
-                    enemy.height = size.height;
-                });
-                
-                bullets.forEach(bullet => {
-                    bullet.width = calculateSize({width: 20, height: 10}).width;
-                    bullet.height = calculateSize({width: 20, height: 10}).height;
-                });
-                
-                enemyBullets.forEach(bullet => {
-                    bullet.width = calculateSize({width: 15, height: 15}).width;
-                    bullet.height = calculateSize({width: 15, height: 15}).height;
-                });
-            }
-        }
-
-        // Laskee objektin koon nykyiseen ikkunan kokoon suhteutettuna
-        function calculateSize(baseSize) {
-            const baseWidth = 1920;
-            const baseHeight = 1080;
-            const scale = Math.min(window.innerWidth / baseWidth, window.innerHeight / baseHeight) * 0.8;
-            
-            return {
-                width: baseSize.width * scale,
-                height: baseSize.height * scale
-            };
-        }
-
-        // Ladataan kuvat
-        const playerImage = new Image();
-        playerImage.src = 'alus.png';
-
-        const bulletImage = new Image();
-        bulletImage.src = 'rockets_PNG13272.png';
-
-        const enemyBulletImage = new Image();
-        enemyBulletImage.src = 'boss_shot.png';
-
-        // Pelitilamuuttujat
+        // Pelin muuttujat
         let player;
         let enemies = [];
         let bullets = [];
@@ -497,20 +356,43 @@ class SoundPool {
         let keys = {};
         let isAnimating = false;
         let animationFrameId = null;
-        let backgroundMusic = null;
+
+        // Canvasin koon asetus
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        // Laskee koon suhteessa näytön kokoon
+        function calculateSize(baseSize) {
+            const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080) * 0.8;
+            return {
+                width: baseSize.width * scale,
+                height: baseSize.height * scale
+            };
+        }
+
+        // Kuvien lataus
+        const playerImage = new Image();
+        playerImage.src = 'alus.png';
+
+        const bulletImage = new Image();
+        bulletImage.src = 'rockets_PNG13272.png';
+
+        const enemyBulletImage = new Image();
+        enemyBulletImage.src = 'boss_shot.png';
 
         // Päivitä energiapalkki
         function updateEnergyBar() {
             const percentage = (player.energy / GAME_CONFIG.playerEnergy) * 100;
             energyFill.style.width = `${percentage}%`;
             
-            // Vaihda väri energian mukaan
             if (percentage > 60) {
-                energyFill.style.backgroundColor = '#00ff00'; // Vihreä
+                energyFill.style.backgroundColor = '#00ff00';
             } else if (percentage > 30) {
-                energyFill.style.backgroundColor = '#ffff00'; // Keltainen
+                energyFill.style.backgroundColor = '#ffff00';
             } else {
-                energyFill.style.backgroundColor = '#ff0000'; // Punainen
+                energyFill.style.backgroundColor = '#ff0000';
             }
             
             energyText.textContent = `Energia: ${player.energy}/${GAME_CONFIG.playerEnergy}`;
@@ -552,8 +434,8 @@ class SoundPool {
                 return {
                     x: this.x + this.width / 2,
                     y: this.y + this.height / 2,
-                    radiusX: this.width * GAME_CONFIG.collisionEllipse.widthRatio / 2,
-                    radiusY: this.height * GAME_CONFIG.collisionEllipse.heightRatio / 2
+                    radiusX: this.width / 2,
+                    radiusY: this.height / 2
                 };
             }
         }
@@ -585,7 +467,7 @@ class SoundPool {
                         bulletSize.width, 
                         bulletSize.height,
                         GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920)
-                    ));
+                    );
                     soundEffects.playerShoot.play();
                     this.canShoot = false;
                 }
@@ -605,21 +487,31 @@ class SoundPool {
         }
 
         class Enemy extends GameObject {
-    constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
-        super(image, x, y, width, height);
-        this.health = health;
-        this.speed = speed * (window.innerWidth / 1920);
-        this.fireCooldown = fireCooldown;
-        this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920);
-        this.fireCounter = 0;
-        this.isSplitting = isSplitting;
-        this.isFinalEnemy = isFinalEnemy;
-        this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2)); // Rajataan 1-2
-        // Varmistetaan että törmäysvaurio on järkevä (1-3 normaalisti, bossi 4)
-        this.collisionDamage = Math.max(1, Math.min(collisionDamage, 4));
-        this.hasCollided = false; // Estetään moninkertainen vahingoittaminen
-        this.collisionCooldown = 0; // Jäähdytysaika törmäyksille
-    }
+            constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed, bulletDamage) {
+                super(image, x, y, width, height);
+                this.health = health;
+                this.speed = speed * (window.innerWidth / 1920);
+                this.fireCooldown = fireCooldown;
+                this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920);
+                this.fireCounter = 0;
+                this.isSplitting = isSplitting;
+                this.isFinalEnemy = isFinalEnemy;
+                this.bulletDamage = bulletDamage;
+                this.hasCollided = false;
+                this.collisionCooldown = 0;
+                this.type = 'medium';
+            }
+
+            getCollisionDamage() {
+                switch(this.type) {
+                    case 'small': return 1;
+                    case 'medium': return 2;
+                    case 'large': return 3;
+                    case 'xlarge': return 4;
+                    default: return 2;
+                }
+            }
+
             follow(player) {
                 if (isAnimating) return;
                 
@@ -636,9 +528,9 @@ class SoundPool {
                 this.y += this.speed * Math.sin(angle);
             }
 
-            takeDamage() {
+            takeDamage(damage = 1) {
                 if (this.exploding) return;
-                this.health -= 1;
+                this.health -= damage;
                 if (this.health <= 0) {
                     if (this.isSplitting) {
                         soundEffects.ufoSplit.play();
@@ -659,79 +551,74 @@ class SoundPool {
 
             split() {
                 this.isDestroyed = true;
-                const originalType = this.type || 'medium';
-                
                 let newSize;
-                if (originalType === 'xlarge') {
+                
+                if (this.type === 'xlarge') {
                     newSize = calculateSize(GAME_CONFIG.enemySizes.large);
-                } else if (originalType === 'large') {
+                    this.type = 'large';
+                } else if (this.type === 'large') {
                     newSize = calculateSize(GAME_CONFIG.enemySizes.medium);
-                } else if (originalType === 'medium') {
-                    newSize = calculateSize(GAME_CONFIG.enemySizes.small);
+                    this.type = 'medium';
                 } else {
                     newSize = calculateSize(GAME_CONFIG.enemySizes.small);
+                    this.type = 'small';
                 }
-                
-                const topUfoY = this.y - newSize.height / 2;
-                const bottomUfoY = this.y + this.height - newSize.height / 2;
                 
                 enemies.push(new Enemy(
                     this.image, 
                     this.x + (this.width - newSize.width) / 2,
-                    topUfoY,
+                    this.y - newSize.height / 2,
                     newSize.width, 
                     newSize.height, 
                     Math.max(1, Math.floor(this.health / 2)),
-                    this.speed + (1 * (window.innerWidth / 1920)),
+                    this.speed + 1,
                     false,
                     false,
                     this.fireCooldown,
                     this.bulletSpeed,
-                    this.bulletDamage,
-                    Math.max(1, Math.floor(this.collisionDamage / 2))
+                    this.bulletDamage
                 ));
                 
                 enemies.push(new Enemy(
                     this.image, 
                     this.x + (this.width - newSize.width) / 2,
-                    bottomUfoY,
+                    this.y + this.height - newSize.height / 2,
                     newSize.width, 
                     newSize.height, 
                     Math.max(1, Math.floor(this.health / 2)),
-                    this.speed + (1 * (window.innerWidth / 1920)),
+                    this.speed + 1,
                     false,
                     false,
                     this.fireCooldown,
                     this.bulletSpeed,
-                    this.bulletDamage,
-                    Math.max(1, Math.floor(this.collisionDamage / 2))
+                    this.bulletDamage
                 ));
             }
 
-    fire(player) {
-        if (this.fireCounter <= 0 && !isAnimating) {
-            const bulletSize = calculateSize({width: 15, height: 15});
-            const bulletX = this.x + this.width / 2;
-            const bulletY = this.y + this.height / 2;
-            const angle = Math.atan2(player.y + player.height/2 - bulletY, player.x + player.width/2 - bulletX);
+            fire(player) {
+                if (this.fireCounter <= 0 && !isAnimating) {
+                    const bulletSize = calculateSize({width: 15, height: 15});
+                    const bulletX = this.x + this.width / 2;
+                    const bulletY = this.y + this.height / 2;
+                    const angle = Math.atan2(player.y + player.height/2 - bulletY, player.x + player.width/2 - bulletX);
 
-            enemyBullets.push(new EnemyBullet(
-                enemyBulletImage, 
-                bulletX, 
-                bulletY, 
-                bulletSize.width, 
-                bulletSize.height, 
-                angle, 
-                this.bulletSpeed,
-                this.bulletDamage // Varmista että tämä on 1 tai 2
-            ));
-            soundEffects.enemyShoot.play();
-            this.fireCounter = this.fireCooldown;
-        } else {
-            this.fireCounter--;
+                    enemyBullets.push(new EnemyBullet(
+                        enemyBulletImage, 
+                        bulletX, 
+                        bulletY, 
+                        bulletSize.width, 
+                        bulletSize.height, 
+                        angle, 
+                        this.bulletSpeed,
+                        this.bulletDamage
+                    ));
+                    soundEffects.enemyShoot.play();
+                    this.fireCounter = this.fireCooldown;
+                } else {
+                    this.fireCounter--;
+                }
+            }
         }
-    }
-}
 
         class Bullet extends GameObject {
             constructor(image, x, y, width, height, speed) {
@@ -749,13 +636,12 @@ class SoundPool {
         }
 
         class EnemyBullet extends GameObject {
-        constructor(image, x, y, width, height, angle, speed, damage) {
-        super(image, x, y, width, height);
-        this.angle = angle;
-        this.speed = speed;
-        // Varmistetaan että vahinko on korkeintaan 2
-        this.damage = Math.min(damage, 2);
-    }
+            constructor(image, x, y, width, height, angle, speed, damage) {
+                super(image, x, y, width, height);
+                this.angle = angle;
+                this.speed = speed;
+                this.damage = damage;
+            }
 
             move() {
                 if (isAnimating) return;
@@ -779,7 +665,7 @@ class SoundPool {
             levelCompleted = false;
             isAnimating = false;
 
-            // Alustetaan pelaaja
+            // Alusta pelaaja
             const playerSize = calculateSize(GAME_CONFIG.playerSize);
             player = new Player(
                 playerImage, 
@@ -790,7 +676,7 @@ class SoundPool {
             );
             updateEnergyBar();
 
-            // Alustetaan viholliset
+            // Alusta viholliset
             enemies = [];
             level.enemies.forEach(enemyConfig => {
                 for (let i = 0; i < enemyConfig.count; i++) {
@@ -810,8 +696,7 @@ class SoundPool {
                         enemyConfig.isFinalEnemy,
                         enemyConfig.fireCooldown,
                         enemyConfig.bulletSpeed,
-                        enemyConfig.bulletDamage,
-                        enemyConfig.collisionDamage
+                        enemyConfig.bulletDamage
                     );
                     enemy.type = enemyConfig.type;
                     enemy.image.src = enemyConfig.image;
@@ -880,57 +765,49 @@ class SoundPool {
                 return !hit;
             });
 
-    enemies = enemies.filter(enemy => {
-        if (enemy.isDestroyed) return false;
-        
-        enemy.follow(player);
-        enemy.fire(player);
-        enemy.draw();
-        
-        // Päivitetään törmäysjäähdytystä
-        if (enemy.collisionCooldown > 0) {
-            enemy.collisionCooldown--;
-        } else {
-            enemy.hasCollided = false;
-        }
-        
-        // Tarkistetaan törmäys vain jos ei ole juuri törmännyt
-        if (!enemy.hasCollided && checkEllipseCollision(player, enemy)) {
-            player.takeDamage(enemy.collisionDamage);
-            enemy.hasCollided = true;
-            enemy.collisionCooldown = 30; // 30 framen jäähdytysaika
-            // Jos vihollinen kuolee törmäyksessä
-            if (enemy.isSplitting) {
-                enemy.split();
-            } else {
-                enemy.takeDamage();
-            }
-        }
-        
-        return true;
-    });
+            enemies = enemies.filter(enemy => {
+                if (enemy.isDestroyed) return false;
+                
+                enemy.follow(player);
+                enemy.fire(player);
+                enemy.draw();
+                
+                if (enemy.collisionCooldown > 0) {
+                    enemy.collisionCooldown--;
+                } else {
+                    enemy.hasCollided = false;
+                }
+                
+                if (!enemy.hasCollided && checkEllipseCollision(player, enemy)) {
+                    player.takeDamage(enemy.getCollisionDamage());
+                    enemy.takeDamage(1);
+                    enemy.hasCollided = true;
+                    enemy.collisionCooldown = 30;
+                }
+                
+                return true;
+            });
 
-    enemyBullets = enemyBullets.filter(bullet => {
-        if (bullet.isDestroyed) return false;
-        
-        bullet.move();
-        bullet.draw();
-        
-        if (checkEllipseCollision(player, bullet)) {
-            player.takeDamage(bullet.damage || 1); // Varmista että damage on olemassa
-            bullet.isDestroyed = true; // Lisätty tämä rivi
-            return true;
-        }
-        
-        return true;
-    });
+            enemyBullets = enemyBullets.filter(bullet => {
+                if (bullet.isDestroyed) return false;
+                
+                bullet.move();
+                bullet.draw();
+                
+                if (checkEllipseCollision(player, bullet)) {
+                    player.takeDamage(bullet.damage);
+                    return true;
+                }
+                
+                return true;
+            });
 
             animationFrameId = requestAnimationFrame(update);
         }
 
         function showGameOver() {
             soundEffects.playerExplosion.play();
-            soundEffects.backgroundMusic.stop();
+            soundEffects.backgroundMusic.pause();
             document.getElementById('gameOver').style.display = 'block';
             gameRunning = false;
         }
@@ -945,7 +822,6 @@ class SoundPool {
             levelCompleted = true;
             document.getElementById('levelCompleted').style.display = 'block';
             gameRunning = false;
-            startEndAnimation();
         }
 
         function hideLevelCompleted() {
@@ -953,71 +829,8 @@ class SoundPool {
             gameRunning = true;
         }
 
-        function startEndAnimation() {
-            isAnimating = true;
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const moveSpeed = 5 * (window.innerWidth / 1920);
-            const scaleSpeed = 0.05;
-            let scale = 1;
-
-            function moveToCenter() {
-                const dx = centerX - (player.x + player.width / 2);
-                const dy = centerY - (player.y + player.height / 2);
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
-                if (distance > moveSpeed) {
-                    const angle = Math.atan2(dy, dx);
-                    player.x += moveSpeed * Math.cos(angle);
-                    player.y += moveSpeed * Math.sin(angle);
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    
-                    enemies.forEach(enemy => enemy.draw());
-                    bullets.forEach(bullet => bullet.draw());
-                    enemyBullets.forEach(bullet => bullet.draw());
-                    
-                    player.draw();
-                    animationFrameId = requestAnimationFrame(moveToCenter);
-                } else {
-                    player.x = centerX - player.width / 2;
-                    player.y = centerY - player.height / 2;
-                    animateScaling();
-                }
-            }
-
-            function animateScaling() {
-                if (scale < 10) {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    
-                    enemies.forEach(enemy => enemy.draw());
-                    bullets.forEach(bullet => bullet.draw());
-                    enemyBullets.forEach(bullet => bullet.draw());
-                    
-                    const newWidth = player.width * scale;
-                    const newHeight = player.height * scale;
-                    const newX = centerX - newWidth / 2;
-                    const newY = centerY - newHeight / 2;
-                    ctx.drawImage(player.image, newX, newY, newWidth, newHeight);
-                    scale += scaleSpeed;
-                    animationFrameId = requestAnimationFrame(animateScaling);
-                } else {
-                    isAnimating = false;
-                }
-            }
-
-            moveToCenter();
-        }
-
-        function cancelAnimation() {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            isAnimating = false;
-        }
-
         function restartGame() {
-            cancelAnimation();
+            cancelAnimationFrame(animationFrameId);
             initializeLevel(currentLevel);
             hideGameOver();
             hideLevelCompleted();
@@ -1026,7 +839,7 @@ class SoundPool {
         }
 
         function nextLevel() {
-            cancelAnimation();
+            cancelAnimationFrame(animationFrameId);
             
             const nextLevel = currentLevel + 1;
             if (nextLevel <= LEVELS.length) {
@@ -1045,21 +858,21 @@ class SoundPool {
         }
 
         function returnToMenu() {
-            cancelAnimation();
+            cancelAnimationFrame(animationFrameId);
             gameContainer.style.display = 'none';
             startScreen.style.display = 'block';
             hideLevelCompleted();
-            soundEffects.backgroundMusic.stop();
+            soundEffects.backgroundMusic.pause();
         }
 
         function startGame(levelId) {
-            cancelAnimation();
+            cancelAnimationFrame(animationFrameId);
             currentLevel = levelId;
             startScreen.style.display = 'none';
             gameContainer.style.display = 'block';
             resizeCanvas();
             initializeLevel(levelId);
-            backgroundMusic = soundEffects.backgroundMusic.play();
+            soundEffects.backgroundMusic.play();
             update();
         }
 
@@ -1073,23 +886,20 @@ class SoundPool {
             });
         }
 
-        // iOS äänien käyttöönottoa varten
-        function enableAudio() {
-            const dummyAudio = new Audio();
-            dummyAudio.volume = 0;
-            dummyAudio.play().then(() => {
-                dummyAudio.pause();
-                dummyAudio.currentTime = 0;
-            });
-        }
-
-        // Alustetaan peli kun sivu on ladattu
+        // Alustus
         window.addEventListener('load', () => {
             initializeLevelButtons();
-            enableAudio();
             resizeCanvas();
             
-            document.body.addEventListener('click', enableAudio, { once: true });
+            // iOS äänien käyttöönotto
+            document.body.addEventListener('click', () => {
+                const dummyAudio = new Audio();
+                dummyAudio.volume = 0;
+                dummyAudio.play().then(() => {
+                    dummyAudio.pause();
+                    dummyAudio.currentTime = 0;
+                });
+            }, { once: true });
         });
 
         window.addEventListener('keydown', (e) => {
