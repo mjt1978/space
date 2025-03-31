@@ -614,11 +614,10 @@ class SoundPool {
         this.fireCounter = 0;
         this.isSplitting = isSplitting;
         this.isFinalEnemy = isFinalEnemy;
-        this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2)); // Rajataan 1-2
-        // Varmistetaan että törmäysvaurio on järkevä (1-3 normaalisti, bossi 4)
+        this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2));
         this.collisionDamage = Math.max(1, Math.min(collisionDamage, 4));
-        this.hasCollided = false; // Estetään moninkertainen vahingoittaminen
-        this.collisionCooldown = 0; // Jäähdytysaika törmäyksille
+        this.hasCollided = false;
+        this.collisionCooldown = 0;
     }
             follow(player) {
                 if (isAnimating) return;
@@ -636,26 +635,30 @@ class SoundPool {
                 this.y += this.speed * Math.sin(angle);
             }
 
-            takeDamage() {
-                if (this.exploding) return;
-                this.health -= 1;
-                if (this.health <= 0) {
-                    if (this.isSplitting) {
-                        soundEffects.ufoSplit.play();
-                        this.split();
-                    } else if (this.isFinalEnemy) {
-                        soundEffects.enemyExplosion.play();
-                        this.exploding = true;
-                        showLevelCompleted();
-                    } else {
-                        soundEffects.enemyExplosion.play();
-                        this.exploding = true;
-                        destroyedUFOs += 1;
-                        ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
-                        checkLevelCompletion();
-                    }
-                }
-            }
+    takeDamage() {
+        if (this.exploding) return;
+        this.health -= 1;
+        if (this.health <= 0) {
+            this.destroyEnemy();
+        }
+    }
+
+    destroyEnemy() {
+        if (this.isSplitting) {
+            soundEffects.ufoSplit.play();
+            this.split();
+        } else if (this.isFinalEnemy) {
+            soundEffects.enemyExplosion.play();
+            this.exploding = true;
+            showLevelCompleted();
+        } else {
+            soundEffects.enemyExplosion.play();
+            this.exploding = true;
+            destroyedUFOs += 1;
+            ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+            checkLevelCompletion();
+        }
+    }
 
             split() {
                 this.isDestroyed = true;
@@ -880,35 +883,38 @@ class SoundPool {
                 return !hit;
             });
 
-    enemies = enemies.filter(enemy => {
-        if (enemy.isDestroyed) return false;
+enemies = enemies.filter(enemy => {
+    if (enemy.isDestroyed) return false;
+    
+    enemy.follow(player);
+    enemy.fire(player);
+    enemy.draw();
+    
+    // Päivitetään törmäysjäähdytystä
+    if (enemy.collisionCooldown > 0) {
+        enemy.collisionCooldown--;
+    } else {
+        enemy.hasCollided = false;
+    }
+    
+    // Tarkistetaan törmäys vain jos ei ole juuri törmännyt
+    if (!enemy.hasCollided && checkEllipseCollision(player, enemy)) {
+        player.takeDamage(enemy.collisionDamage);
+        enemy.hasCollided = true;
+        enemy.collisionCooldown = 30; // 30 framen jäähdytysaika
         
-        enemy.follow(player);
-        enemy.fire(player);
-        enemy.draw();
-        
-        // Päivitetään törmäysjäähdytystä
-        if (enemy.collisionCooldown > 0) {
-            enemy.collisionCooldown--;
-        } else {
-            enemy.hasCollided = false;
-        }
-        
-        // Tarkistetaan törmäys vain jos ei ole juuri törmännyt
-        if (!enemy.hasCollided && checkEllipseCollision(player, enemy)) {
-            player.takeDamage(enemy.collisionDamage);
-            enemy.hasCollided = true;
-            enemy.collisionCooldown = 30; // 30 framen jäähdytysaika
-            // Jos vihollinen kuolee törmäyksessä
+        // Jos vihollinen kuolee törmäyksessä
+        if (enemy.health <= 1) {
             if (enemy.isSplitting) {
                 enemy.split();
             } else {
                 enemy.takeDamage();
             }
         }
-        
-        return true;
-    });
+    }
+    
+    return true;
+});
 
     enemyBullets = enemyBullets.filter(bullet => {
         if (bullet.isDestroyed) return false;
