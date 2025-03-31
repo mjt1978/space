@@ -20,24 +20,27 @@
         #startScreen {
             text-align: center;
             color: white;
+            width: 100%;
+            max-width: 800px;
         }
 
         #startScreen h1 {
-            font-size: 64px;
-            margin-bottom: 40px;
+            font-size: 5vw;
+            margin-bottom: 4vh;
             text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
         }
 
         #startScreen button {
-            font-size: 24px;
-            padding: 10px 20px;
-            margin: 10px;
+            font-size: 2vw;
+            padding: 1vh 2vw;
+            margin: 1vh;
             cursor: pointer;
             background-color: rgba(0, 0, 0, 0.7);
             color: white;
             border: 2px solid white;
             border-radius: 5px;
             transition: all 0.3s;
+            min-width: 200px;
         }
 
         #startScreen button:hover {
@@ -48,12 +51,16 @@
         #gameContainer {
             display: none;
             position: relative;
+            width: 100%;
+            height: 100%;
         }
 
         canvas {
             display: block;
             border: 2px solid white;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            width: 100%;
+            height: 100%;
         }
 
         #gameOver,
@@ -65,24 +72,26 @@
             display: none;
             text-align: center;
             background-color: rgba(0, 0, 0, 0.8);
-            padding: 30px;
+            padding: 3vh 3vw;
             border-radius: 10px;
             border: 2px solid white;
+            width: 80%;
+            max-width: 500px;
         }
 
         #gameOver h1,
         #levelCompleted h1 {
-            font-size: 48px;
+            font-size: 4vw;
             color: red;
-            margin: 0 0 20px 0;
+            margin: 0 0 2vh 0;
             text-shadow: 0 0 5px white;
         }
 
         #gameOver button,
         #levelCompleted button {
-            font-size: 24px;
-            padding: 10px 20px;
-            margin-top: 20px;
+            font-size: 2vw;
+            padding: 1vh 2vw;
+            margin-top: 2vh;
             cursor: pointer;
             background-color: rgba(255, 255, 255, 0.8);
             border: none;
@@ -97,24 +106,50 @@
 
         #ufoCounter {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 24px;
+            top: 1vh;
+            left: 1vw;
+            font-size: 2vw;
             color: white;
             background-color: rgba(0, 0, 0, 0.5);
-            padding: 5px 10px;
+            padding: 0.5vh 1vw;
             border-radius: 5px;
         }
 
         #levelInfo {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 24px;
+            top: 1vh;
+            right: 1vw;
+            font-size: 2vw;
             color: white;
             background-color: rgba(0, 0, 0, 0.5);
-            padding: 5px 10px;
+            padding: 0.5vh 1vw;
             border-radius: 5px;
+        }
+
+        @media (max-width: 768px) {
+            #startScreen h1 {
+                font-size: 8vw;
+            }
+            
+            #startScreen button {
+                font-size: 4vw;
+                padding: 1.5vh 3vw;
+            }
+            
+            #gameOver h1,
+            #levelCompleted h1 {
+                font-size: 6vw;
+            }
+            
+            #gameOver button,
+            #levelCompleted button {
+                font-size: 4vw;
+            }
+            
+            #ufoCounter,
+            #levelInfo {
+                font-size: 4vw;
+            }
         }
     </style>
 </head>
@@ -323,8 +358,51 @@
         const ufoCounter = document.getElementById('ufoCounter');
         const levelInfo = document.getElementById('levelInfo');
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        // Asetetaan canvasin koko
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Päivitetään pelin elementtien koot jos peli on käynnissä
+            if (player) {
+                const playerSize = calculateSize(GAME_CONFIG.playerSize);
+                player.width = playerSize.width;
+                player.height = playerSize.height;
+                
+                // Päivitetään vihollisten koot
+                enemies.forEach(enemy => {
+                    const enemyType = enemy.type || 'medium';
+                    const size = calculateSize(GAME_CONFIG.enemySizes[enemyType]);
+                    enemy.width = size.width;
+                    enemy.height = size.height;
+                });
+                
+                // Päivitetään ammusten koot
+                bullets.forEach(bullet => {
+                    bullet.width = calculateSize({width: 20, height: 10}).width;
+                    bullet.height = calculateSize({width: 20, height: 10}).height;
+                });
+                
+                enemyBullets.forEach(bullet => {
+                    bullet.width = calculateSize({width: 15, height: 15}).width;
+                    bullet.height = calculateSize({width: 15, height: 15}).height;
+                });
+            }
+        }
+
+        // Laskee objektin koon nykyiseen ikkunan kokoon suhteutettuna
+        function calculateSize(baseSize) {
+            const baseWidth = 1920; // Referenssileveys
+            const baseHeight = 1080; // Referenssikorkeus
+            
+            // Käytetään pienempää skaalauskerrointa jotta objektit eivät kasva liian suuriksi
+            const scale = Math.min(window.innerWidth / baseWidth, window.innerHeight / baseHeight) * 0.8;
+            
+            return {
+                width: baseSize.width * scale,
+                height: baseSize.height * scale
+            };
+        }
 
         // Ladataan kuvat
         const playerImage = new Image();
@@ -395,7 +473,7 @@
         class Player extends GameObject {
             constructor(image, x, y, width, height) {
                 super(image, x, y, width, height);
-                this.speed = GAME_CONFIG.playerSpeed;
+                this.speed = GAME_CONFIG.playerSpeed * (window.innerWidth / 1920); // Skaalataan nopeus ruudun koon mukaan
                 this.canShoot = true;
             }
 
@@ -410,13 +488,14 @@
 
             shoot() {
                 if (this.canShoot && !isAnimating) {
+                    const bulletSize = calculateSize({width: 20, height: 10});
                     bullets.push(new Bullet(
                         bulletImage, 
                         this.x + this.width, 
-                        this.y + this.height / 2 - 5, 
-                        20, 
-                        10,
-                        GAME_CONFIG.bulletSpeed
+                        this.y + this.height / 2 - bulletSize.height / 2, 
+                        bulletSize.width, 
+                        bulletSize.height,
+                        GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920) // Skaalataan nopeus
                     ));
                     soundEffects.playerShoot.play();
                     this.canShoot = false;
@@ -428,9 +507,9 @@
             constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed) {
                 super(image, x, y, width, height);
                 this.health = health;
-                this.speed = speed;
+                this.speed = speed * (window.innerWidth / 1920); // Skaalataan nopeus
                 this.fireCooldown = fireCooldown;
-                this.bulletSpeed = bulletSpeed;
+                this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920); // Skaalataan nopeus
                 this.fireCounter = 0;
                 this.isSplitting = isSplitting;
                 this.isFinalEnemy = isFinalEnemy;
@@ -479,13 +558,13 @@
                 
                 let newSize;
                 if (originalType === 'xlarge') {
-                    newSize = GAME_CONFIG.enemySizes.large;
+                    newSize = calculateSize(GAME_CONFIG.enemySizes.large);
                 } else if (originalType === 'large') {
-                    newSize = GAME_CONFIG.enemySizes.medium;
+                    newSize = calculateSize(GAME_CONFIG.enemySizes.medium);
                 } else if (originalType === 'medium') {
-                    newSize = GAME_CONFIG.enemySizes.small;
+                    newSize = calculateSize(GAME_CONFIG.enemySizes.small);
                 } else {
-                    newSize = GAME_CONFIG.enemySizes.small;
+                    newSize = calculateSize(GAME_CONFIG.enemySizes.small);
                 }
                 
                 const topUfoY = this.y - newSize.height / 2;
@@ -498,7 +577,7 @@
                     newSize.width, 
                     newSize.height, 
                     Math.max(1, Math.floor(this.health / 2)),
-                    this.speed + 1,
+                    this.speed + (1 * (window.innerWidth / 1920)), // Skaalataan nopeus
                     false,
                     false,
                     this.fireCooldown,
@@ -512,7 +591,7 @@
                     newSize.width, 
                     newSize.height, 
                     Math.max(1, Math.floor(this.health / 2)),
-                    this.speed + 1,
+                    this.speed + (1 * (window.innerWidth / 1920)), // Skaalataan nopeus
                     false,
                     false,
                     this.fireCooldown,
@@ -522,6 +601,7 @@
 
             fire(player) {
                 if (this.fireCounter <= 0 && !isAnimating) {
+                    const bulletSize = calculateSize({width: 15, height: 15});
                     const bulletX = this.x + this.width / 2;
                     const bulletY = this.y + this.height / 2;
                     const angle = Math.atan2(player.y + player.height/2 - bulletY, player.x + player.width/2 - bulletX);
@@ -530,8 +610,8 @@
                         enemyBulletImage, 
                         bulletX, 
                         bulletY, 
-                        15, 
-                        15, 
+                        bulletSize.width, 
+                        bulletSize.height, 
                         angle, 
                         this.bulletSpeed
                     ));
@@ -588,7 +668,7 @@
             isAnimating = false;
 
             // Alustetaan pelaaja
-            const playerSize = GAME_CONFIG.playerSize;
+            const playerSize = calculateSize(GAME_CONFIG.playerSize);
             player = new Player(
                 playerImage, 
                 50, 
@@ -601,7 +681,7 @@
             enemies = [];
             level.enemies.forEach(enemyConfig => {
                 for (let i = 0; i < enemyConfig.count; i++) {
-                    const size = GAME_CONFIG.enemySizes[enemyConfig.type];
+                    const size = calculateSize(GAME_CONFIG.enemySizes[enemyConfig.type]);
                     const x = canvas.width - size.width - 50 - (i * 50);
                     const y = Math.random() * (canvas.height - size.height);
                     
@@ -749,7 +829,7 @@
             isAnimating = true;
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            const moveSpeed = 5;
+            const moveSpeed = 5 * (window.innerWidth / 1920); // Skaalataan nopeus
             const scaleSpeed = 0.05;
             let scale = 1;
 
@@ -847,6 +927,7 @@
             currentLevel = levelId;
             startScreen.style.display = 'none';
             gameContainer.style.display = 'block';
+            resizeCanvas();
             initializeLevel(levelId);
             backgroundMusic = soundEffects.backgroundMusic.play();
             update();
@@ -877,6 +958,7 @@
         window.addEventListener('load', () => {
             initializeLevelButtons();
             enableAudio();
+            resizeCanvas();
             
             // Lisätään mahdollisuus äänien käyttöönottoon klikkaamalla
             document.body.addEventListener('click', enableAudio, { once: true });
@@ -897,8 +979,7 @@
         });
 
         window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            resizeCanvas();
         });
     </script>
 </body>
