@@ -706,30 +706,30 @@ class SoundPool {
                 ));
             }
 
-            fire(player) {
-                if (this.fireCounter <= 0 && !isAnimating) {
-                    const bulletSize = calculateSize({width: 15, height: 15});
-                    const bulletX = this.x + this.width / 2;
-                    const bulletY = this.y + this.height / 2;
-                    const angle = Math.atan2(player.y + player.height/2 - bulletY, player.x + player.width/2 - bulletX);
+    fire(player) {
+        if (this.fireCounter <= 0 && !isAnimating) {
+            const bulletSize = calculateSize({width: 15, height: 15});
+            const bulletX = this.x + this.width / 2;
+            const bulletY = this.y + this.height / 2;
+            const angle = Math.atan2(player.y + player.height/2 - bulletY, player.x + player.width/2 - bulletX);
 
-                    enemyBullets.push(new EnemyBullet(
-                        enemyBulletImage, 
-                        bulletX, 
-                        bulletY, 
-                        bulletSize.width, 
-                        bulletSize.height, 
-                        angle, 
-                        this.bulletSpeed,
-                        this.bulletDamage
-                    ));
-                    soundEffects.enemyShoot.play();
-                    this.fireCounter = this.fireCooldown;
-                } else {
-                    this.fireCounter--;
-                }
-            }
+            enemyBullets.push(new EnemyBullet(
+                enemyBulletImage, 
+                bulletX, 
+                bulletY, 
+                bulletSize.width, 
+                bulletSize.height, 
+                angle, 
+                this.bulletSpeed,
+                this.bulletDamage // Varmista että tämä on 1 tai 2
+            ));
+            soundEffects.enemyShoot.play();
+            this.fireCounter = this.fireCooldown;
+        } else {
+            this.fireCounter--;
         }
+    }
+}
 
         class Bullet extends GameObject {
             constructor(image, x, y, width, height, speed) {
@@ -894,19 +894,20 @@ class SoundPool {
                 return true;
             });
 
-            enemyBullets = enemyBullets.filter(bullet => {
-                if (bullet.isDestroyed) return false;
-                
-                bullet.move();
-                bullet.draw();
-                
-                if (checkEllipseCollision(player, bullet)) {
-                    player.takeDamage(bullet.damage);
-                    return true;
-                }
-                
-                return true;
-            });
+    enemyBullets = enemyBullets.filter(bullet => {
+        if (bullet.isDestroyed) return false;
+        
+        bullet.move();
+        bullet.draw();
+        
+        if (checkEllipseCollision(player, bullet)) {
+            player.takeDamage(bullet.damage || 1); // Varmista että damage on olemassa
+            bullet.isDestroyed = true; // Lisätty tämä rivi
+            return true;
+        }
+        
+        return true;
+    });
 
             animationFrameId = requestAnimationFrame(update);
         }
