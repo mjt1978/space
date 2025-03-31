@@ -605,19 +605,19 @@ class SoundPool {
         }
 
         class Enemy extends GameObject {
-            constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
-                super(image, x, y, width, height);
-                this.health = health;
-                this.speed = speed * (window.innerWidth / 1920);
-                this.fireCooldown = fireCooldown;
-                this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920);
-                this.fireCounter = 0;
-                this.isSplitting = isSplitting;
-                this.isFinalEnemy = isFinalEnemy;
-                this.bulletDamage = bulletDamage;
-                this.collisionDamage = collisionDamage;
-            }
-
+        constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
+        super(image, x, y, width, height);
+        this.health = health;
+        this.speed = speed * (window.innerWidth / 1920);
+        this.fireCooldown = fireCooldown;
+        this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920);
+        this.fireCounter = 0;
+        this.isSplitting = isSplitting;
+        this.isFinalEnemy = isFinalEnemy;
+        // Varmistetaan että bulletDamage on järkevä (1-2 normaalisti)
+        this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2));
+        this.collisionDamage = collisionDamage;
+    }
             follow(player) {
                 if (isAnimating) return;
                 
@@ -747,12 +747,13 @@ class SoundPool {
         }
 
         class EnemyBullet extends GameObject {
-            constructor(image, x, y, width, height, angle, speed, damage) {
-                super(image, x, y, width, height);
-                this.angle = angle;
-                this.speed = speed;
-                this.damage = damage;
-            }
+        constructor(image, x, y, width, height, angle, speed, damage) {
+        super(image, x, y, width, height);
+        this.angle = angle;
+        this.speed = speed;
+        // Varmistetaan että vahinko on korkeintaan 2
+        this.damage = Math.min(damage, 2);
+    }
 
             move() {
                 if (isAnimating) return;
