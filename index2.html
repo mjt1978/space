@@ -175,54 +175,54 @@
         </div>
     </div>
     <script>
-        // Sound Pool -luokka äänien hallintaan
-        class SoundPool {
-            constructor(src, poolSize = 5, volume = 0.3, loop = false) {
-                this.pool = [];
-                this.src = src;
-                this.poolSize = poolSize;
-                this.volume = volume;
-                this.loop = loop;
-                this.initializePool();
-            }
+    // Sound Pool -luokka äänien hallintaan
+    class SoundPool {
+        constructor(src, poolSize = 20, volume = 0.3, loop = false) {  // Muutettu poolSize 20:ksi
+            this.pool = [];
+            this.src = src;
+            this.poolSize = poolSize;
+            this.volume = volume;
+            this.loop = loop;
+            this.initializePool();
+        }
 
-            initializePool() {
-                for (let i = 0; i < this.poolSize; i++) {
-                    const audio = new Audio(this.src);
-                    audio.volume = this.volume;
-                    audio.loop = this.loop;
-                    audio.load();
-                    this.pool.push(audio);
-                }
-            }
-
-            play() {
-                const availableSound = this.pool.find(sound => sound.paused || sound.ended);
-                if (availableSound) {
-                    availableSound.currentTime = 0;
-                    availableSound.play().catch(e => console.log("Audio play blocked:", e));
-                    return availableSound;
-                }
-                return null;
-            }
-
-            stop() {
-                this.pool.forEach(sound => {
-                    sound.pause();
-                    sound.currentTime = 0;
-                });
+        initializePool() {
+            for (let i = 0; i < this.poolSize; i++) {
+                const audio = new Audio(this.src);
+                audio.volume = this.volume;
+                audio.loop = this.loop;
+                audio.load();
+                this.pool.push(audio);
             }
         }
 
+        play() {
+            const availableSound = this.pool.find(sound => sound.paused || sound.ended);
+            if (availableSound) {
+                availableSound.currentTime = 0;
+                availableSound.play().catch(e => console.log("Audio play blocked:", e));
+                return availableSound;
+            }
+            return null;
+        }
+
+        stop() {
+            this.pool.forEach(sound => {
+                sound.pause();
+                sound.currentTime = 0;
+            });
+        }
+    }
+
         // Ääniefektit
-        const soundEffects = {
-            playerShoot: new SoundPool('blast_ship.mp3', 5, 0.3),
-            enemyShoot: new SoundPool('blast_ufo.mp3', 5, 0.3),
-            playerExplosion: new SoundPool('explosion_ship.mp3', 3, 0.4),
-            enemyExplosion: new SoundPool('explosion_ufo.mp3', 5, 0.3),
-            ufoSplit: new SoundPool('split.mp3', 5, 0.9),
-            backgroundMusic: new SoundPool('music.mp3', 1, 0.2, true)
-        };
+    const soundEffects = {
+        playerShoot: new SoundPool('blast_ship.mp3', 20, 0.3),
+        enemyShoot: new SoundPool('blast_ufo.mp3', 20, 0.3),
+        playerExplosion: new SoundPool('explosion_ship.mp3', 20, 0.4),
+        enemyExplosion: new SoundPool('explosion_ufo.mp3', 20, 0.3),
+        ufoSplit: new SoundPool('split.mp3', 20, 0.9),
+        backgroundMusic: new SoundPool('music.mp3', 1, 0.2, true)
+    };
 
         // Pelin globaalit asetukset
         const GAME_CONFIG = {
