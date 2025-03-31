@@ -222,43 +222,55 @@
     </div>
     <script>
         // Sound Pool -luokka äänien hallintaan
-        class SoundPool {
-            constructor(src, poolSize = 20, volume = 0.3, loop = false) {
-                this.pool = [];
-                this.src = src;
-                this.poolSize = poolSize;
-                this.volume = volume;
-                this.loop = loop;
-                this.initializePool();
-            }
+class SoundPool {
+    constructor(src, poolSize = 20, volume = 0.3, loop = false) {
+        this.pool = [];
+        this.src = src;
+        this.poolSize = poolSize;
+        this.volume = volume;
+        this.loop = loop;
+        this.initialized = false;
+    }
 
-            initializePool() {
-                for (let i = 0; i < this.poolSize; i++) {
-                    const audio = new Audio(this.src);
-                    audio.volume = this.volume;
-                    audio.loop = this.loop;
-                    audio.load();
-                    this.pool.push(audio);
-                }
-            }
+    async initialize() {
+        if (this.initialized) return;
+        
+        for (let i = 0; i < this.poolSize; i++) {
+            const audio = new Audio(this.src);
+            audio.volume = this.volume;
+            audio.loop = this.loop;
+            audio.load();
+            this.pool.push(audio);
+        }
+        this.initialized = true;
+    }
 
-            play() {
-                const availableSound = this.pool.find(sound => sound.paused || sound.ended);
-                if (availableSound) {
-                    availableSound.currentTime = 0;
-                    availableSound.play().catch(e => console.log("Audio play blocked:", e));
-                    return availableSound;
-                }
+    async play() {
+        if (!this.initialized) {
+            await this.initialize();
+        }
+
+        const availableSound = this.pool.find(sound => sound.paused || sound.ended);
+        if (availableSound) {
+            try {
+                availableSound.currentTime = 0;
+                await availableSound.play();
+                return availableSound;
+            } catch (e) {
+                console.log("Audio play error:", e);
                 return null;
             }
-
-            stop() {
-                this.pool.forEach(sound => {
-                    sound.pause();
-                    sound.currentTime = 0;
-                });
-            }
         }
+        return null;
+    }
+
+    stop() {
+        this.pool.forEach(sound => {
+            sound.pause();
+            sound.currentTime = 0;
+        });
+    }
+}
 
         // Ääniefektit
         const soundEffects = {
