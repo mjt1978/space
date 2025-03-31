@@ -605,7 +605,7 @@ class SoundPool {
         }
 
         class Enemy extends GameObject {
-        constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
+    constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
         super(image, x, y, width, height);
         this.health = health;
         this.speed = speed * (window.innerWidth / 1920);
@@ -614,9 +614,11 @@ class SoundPool {
         this.fireCounter = 0;
         this.isSplitting = isSplitting;
         this.isFinalEnemy = isFinalEnemy;
-        // Varmistetaan että bulletDamage on järkevä (1-2 normaalisti)
-        this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2));
-        this.collisionDamage = collisionDamage;
+        this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2)); // Rajataan 1-2
+        // Varmistetaan että törmäysvaurio on järkevä (1-3 normaalisti, bossi 4)
+        this.collisionDamage = Math.max(1, Math.min(collisionDamage, 4));
+        this.hasCollided = false; // Estetään moninkertainen vahingoittaminen
+        this.collisionCooldown = 0; // Jäähdytysaika törmäyksille
     }
             follow(player) {
                 if (isAnimating) return;
@@ -878,21 +880,35 @@ class SoundPool {
                 return !hit;
             });
 
-            enemies = enemies.filter(enemy => {
-                if (enemy.isDestroyed) return false;
-                
-                enemy.follow(player);
-                enemy.fire(player);
-                enemy.draw();
-                
-                if (checkEllipseCollision(player, enemy)) {
-                    player.takeDamage(enemy.collisionDamage);
-                    enemy.takeDamage();
-                    return true;
-                }
-                
-                return true;
-            });
+    enemies = enemies.filter(enemy => {
+        if (enemy.isDestroyed) return false;
+        
+        enemy.follow(player);
+        enemy.fire(player);
+        enemy.draw();
+        
+        // Päivitetään törmäysjäähdytystä
+        if (enemy.collisionCooldown > 0) {
+            enemy.collisionCooldown--;
+        } else {
+            enemy.hasCollided = false;
+        }
+        
+        // Tarkistetaan törmäys vain jos ei ole juuri törmännyt
+        if (!enemy.hasCollided && checkEllipseCollision(player, enemy)) {
+            player.takeDamage(enemy.collisionDamage);
+            enemy.hasCollided = true;
+            enemy.collisionCooldown = 30; // 30 framen jäähdytysaika
+            // Jos vihollinen kuolee törmäyksessä
+            if (enemy.isSplitting) {
+                enemy.split();
+            } else {
+                enemy.takeDamage();
+            }
+        }
+        
+        return true;
+    });
 
     enemyBullets = enemyBullets.filter(bullet => {
         if (bullet.isDestroyed) return false;
