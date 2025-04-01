@@ -605,84 +605,100 @@
         }
 
         class Enemy extends GameObject {
-            constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
-                super(image, x, y, width, height);
-                this.health = health;
-                this.baseSpeed = speed * (window.innerWidth / 1920); // Alkuperäinen nopeus
-                this.speed = this.baseSpeed; // Nykyinen nopeus
-                this.fireCooldown = fireCooldown;
-                this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920);
-                this.fireCounter = 0;
-                this.isSplitting = isSplitting;
-                this.isFinalEnemy = isFinalEnemy;
-                this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2));
-                this.collisionDamage = Math.max(1, Math.min(collisionDamage, 4));
-                this.collisionCooldown = 0;
+    constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
+        super(image, x, y, width, height);
+        this.health = health;
+        this.baseSpeed = speed * (window.innerWidth / 1920);
+        this.speed = this.baseSpeed;
+        this.fireCooldown = fireCooldown;
+        this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920);
+        this.fireCounter = 0;
+        this.isSplitting = isSplitting;
+        this.isFinalEnemy = isFinalEnemy;
+        this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2));
+        this.collisionDamage = Math.max(1, Math.min(collisionDamage, 4));
+        this.collisionCooldown = 0;
+        this.repulsionForce = 0;
+        this.repulsionAngle = 0;
+        this.isRepelling = false; // Uusi tila kimpoamiselle
+    }
+
+    follow(player) {
+        if (isAnimating) return;
+        
+        // Jos kimpoamisvoima on aktiivinen
+        if (this.isRepelling) {
+            this.x += this.repulsionForce * Math.cos(this.repulsionAngle);
+            this.y += this.repulsionForce * Math.sin(this.repulsionAngle);
+            this.repulsionForce *= 0.85;
+            
+            // Rajaa vihollinen kentän sisälle
+            this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+            this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+            
+            // Kun kimpoamisvoima on tarpeeksi pieni, lopeta kimpoaminen
+            if (this.repulsionForce < 1) {
+                this.isRepelling = false;
                 this.repulsionForce = 0;
-                this.repulsionAngle = 0;
             }
+            return;
+        }
+        
+        // Normaali seurausliike
+        const playerCenterX = player.x + player.width / 2;
+        const playerCenterY = player.y + player.height / 2;
+        const enemyCenterX = this.x + this.width / 2;
+        const enemyCenterY = this.y + this.height / 2;
 
-            follow(player) {
-                if (isAnimating) return;
-                
-                // Jos kimpoamisvoima on aktiivinen, käytä sitä
-                if (this.repulsionForce > 0.5) {
-                    this.x += this.repulsionForce * Math.cos(this.repulsionAngle);
-                    this.y += this.repulsionForce * Math.sin(this.repulsionAngle);
-                    this.repulsionForce *= 0.85; // Vähennä kimpoamisvoimaa
-                    
-                    // Rajaa vihollinen kentän sisälle
-                    this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-                    this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
-                    return;
-                } else {
-                    this.repulsionForce = 0; // Nollaa kimpoamisvoima kun se on tarpeeksi pieni
-                }
-                
-                const playerCenterX = player.x + player.width / 2;
-                const playerCenterY = player.y + player.height / 2;
-                const enemyCenterX = this.x + this.width / 2;
-                const enemyCenterY = this.y + this.height / 2;
+        const deltaX = playerCenterX - enemyCenterX;
+        const deltaY = playerCenterY - enemyCenterY;
+        const angle = Math.atan2(deltaY, deltaX);
 
-                const deltaX = playerCenterX - enemyCenterX;
-                const deltaY = playerCenterY - enemyCenterY;
-                const angle = Math.atan2(deltaY, deltaX);
+        this.speed = this.baseSpeed;
+        this.x += this.speed * Math.cos(angle);
+        this.y += this.speed * Math.sin(angle);
+    }
 
-                // Palauta nopeus alkuperäiseksi
-                this.speed = this.baseSpeed;
-                
-                this.x += this.speed * Math.cos(angle);
-                this.y += this.speed * Math.sin(angle);
+    handleCollision(player) {
+        // Jos törmäysjäähdytys on käynnissä, ei tehdä mitään
+        if (this.collisionCooldown > 0) {
+            this.collisionCooldown--;
+            return;
+        }
+
+        // Laske törmäyssuunta
+        const dx = (this.x + this.width/2) - (player.x + player.width/2);
+        const dy = (this.y + this.height/2) - (player.y + player.height/2);
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Normalisoi suuntavektori
+        const nx = dx / distance;
+        const ny = dy / distance;
+
+        // Aseta kimpoamisvoima ja suunta
+        this.repulsionForce = this.baseSpeed * 4; // Voimakas kimpoaminen
+        this.repulsionAngle = Math.atan2(ny, nx);
+        this.isRepelling = true; // Aktivoi kimpoaminen
+
+        // Siirrä UFOa hieman kauemmaksi välttääkseen välitön uusi törmäys
+        this.x += nx * 5;
+        this.y += ny * 5;
+
+        // Vahingoita pelaajaa
+        player.takeDamage(this.collisionDamage);
+        
+        // Aseta riittävä jäähdytysaika (40 framea)
+        this.collisionCooldown = 40;
+
+        // Jos vihollinen kuolee törmäyksessä
+        if (this.health <= 1) {
+            if (this.isSplitting) {
+                this.split();
+            } else {
+                this.takeDamage();
             }
-
-            handleCollision(player) {
-                if (this.collisionCooldown > 0) {
-                    this.collisionCooldown--;
-                    return;
-                }
-
-                // Laske törmäyssuunta
-                const dx = (this.x + this.width/2) - (player.x + player.width/2);
-                const dy = (this.y + this.height/2) - (player.y + player.height/2);
-                const angle = Math.atan2(dy, dx);
-
-                // Aseta kimpoamisvoima ja suunta
-                this.repulsionForce = this.baseSpeed * 3.5; // Voimakas kimpoaminen
-                this.repulsionAngle = angle;
-
-                // Vahingoita pelaajaa
-                player.takeDamage(this.collisionDamage);
-                this.collisionCooldown = 15; // Lyhyt jäähdytysaika
-
-                // Jos vihollinen kuolee törmäyksessä
-                if (this.health <= 1) {
-                    if (this.isSplitting) {
-                        this.split();
-                    } else {
-                        this.takeDamage();
-                    }
-                }
-            }
+        }
+    }
 
             takeDamage() {
                 if (this.exploding) return;
