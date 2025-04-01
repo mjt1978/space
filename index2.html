@@ -661,7 +661,7 @@
 
     handleCollision(player) {
         // Jos törmäysjäähdytys on käynnissä, ei tehdä mitään
-        if (this.collisionCooldown < 0) {
+        if (this.collisionCooldown > 0) {
             this.collisionCooldown--;
             return;
         }
@@ -688,7 +688,7 @@
         player.takeDamage(this.collisionDamage);
         
         // Aseta riittävä jäähdytysaika (40 framea)
-        this.collisionCooldown = 40;
+        this.collisionCooldown = 4;
 
         // Jos vihollinen kuolee törmäyksessä
         if (this.health <= 1) {
