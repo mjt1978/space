@@ -676,7 +676,7 @@ handleCollision(player) {
     const ny = dy / distance;
 
     // Aseta kimpoamisvoima ja suunta pelaajalle
-    const playerRepelForce = this.baseSpeed * 3;
+    const playerRepelForce = this.baseSpeed * 4;
     player.x -= nx * playerRepelForce;
     player.y -= ny * playerRepelForce;
     
