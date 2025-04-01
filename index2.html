@@ -277,8 +277,9 @@
             playerShoot: new SoundPool('blast_ship.mp3', 20, 0.3),
             enemyShoot: new SoundPool('blast_ufo.mp3', 20, 0.3),
             playerExplosion: new SoundPool('explosion_ship.mp3', 20, 0.4),
-            enemyExplosion: new SoundPool('explosion_ufo.mp3', 20, 0.3),
+            enemyExplosion: new SoundPool('explosion_ufo.mp3', 20, 0.5),
             ufoSplit: new SoundPool('split.mp3', 20, 0.9),
+            collision: new SoundPool('collision.mp3', 20, 0.5),
             backgroundMusic: new SoundPool('music.mp3', 1, 0.3, true)
         };
 
@@ -689,6 +690,9 @@
                 if (this.collisionCooldown > 0 || player.collisionCooldown > 0) {
                     return;
                 }
+
+                // Soita törmäysääni
+                soundEffects.collision.play();
 
                 // Laske törmäyssuunta
                 const dx = (this.x + this.width/2) - (player.x + player.width/2);
