@@ -222,55 +222,55 @@
     </div>
     <script>
         // Sound Pool -luokka äänien hallintaan
-class SoundPool {
-    constructor(src, poolSize = 20, volume = 0.3, loop = false) {
-        this.pool = [];
-        this.src = src;
-        this.poolSize = poolSize;
-        this.volume = volume;
-        this.loop = loop;
-        this.initialized = false;
-    }
+        class SoundPool {
+            constructor(src, poolSize = 20, volume = 0.3, loop = false) {
+                this.pool = [];
+                this.src = src;
+                this.poolSize = poolSize;
+                this.volume = volume;
+                this.loop = loop;
+                this.initialized = false;
+            }
 
-    async initialize() {
-        if (this.initialized) return;
-        
-        for (let i = 0; i < this.poolSize; i++) {
-            const audio = new Audio(this.src);
-            audio.volume = this.volume;
-            audio.loop = this.loop;
-            audio.load();
-            this.pool.push(audio);
-        }
-        this.initialized = true;
-    }
+            async initialize() {
+                if (this.initialized) return;
+                
+                for (let i = 0; i < this.poolSize; i++) {
+                    const audio = new Audio(this.src);
+                    audio.volume = this.volume;
+                    audio.loop = this.loop;
+                    audio.load();
+                    this.pool.push(audio);
+                }
+                this.initialized = true;
+            }
 
-    async play() {
-        if (!this.initialized) {
-            await this.initialize();
-        }
+            async play() {
+                if (!this.initialized) {
+                    await this.initialize();
+                }
 
-        const availableSound = this.pool.find(sound => sound.paused || sound.ended);
-        if (availableSound) {
-            try {
-                availableSound.currentTime = 0;
-                await availableSound.play();
-                return availableSound;
-            } catch (e) {
-                console.log("Audio play error:", e);
+                const availableSound = this.pool.find(sound => sound.paused || sound.ended);
+                if (availableSound) {
+                    try {
+                        availableSound.currentTime = 0;
+                        await availableSound.play();
+                        return availableSound;
+                    } catch (e) {
+                        console.log("Audio play error:", e);
+                        return null;
+                    }
+                }
                 return null;
             }
-        }
-        return null;
-    }
 
-    stop() {
-        this.pool.forEach(sound => {
-            sound.pause();
-            sound.currentTime = 0;
-        });
-    }
-}
+            stop() {
+                this.pool.forEach(sound => {
+                    sound.pause();
+                    sound.currentTime = 0;
+                });
+            }
+        }
 
         // Ääniefektit
         const soundEffects = {
@@ -608,7 +608,8 @@ class SoundPool {
             constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
                 super(image, x, y, width, height);
                 this.health = health;
-                this.speed = speed * (window.innerWidth / 1920);
+                this.baseSpeed = speed * (window.innerWidth / 1920); // Alkuperäinen nopeus
+                this.speed = this.baseSpeed; // Nykyinen nopeus
                 this.fireCooldown = fireCooldown;
                 this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920);
                 this.fireCounter = 0;
@@ -616,25 +617,26 @@ class SoundPool {
                 this.isFinalEnemy = isFinalEnemy;
                 this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2));
                 this.collisionDamage = Math.max(1, Math.min(collisionDamage, 4));
-                this.hasCollided = false;
                 this.collisionCooldown = 0;
-                this.repulsionForce = 0; // Lisätty kimpoamisvoima
-                this.repulsionAngle = 0; // Lisätty kimpoamissuunta
+                this.repulsionForce = 0;
+                this.repulsionAngle = 0;
             }
 
             follow(player) {
                 if (isAnimating) return;
                 
                 // Jos kimpoamisvoima on aktiivinen, käytä sitä
-                if (this.repulsionForce > 0) {
+                if (this.repulsionForce > 0.5) {
                     this.x += this.repulsionForce * Math.cos(this.repulsionAngle);
                     this.y += this.repulsionForce * Math.sin(this.repulsionAngle);
-                    this.repulsionForce *= 0.9; // Vähennä kimpoamisvoimaa asteittain
+                    this.repulsionForce *= 0.85; // Vähennä kimpoamisvoimaa
                     
                     // Rajaa vihollinen kentän sisälle
                     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
                     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
                     return;
+                } else {
+                    this.repulsionForce = 0; // Nollaa kimpoamisvoima kun se on tarpeeksi pieni
                 }
                 
                 const playerCenterX = player.x + player.width / 2;
@@ -646,8 +648,40 @@ class SoundPool {
                 const deltaY = playerCenterY - enemyCenterY;
                 const angle = Math.atan2(deltaY, deltaX);
 
+                // Palauta nopeus alkuperäiseksi
+                this.speed = this.baseSpeed;
+                
                 this.x += this.speed * Math.cos(angle);
                 this.y += this.speed * Math.sin(angle);
+            }
+
+            handleCollision(player) {
+                if (this.collisionCooldown > 0) {
+                    this.collisionCooldown--;
+                    return;
+                }
+
+                // Laske törmäyssuunta
+                const dx = (this.x + this.width/2) - (player.x + player.width/2);
+                const dy = (this.y + this.height/2) - (player.y + player.height/2);
+                const angle = Math.atan2(dy, dx);
+
+                // Aseta kimpoamisvoima ja suunta
+                this.repulsionForce = this.baseSpeed * 3.5; // Voimakas kimpoaminen
+                this.repulsionAngle = angle;
+
+                // Vahingoita pelaajaa
+                player.takeDamage(this.collisionDamage);
+                this.collisionCooldown = 15; // Lyhyt jäähdytysaika
+
+                // Jos vihollinen kuolee törmäyksessä
+                if (this.health <= 1) {
+                    if (this.isSplitting) {
+                        this.split();
+                    } else {
+                        this.takeDamage();
+                    }
+                }
             }
 
             takeDamage() {
@@ -700,7 +734,7 @@ class SoundPool {
                     newSize.width, 
                     newSize.height, 
                     Math.max(1, Math.floor(this.health / 2)),
-                    this.speed + (1 * (window.innerWidth / 1920)),
+                    this.baseSpeed / (window.innerWidth / 1920) + 1, // Lisää nopeutta
                     false,
                     false,
                     this.fireCooldown,
@@ -716,7 +750,7 @@ class SoundPool {
                     newSize.width, 
                     newSize.height, 
                     Math.max(1, Math.floor(this.health / 2)),
-                    this.speed + (1 * (window.innerWidth / 1920)),
+                    this.baseSpeed / (window.innerWidth / 1920) + 1, // Lisää nopeutta
                     false,
                     false,
                     this.fireCooldown,
@@ -747,36 +781,6 @@ class SoundPool {
                     this.fireCounter = this.fireCooldown;
                 } else {
                     this.fireCounter--;
-                }
-            }
-
-            // Uusi metodi törmäyksen käsittelyyn
-            handleCollision(player) {
-                if (this.collisionCooldown > 0) {
-                    this.collisionCooldown--;
-                    return;
-                }
-
-                // Laske törmäyssuunta
-                const dx = (this.x + this.width/2) - (player.x + player.width/2);
-                const dy = (this.y + this.height/2) - (player.y + player.height/2);
-                const angle = Math.atan2(dy, dx);
-
-                // Aseta kimpoamisvoima ja suunta
-                this.repulsionForce = this.speed * 2;
-                this.repulsionAngle = angle;
-
-                // Vahingoita pelaajaa
-                player.takeDamage(this.collisionDamage);
-                this.collisionCooldown = 30; // 30 framen jäähdytysaika
-
-                // Jos vihollinen kuolee törmäyksessä
-                if (this.health <= 1) {
-                    if (this.isSplitting) {
-                        this.split();
-                    } else {
-                        this.takeDamage();
-                    }
                 }
             }
         }
@@ -927,8 +931,8 @@ class SoundPool {
                 return !hit;
             });
 
-            enemies = enemies.filter(enemy => {
-                if (enemy.isDestroyed) return false;
+            enemies.forEach(enemy => {
+                if (enemy.isDestroyed) return;
                 
                 enemy.follow(player);
                 enemy.fire(player);
@@ -938,12 +942,13 @@ class SoundPool {
                 if (checkEllipseCollision(player, enemy)) {
                     enemy.handleCollision(player);
                 }
-                
-                return true;
             });
 
-            enemyBullets = enemyBullets.filter(bullet => {
-                if (bullet.isDestroyed) return false;
+            // Poista tuhoutuneet viholliset
+            enemies = enemies.filter(enemy => !enemy.isDestroyed);
+
+            enemyBullets.forEach(bullet => {
+                if (bullet.isDestroyed) return;
                 
                 bullet.move();
                 bullet.draw();
@@ -952,9 +957,10 @@ class SoundPool {
                     player.takeDamage(bullet.damage || 1);
                     bullet.isDestroyed = true;
                 }
-                
-                return !bullet.isDestroyed;
             });
+
+            // Poista tuhoutuneet vihollisluodit
+            enemyBullets = enemyBullets.filter(bullet => !bullet.isDestroyed);
 
             animationFrameId = requestAnimationFrame(update);
         }
