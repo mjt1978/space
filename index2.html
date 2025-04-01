@@ -605,22 +605,37 @@ class SoundPool {
         }
 
         class Enemy extends GameObject {
-    constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
-        super(image, x, y, width, height);
-        this.health = health;
-        this.speed = speed * (window.innerWidth / 1920);
-        this.fireCooldown = fireCooldown;
-        this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920);
-        this.fireCounter = 0;
-        this.isSplitting = isSplitting;
-        this.isFinalEnemy = isFinalEnemy;
-        this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2));
-        this.collisionDamage = Math.max(1, Math.min(collisionDamage, 4));
-        this.hasCollided = false;
-        this.collisionCooldown = 0;
-    }
+            constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
+                super(image, x, y, width, height);
+                this.health = health;
+                this.speed = speed * (window.innerWidth / 1920);
+                this.fireCooldown = fireCooldown;
+                this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920);
+                this.fireCounter = 0;
+                this.isSplitting = isSplitting;
+                this.isFinalEnemy = isFinalEnemy;
+                this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2));
+                this.collisionDamage = Math.max(1, Math.min(collisionDamage, 4));
+                this.hasCollided = false;
+                this.collisionCooldown = 0;
+                this.repulsionForce = 0; // Lisätty kimpoamisvoima
+                this.repulsionAngle = 0; // Lisätty kimpoamissuunta
+            }
+
             follow(player) {
                 if (isAnimating) return;
+                
+                // Jos kimpoamisvoima on aktiivinen, käytä sitä
+                if (this.repulsionForce > 0) {
+                    this.x += this.repulsionForce * Math.cos(this.repulsionAngle);
+                    this.y += this.repulsionForce * Math.sin(this.repulsionAngle);
+                    this.repulsionForce *= 0.9; // Vähennä kimpoamisvoimaa asteittain
+                    
+                    // Rajaa vihollinen kentän sisälle
+                    this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+                    this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+                    return;
+                }
                 
                 const playerCenterX = player.x + player.width / 2;
                 const playerCenterY = player.y + player.height / 2;
@@ -635,30 +650,30 @@ class SoundPool {
                 this.y += this.speed * Math.sin(angle);
             }
 
-    takeDamage() {
-        if (this.exploding) return;
-        this.health -= 1;
-        if (this.health <= 0) {
-            this.destroyEnemy();
-        }
-    }
+            takeDamage() {
+                if (this.exploding) return;
+                this.health -= 1;
+                if (this.health <= 0) {
+                    this.destroyEnemy();
+                }
+            }
 
-    destroyEnemy() {
-        if (this.isSplitting) {
-            soundEffects.ufoSplit.play();
-            this.split();
-        } else if (this.isFinalEnemy) {
-            soundEffects.enemyExplosion.play();
-            this.exploding = true;
-            showLevelCompleted();
-        } else {
-            soundEffects.enemyExplosion.play();
-            this.exploding = true;
-            destroyedUFOs += 1;
-            ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
-            checkLevelCompletion();
-        }
-    }
+            destroyEnemy() {
+                if (this.isSplitting) {
+                    soundEffects.ufoSplit.play();
+                    this.split();
+                } else if (this.isFinalEnemy) {
+                    soundEffects.enemyExplosion.play();
+                    this.exploding = true;
+                    showLevelCompleted();
+                } else {
+                    soundEffects.enemyExplosion.play();
+                    this.exploding = true;
+                    destroyedUFOs += 1;
+                    ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
+                    checkLevelCompletion();
+                }
+            }
 
             split() {
                 this.isDestroyed = true;
@@ -711,30 +726,60 @@ class SoundPool {
                 ));
             }
 
-    fire(player) {
-        if (this.fireCounter <= 0 && !isAnimating) {
-            const bulletSize = calculateSize({width: 15, height: 15});
-            const bulletX = this.x + this.width / 2;
-            const bulletY = this.y + this.height / 2;
-            const angle = Math.atan2(player.y + player.height/2 - bulletY, player.x + player.width/2 - bulletX);
+            fire(player) {
+                if (this.fireCounter <= 0 && !isAnimating) {
+                    const bulletSize = calculateSize({width: 15, height: 15});
+                    const bulletX = this.x + this.width / 2;
+                    const bulletY = this.y + this.height / 2;
+                    const angle = Math.atan2(player.y + player.height/2 - bulletY, player.x + player.width/2 - bulletX);
 
-            enemyBullets.push(new EnemyBullet(
-                enemyBulletImage, 
-                bulletX, 
-                bulletY, 
-                bulletSize.width, 
-                bulletSize.height, 
-                angle, 
-                this.bulletSpeed,
-                this.bulletDamage // Varmista että tämä on 1 tai 2
-            ));
-            soundEffects.enemyShoot.play();
-            this.fireCounter = this.fireCooldown;
-        } else {
-            this.fireCounter--;
+                    enemyBullets.push(new EnemyBullet(
+                        enemyBulletImage, 
+                        bulletX, 
+                        bulletY, 
+                        bulletSize.width, 
+                        bulletSize.height, 
+                        angle, 
+                        this.bulletSpeed,
+                        this.bulletDamage
+                    ));
+                    soundEffects.enemyShoot.play();
+                    this.fireCounter = this.fireCooldown;
+                } else {
+                    this.fireCounter--;
+                }
+            }
+
+            // Uusi metodi törmäyksen käsittelyyn
+            handleCollision(player) {
+                if (this.collisionCooldown > 0) {
+                    this.collisionCooldown--;
+                    return;
+                }
+
+                // Laske törmäyssuunta
+                const dx = (this.x + this.width/2) - (player.x + player.width/2);
+                const dy = (this.y + this.height/2) - (player.y + player.height/2);
+                const angle = Math.atan2(dy, dx);
+
+                // Aseta kimpoamisvoima ja suunta
+                this.repulsionForce = this.speed * 2;
+                this.repulsionAngle = angle;
+
+                // Vahingoita pelaajaa
+                player.takeDamage(this.collisionDamage);
+                this.collisionCooldown = 30; // 30 framen jäähdytysaika
+
+                // Jos vihollinen kuolee törmäyksessä
+                if (this.health <= 1) {
+                    if (this.isSplitting) {
+                        this.split();
+                    } else {
+                        this.takeDamage();
+                    }
+                }
+            }
         }
-    }
-}
 
         class Bullet extends GameObject {
             constructor(image, x, y, width, height, speed) {
@@ -752,13 +797,12 @@ class SoundPool {
         }
 
         class EnemyBullet extends GameObject {
-        constructor(image, x, y, width, height, angle, speed, damage) {
-        super(image, x, y, width, height);
-        this.angle = angle;
-        this.speed = speed;
-        // Varmistetaan että vahinko on korkeintaan 2
-        this.damage = Math.min(damage, 2);
-    }
+            constructor(image, x, y, width, height, angle, speed, damage) {
+                super(image, x, y, width, height);
+                this.angle = angle;
+                this.speed = speed;
+                this.damage = Math.min(damage, 2);
+            }
 
             move() {
                 if (isAnimating) return;
@@ -883,53 +927,34 @@ class SoundPool {
                 return !hit;
             });
 
-enemies = enemies.filter(enemy => {
-    if (enemy.isDestroyed) return false;
-    
-    enemy.follow(player);
-    enemy.fire(player);
-    enemy.draw();
-    
-    // Päivitetään törmäysjäähdytystä
-    if (enemy.collisionCooldown > 0) {
-        enemy.collisionCooldown--;
-    } else {
-        enemy.hasCollided = false;
-    }
-    
-    // Tarkistetaan törmäys vain jos ei ole juuri törmännyt
-    if (!enemy.hasCollided && checkEllipseCollision(player, enemy)) {
-        player.takeDamage(enemy.collisionDamage);
-        enemy.hasCollided = true;
-        enemy.collisionCooldown = 30; // 30 framen jäähdytysaika
-        
-        // Jos vihollinen kuolee törmäyksessä
-        if (enemy.health <= 1) {
-            if (enemy.isSplitting) {
-                enemy.split();
-            } else {
-                enemy.takeDamage();
-            }
-        }
-    }
-    
-    return true;
-});
+            enemies = enemies.filter(enemy => {
+                if (enemy.isDestroyed) return false;
+                
+                enemy.follow(player);
+                enemy.fire(player);
+                enemy.draw();
+                
+                // Tarkista törmäys pelaajaan
+                if (checkEllipseCollision(player, enemy)) {
+                    enemy.handleCollision(player);
+                }
+                
+                return true;
+            });
 
-    enemyBullets = enemyBullets.filter(bullet => {
-        if (bullet.isDestroyed) return false;
-        
-        bullet.move();
-        bullet.draw();
-        
-        if (checkEllipseCollision(player, bullet)) {
-            player.takeDamage(bullet.damage || 1); // Varmista että damage on olemassa
-            bullet.isDestroyed = true; // Lisätty tämä rivi
-            return true;
-        }
-        
-        return true;
-    });
+            enemyBullets = enemyBullets.filter(bullet => {
+                if (bullet.isDestroyed) return false;
+                
+                bullet.move();
+                bullet.draw();
+                
+                if (checkEllipseCollision(player, bullet)) {
+                    player.takeDamage(bullet.damage || 1);
+                    bullet.isDestroyed = true;
+                }
+                
+                return !bullet.isDestroyed;
+            });
 
             animationFrameId = requestAnimationFrame(update);
         }
