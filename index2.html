@@ -687,8 +687,8 @@
         // Vahingoita pelaajaa
         player.takeDamage(this.collisionDamage);
         
-        // Aseta riittävä jäähdytysaika (40 framea)
-        this.collisionCooldown = 4;
+        // Aseta riittävä jäähdytysaika (10 framea)
+        this.collisionCooldown = 10;
 
         // Jos vihollinen kuolee törmäyksessä
         if (this.health <= 1) {
