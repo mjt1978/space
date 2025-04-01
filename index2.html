@@ -661,7 +661,7 @@
 
     handleCollision(player) {
         // Jos törmäysjäähdytys on käynnissä, ei tehdä mitään
-        if (this.collisionCooldown > 0) {
+        if (this.collisionCooldown < 0) {
             this.collisionCooldown--;
             return;
         }
