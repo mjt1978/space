@@ -648,7 +648,6 @@
         let gameRunning = true;
         let currentLevel = 1;
         let currentWave = 0;
-        let destroyedUFOs = 0;
         let levelCompleted = false;
         let keys = {};
         let isAnimating = false;
@@ -931,7 +930,6 @@
                 } else if (this.isFinalEnemy) {
                     soundEffects.enemyExplosion.play();
                     this.exploding = true;
-                    destroyedUFOs += 1;
                     
                     // Check if this was the final enemy of the final wave
                     const level = LEVELS.find(l => l.id === currentLevel);
@@ -945,7 +943,6 @@
                 } else {
                     soundEffects.enemyExplosion.play();
                     this.exploding = true;
-                    destroyedUFOs += 1;
                     checkWaveCompletion();
                 }
             }
@@ -1066,7 +1063,6 @@
 
             currentLevel = levelId;
             currentWave = 0;
-            destroyedUFOs = 0;
             levelCompleted = false;
             isAnimating = false;
 
@@ -1095,7 +1091,6 @@
                 return;
             }
 
-            destroyedUFOs = 0;
             isAnimating = false;
 
             // Alustetaan viholliset
@@ -1139,14 +1134,9 @@
             if (!level || currentWave >= level.waves.length) return;
 
             const waveConfig = level.waves[currentWave];
-            let totalKillsNeeded = 0;
-            let totalKillsAchieved = destroyedUFOs;
+            let enemiesRemaining = enemies.length;
             
-            waveConfig.enemies.forEach(enemyConfig => {
-                totalKillsNeeded += enemyConfig.requiredKills;
-            });
-
-            if (totalKillsAchieved >= totalKillsNeeded) {
+            if (enemiesRemaining === 0) {
                 currentWave++;
                 if (currentWave >= level.waves.length) {
                     // All waves completed - level is done
@@ -1229,6 +1219,9 @@
 
             // Poista tuhoutuneet vihollisluodit
             enemyBullets = enemyBullets.filter(bullet => !bullet.isDestroyed);
+
+            // Tarkista aallon päättyminen
+            checkWaveCompletion();
 
             animationFrameId = requestAnimationFrame(update);
         }
