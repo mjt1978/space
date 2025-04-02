@@ -1109,8 +1109,10 @@
             if (totalKillsAchieved >= totalKillsNeeded) {
                 currentWave++;
                 if (currentWave >= level.waves.length) {
+                    // All waves completed - level is done
                     showLevelCompleted();
                 } else {
+                    // Start next wave immediately
                     startNextWave();
                 }
             }
