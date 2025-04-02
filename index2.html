@@ -67,8 +67,7 @@
         }
 
         #gameOver,
-        #levelCompleted,
-        #waveCompleted {
+        #levelCompleted {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -84,8 +83,7 @@
         }
 
         #gameOver h1,
-        #levelCompleted h1,
-        #waveCompleted h1 {
+        #levelCompleted h1 {
             font-size: 4vw;
             color: red;
             margin: 0 0 2vh 0;
@@ -93,8 +91,7 @@
         }
 
         #gameOver button,
-        #levelCompleted button,
-        #waveCompleted button {
+        #levelCompleted button {
             font-size: 2vw;
             padding: 1vh 2vw;
             margin-top: 2vh;
@@ -106,8 +103,7 @@
         }
 
         #gameOver button:hover,
-        #levelCompleted button:hover,
-        #waveCompleted button:hover {
+        #levelCompleted button:hover {
             background-color: white;
         }
 
@@ -153,14 +149,12 @@
             }
             
             #gameOver h1,
-            #levelCompleted h1,
-            #waveCompleted h1 {
+            #levelCompleted h1 {
                 font-size: 6vw;
             }
             
             #gameOver button,
-            #levelCompleted button,
-            #waveCompleted button {
+            #levelCompleted button {
                 font-size: 4vw;
             }
             
@@ -193,10 +187,6 @@
         <div id="levelCompleted">
             <h1>Taso Suoritettu!</h1>
             <button onclick="nextLevel()">Seuraava taso</button>
-        </div>
-        <div id="waveCompleted">
-            <h1>Aalto Selvitetty!</h1>
-            <button onclick="nextWave()">Seuraava aalto</button>
         </div>
     </div>
     <script>
@@ -660,7 +650,6 @@
         let currentWave = 0;
         let destroyedUFOs = 0;
         let levelCompleted = false;
-        let waveCompleted = false;
         let keys = {};
         let isAnimating = false;
         let animationFrameId = null;
@@ -912,7 +901,7 @@
                 } else if (this.isFinalEnemy) {
                     soundEffects.enemyExplosion.play();
                     this.exploding = true;
-                    showWaveCompleted();
+                    startNextWave();
                 } else {
                     soundEffects.enemyExplosion.play();
                     this.exploding = true;
@@ -1039,7 +1028,6 @@
             currentWave = 0;
             destroyedUFOs = 0;
             levelCompleted = false;
-            waveCompleted = false;
             isAnimating = false;
 
             // Alustetaan pelaaja
@@ -1068,7 +1056,6 @@
             }
 
             destroyedUFOs = 0;
-            waveCompleted = false;
             isAnimating = false;
 
             // Alustetaan viholliset
@@ -1120,7 +1107,12 @@
             });
 
             if (totalKillsAchieved >= totalKillsNeeded) {
-                showWaveCompleted();
+                currentWave++;
+                if (currentWave >= level.waves.length) {
+                    showLevelCompleted();
+                } else {
+                    startNextWave();
+                }
             }
         }
 
@@ -1224,32 +1216,6 @@
             gameRunning = true;
         }
 
-        function showWaveCompleted() {
-            if (waveCompleted) return;
-            waveCompleted = true;
-            document.getElementById('waveCompleted').style.display = 'block';
-            gameRunning = false;
-        }
-
-        function hideWaveCompleted() {
-            document.getElementById('waveCompleted').style.display = 'none';
-            gameRunning = true;
-        }
-
-        function nextWave() {
-            currentWave++;
-            hideWaveCompleted();
-            
-            const level = LEVELS.find(l => l.id === currentLevel);
-            if (currentWave >= level.waves.length) {
-                // Kaikki aallot suoritettu, taso valmis
-                showLevelCompleted();
-            } else {
-                startNextWave();
-                update();
-            }
-        }
-
         function startEndAnimation() {
             isAnimating = true;
             const centerX = canvas.width / 2;
@@ -1318,7 +1284,6 @@
             initializeLevel(currentLevel);
             hideGameOver();
             hideLevelCompleted();
-            hideWaveCompleted();
             update();
             soundEffects.backgroundMusic.play();
         }
@@ -1347,7 +1312,6 @@
             gameContainer.style.display = 'none';
             startScreen.style.display = 'block';
             hideLevelCompleted();
-            hideWaveCompleted();
             soundEffects.backgroundMusic.stop();
         }
 
