@@ -901,7 +901,17 @@
                 } else if (this.isFinalEnemy) {
                     soundEffects.enemyExplosion.play();
                     this.exploding = true;
-                    startNextWave();
+                    destroyedUFOs += 1;
+                    
+                    // Check if this was the final enemy of the final wave
+                    const level = LEVELS.find(l => l.id === currentLevel);
+                    if (currentWave === level.waves.length - 1) {
+                        // This was the last wave's final enemy
+                        showLevelCompleted();
+                    } else {
+                        // Just a wave's final enemy - proceed to next wave
+                        startNextWave();
+                    }
                 } else {
                     soundEffects.enemyExplosion.play();
                     this.exploding = true;
