@@ -762,7 +762,7 @@
                         bulletSize.width, 
                         bulletSize.height,
                         GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920)
-                    ));
+                    );
                     soundEffects.playerShoot.play();
                     this.canShoot = false;
                 }
@@ -782,7 +782,7 @@
         }
 
         class Enemy extends GameObject {
-            constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
+            constructor(image, x, y, width, height, health, speed, isSplitting, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
                 super(image, x, y, width, height);
                 this.health = health;
                 this.baseSpeed = speed * (window.innerWidth / 1920);
@@ -791,7 +791,6 @@
                 this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920);
                 this.fireCounter = 0;
                 this.isSplitting = isSplitting;
-                this.isFinalEnemy = isFinalEnemy;
                 this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2));
                 this.collisionDamage = Math.max(1, Math.min(collisionDamage, 4));
                 this.collisionCooldown = 0;
@@ -907,16 +906,16 @@
                 }
             }
 
-    destroyEnemy() {
-        if (this.isSplitting) {
-            soundEffects.ufoSplit.play();
-            this.split();
-        } else {
-            soundEffects.enemyExplosion.play();
-            this.exploding = true;
-            checkWaveCompletion(); // Tarkistetaan aallon tilanne aina kun vihollinen tuhoutuu
-        }
-    }
+            destroyEnemy() {
+                if (this.isSplitting) {
+                    soundEffects.ufoSplit.play();
+                    this.split();
+                } else {
+                    soundEffects.enemyExplosion.play();
+                    this.exploding = true;
+                    checkWaveCompletion(); // Tarkistetaan aallon tilanne aina kun vihollinen tuhoutuu
+                }
+            }
 
             split() {
                 this.isDestroyed = true;
@@ -945,7 +944,6 @@
                     Math.max(1, Math.floor(this.health / 2)),
                     this.baseSpeed / (window.innerWidth / 1920) + 1,
                     false,
-                    false,
                     this.fireCooldown,
                     this.bulletSpeed,
                     this.bulletDamage,
@@ -960,7 +958,6 @@
                     newSize.height, 
                     Math.max(1, Math.floor(this.health / 2)),
                     this.baseSpeed / (window.innerWidth / 1920) + 1,
-                    false,
                     false,
                     this.fireCooldown,
                     this.bulletSpeed,
@@ -1028,92 +1025,91 @@
         }
 
         // Tason alustus
-function initializeLevel(levelId) {
-    const level = LEVELS.find(l => l.id === levelId);
-    if (!level) return;
+        function initializeLevel(levelId) {
+            const level = LEVELS.find(l => l.id === levelId);
+            if (!level) return;
 
-    currentLevel = levelId;
-    currentWave = 0;
-    levelCompleted = false;
-    isAnimating = false;
+            currentLevel = levelId;
+            currentWave = 0;
+            levelCompleted = false;
+            isAnimating = false;
 
-    // Alustetaan pelaaja
-    const playerSize = calculateSize(GAME_CONFIG.playerSize);
-    player = new Player(
-        playerImage, 
-        50, 
-        canvas.height / 2 - playerSize.height / 2, 
-        playerSize.width, 
-        playerSize.height
-    );
-    updateEnergyBar();
-    updateWaveInfo();
+            // Alustetaan pelaaja
+            const playerSize = calculateSize(GAME_CONFIG.playerSize);
+            player = new Player(
+                playerImage, 
+                50, 
+                canvas.height / 2 - playerSize.height / 2, 
+                playerSize.width, 
+                playerSize.height
+            );
+            updateEnergyBar();
+            updateWaveInfo();
 
-    startNextWave();
-}
+            startNextWave();
+        }
 
         // Aloita seuraava aalto
-function startNextWave() {
-    const level = LEVELS.find(l => l.id === currentLevel);
-    if (!level || currentWave >= level.waves.length) {
-        showLevelCompleted();
-        return;
-    }
+        function startNextWave() {
+            const level = LEVELS.find(l => l.id === currentLevel);
+            if (!level || currentWave >= level.waves.length) {
+                showLevelCompleted();
+                return;
+            }
 
-    enemies = [];
-    const waveConfig = level.waves[currentWave];
-    
-    waveConfig.enemies.forEach(enemyConfig => {
-        for (let i = 0; i < enemyConfig.count; i++) {
-            const size = calculateSize(GAME_CONFIG.enemySizes[enemyConfig.type]);
-            const x = canvas.width - size.width - 50 - (i * 50);
-            const y = Math.random() * (canvas.height - size.height);
+            enemies = [];
+            const waveConfig = level.waves[currentWave];
             
-            const enemy = new Enemy(
-                new Image(), 
-                x,
-                y,
-                size.width,
-                size.height,
-                enemyConfig.health,
-                enemyConfig.speed,
-                enemyConfig.isSplitting,
-                enemyConfig.isFinalEnemy,
-                enemyConfig.fireCooldown,
-                enemyConfig.bulletSpeed,
-                enemyConfig.bulletDamage,
-                enemyConfig.collisionDamage
-            );
-            enemy.type = enemyConfig.type;
-            enemy.image.src = enemyConfig.image;
-            enemies.push(enemy);
+            waveConfig.enemies.forEach(enemyConfig => {
+                for (let i = 0; i < enemyConfig.count; i++) {
+                    const size = calculateSize(GAME_CONFIG.enemySizes[enemyConfig.type]);
+                    const x = canvas.width - size.width - 50 - (i * 50);
+                    const y = Math.random() * (canvas.height - size.height);
+                    
+                    const enemy = new Enemy(
+                        new Image(), 
+                        x,
+                        y,
+                        size.width,
+                        size.height,
+                        enemyConfig.health,
+                        enemyConfig.speed,
+                        enemyConfig.isSplitting,
+                        enemyConfig.fireCooldown,
+                        enemyConfig.bulletSpeed,
+                        enemyConfig.bulletDamage,
+                        enemyConfig.collisionDamage
+                    );
+                    enemy.type = enemyConfig.type;
+                    enemy.image.src = enemyConfig.image;
+                    enemies.push(enemy);
+                }
+            });
+
+            bullets = [];
+            enemyBullets = [];
+            updateWaveInfo();
         }
-    });
 
-    bullets = [];
-    enemyBullets = [];
-    updateWaveInfo();
-}
+        function checkWaveCompletion() {
+            const level = LEVELS.find(l => l.id === currentLevel);
+            if (!level || currentWave >= level.waves.length) return;
 
-function checkWaveCompletion() {
-    const level = LEVELS.find(l => l.id === currentLevel);
-    if (!level || currentWave >= level.waves.length) return;
+            // Tarkista onko kaikki viholliset tuhottu
+            const allEnemiesDestroyed = enemies.every(enemy => enemy.isDestroyed);
+            
+            if (!allEnemiesDestroyed) return;
 
-    // Tarkista onko kaikki viholliset tuhottu
-    const allEnemiesDestroyed = enemies.every(enemy => enemy.isDestroyed);
-    
-    if (!allEnemiesDestroyed) return;
-
-    // Jos ollaan viimeisessä aallossa ja kaikki tuhottu
-    if (currentWave === level.waves.length - 1) {
-        showLevelCompleted();
-    } 
-    // Muussa tapauksessa siirrytään seuraavaan aaltoon
-    else {
-        currentWave++;
-        startNextWave();
-    }
-}
+            // Jos ollaan viimeisessä aallossa ja kaikki tuhottu
+            if (currentWave === level.waves.length - 1) {
+                showLevelCompleted();
+            } 
+            // Muussa tapauksessa siirrytään seuraavaan aaltoon
+            else {
+                currentWave++;
+                startNextWave();
+            }
+        }
 
         function checkEllipseCollision(obj1, obj2) {
             const ellipse1 = obj1.getEllipse();
