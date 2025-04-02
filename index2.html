@@ -107,31 +107,9 @@
             background-color: white;
         }
 
-        #ufoCounter {
-            position: absolute;
-            top: 1vh;
-            left: 1vw;
-            font-size: 2vw;
-            color: white;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 0.5vh 1vw;
-            border-radius: 5px;
-        }
-
-        #levelInfo {
-            position: absolute;
-            top: 1vh;
-            right: 1vw;
-            font-size: 2vw;
-            color: white;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 0.5vh 1vw;
-            border-radius: 5px;
-        }
-
         #energyBar {
             position: absolute;
-            top: 6vh;
+            top: 1vh;
             left: 1vw;
             width: 200px;
             height: 20px;
@@ -146,17 +124,6 @@
             width: 100%;
             background-color: #00ff00;
             transition: width 0.3s, background-color 0.3s;
-        }
-
-        #energyText {
-            position: absolute;
-            top: 6vh;
-            left: 210px;
-            font-size: 2vw;
-            color: white;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 0.5vh 1vw;
-            border-radius: 5px;
         }
 
         @media (max-width: 768px) {
@@ -179,21 +146,9 @@
                 font-size: 4vw;
             }
             
-            #ufoCounter,
-            #levelInfo,
-            #energyText {
-                font-size: 4vw;
-            }
-            
             #energyBar {
                 width: 150px;
                 height: 15px;
-                top: 8vh;
-            }
-            
-            #energyText {
-                top: 8vh;
-                left: 160px;
             }
         }
     </style>
@@ -205,12 +160,9 @@
     </div>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
-        <div id="ufoCounter">Tuhotut Ufot: 0</div>
-        <div id="levelInfo">Taso: 1</div>
         <div id="energyBar">
             <div id="energyFill"></div>
         </div>
-        <div id="energyText">Energia: 5/5</div>
         <div id="gameOver">
             <h1>Game Over</h1>
             <button onclick="restartGame()">Uusi yritys</button>
@@ -430,10 +382,7 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const levelButtonsContainer = document.getElementById('levelButtons');
-        const ufoCounter = document.getElementById('ufoCounter');
-        const levelInfo = document.getElementById('levelInfo');
         const energyFill = document.getElementById('energyFill');
-        const energyText = document.getElementById('energyText');
 
         // Asetetaan canvasin koko
         function resizeCanvas() {
@@ -513,8 +462,6 @@
             } else {
                 energyFill.style.backgroundColor = '#ff0000'; // Punainen
             }
-            
-            energyText.textContent = `Energia: ${player.energy}/${GAME_CONFIG.playerEnergy}`;
         }
 
         // Pelioliot
@@ -748,7 +695,6 @@
                     soundEffects.enemyExplosion.play();
                     this.exploding = true;
                     destroyedUFOs += 1;
-                    ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
                     checkLevelCompletion();
                 }
             }
@@ -868,9 +814,7 @@
             if (!level) return;
 
             currentLevel = levelId;
-            levelInfo.textContent = `Taso: ${levelId} - ${level.name}`;
             destroyedUFOs = 0;
-            ufoCounter.textContent = `Tuhotut Ufot: ${destroyedUFOs}`;
             levelCompleted = false;
             isAnimating = false;
 
