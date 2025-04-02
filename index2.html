@@ -782,7 +782,7 @@
         }
 
         class Enemy extends GameObject {
-            constructor(image, x, y, width, height, health, speed, isSplitting, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
+            constructor(image, x, y, width, height, health, speed, isSplitting, isFinalEnemy, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
                 super(image, x, y, width, height);
                 this.health = health;
                 this.baseSpeed = speed * (window.innerWidth / 1920);
@@ -791,6 +791,7 @@
                 this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920);
                 this.fireCounter = 0;
                 this.isSplitting = isSplitting;
+                this.isFinalEnemy = isFinalEnemy;
                 this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2));
                 this.collisionDamage = Math.max(1, Math.min(collisionDamage, 4));
                 this.collisionCooldown = 0;
@@ -1077,6 +1078,7 @@ function startNextWave() {
                 enemyConfig.health,
                 enemyConfig.speed,
                 enemyConfig.isSplitting,
+                enemyConfig.isFinalEnemy,
                 enemyConfig.fireCooldown,
                 enemyConfig.bulletSpeed,
                 enemyConfig.bulletDamage,
