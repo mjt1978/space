@@ -138,6 +138,23 @@
             border-radius: 5px;
         }
 
+        #livesContainer {
+            position: absolute;
+            top: 4vh;
+            left: 1vw;
+            display: flex;
+            gap: 10px;
+        }
+
+        .life {
+            width: 30px;
+            height: 30px;
+            background-image: url('alus.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            transition: all 0.3s;
+        }
+
         @media (max-width: 768px) {
             #startScreen h1 {
                 font-size: 8vw;
@@ -166,6 +183,15 @@
             #waveInfo {
                 font-size: 4vw;
             }
+            
+            #livesContainer {
+                top: 3.5vh;
+            }
+            
+            .life {
+                width: 20px;
+                height: 20px;
+            }
         }
     </style>
 </head>
@@ -179,6 +205,7 @@
         <div id="energyBar">
             <div id="energyFill"></div>
         </div>
+        <div id="livesContainer"></div>
         <div id="waveInfo">Aalto: 1/5</div>
         <div id="gameOver">
             <h1>Game Over</h1>
@@ -258,6 +285,7 @@
             bulletSpeed: 10,
             playerSize: { width: 100, height: 100 },
             playerEnergy: 5,
+            playerLives: 3, // Kolme elämää
             enemySizes: {
                 small: { width: 50, height: 50 },
                 medium: { width: 100, height: 100 },
@@ -572,6 +600,7 @@
         const levelButtonsContainer = document.getElementById('levelButtons');
         const energyFill = document.getElementById('energyFill');
         const waveInfo = document.getElementById('waveInfo');
+        const livesContainer = document.getElementById('livesContainer');
 
         // Asetetaan canvasin koko
         function resizeCanvas() {
@@ -653,6 +682,16 @@
             }
         }
 
+        // Päivitä elämät
+        function updateLives() {
+            livesContainer.innerHTML = '';
+            for (let i = 0; i < player.lives; i++) {
+                const life = document.createElement('div');
+                life.className = 'life';
+                livesContainer.appendChild(life);
+            }
+        }
+
         // Päivitä aaltotiedot
         function updateWaveInfo() {
             waveInfo.textContent = `Aalto: ${currentWave + 1}/${GAME_CONFIG.wavesPerLevel}`;
@@ -729,11 +768,14 @@
                 this.speed = GAME_CONFIG.playerSpeed * (window.innerWidth / 1920);
                 this.canShoot = true;
                 this.energy = GAME_CONFIG.playerEnergy;
+                this.lives = GAME_CONFIG.playerLives;
                 this.collisionCooldown = 0;
+                this.respawnCooldown = 0;
+                this.isRespawning = false;
             }
 
             move() {
-                if (isAnimating) return;
+                if (isAnimating || this.isRespawning) return;
                 
                 // Käsittele kimpoaminen jos se on käynnissä
                 if (this.handleRepulsion()) {
@@ -753,7 +795,7 @@
             }
 
             shoot() {
-                if (this.canShoot && !isAnimating) {
+                if (this.canShoot && !isAnimating && !this.isRespawning) {
                     const bulletSize = calculateSize({width: 20, height: 10});
                     bullets.push(new Bullet(
                         bulletImage, 
@@ -769,14 +811,56 @@
             }
 
             takeDamage(damage) {
+                if (this.isRespawning) return;
+                
                 this.energy -= damage;
                 updateEnergyBar();
                 
                 if (this.energy <= 0) {
+                    this.loseLife();
+                }
+            }
+            
+            loseLife() {
+                this.lives--;
+                updateLives();
+                
+                if (this.lives <= 0) {
+                    // Kaikki elämät loppuivat
                     this.energy = 0;
                     this.exploding = true;
                     this.explosionFrame = 0;
                     showGameOver();
+                } else {
+                    // Uudelleen syntyminen
+                    this.isRespawning = true;
+                    this.respawnCooldown = 120; // 2 sekuntia (60fps)
+                    this.energy = GAME_CONFIG.playerEnergy;
+                    updateEnergyBar();
+                    
+                    // Aseta alus keskelle ruutua ja tekee sen läpinäkyväksi
+                    this.x = canvas.width / 2 - this.width / 2;
+                    this.y = canvas.height / 2 - this.height / 2;
+                }
+            }
+            
+            draw() {
+                if (this.isRespawning) {
+                    // Vähennä respawn-aikaa
+                    this.respawnCooldown--;
+                    if (this.respawnCooldown <= 0) {
+                        this.isRespawning = false;
+                    }
+                    
+                    // Vilkuta pelaajaa respawn-aikana
+                    if (Math.floor(this.respawnCooldown / 10) % 2 === 0) {
+                        ctx.save();
+                        ctx.globalAlpha = 0.5;
+                        super.draw();
+                        ctx.restore();
+                    }
+                } else {
+                    super.draw();
                 }
             }
         }
@@ -804,7 +888,7 @@
             }
 
             follow(player) {
-                if (isAnimating) return;
+                if (isAnimating || player.isRespawning) return;
                 
                 // Käsittele kimpoaminen jos se on käynnissä
                 if (this.handleRepulsion()) {
@@ -857,7 +941,7 @@
 
             handleCollision(player) {
                 // Jos törmäysjäähdytys on käynnissä, ei tehdä mitään
-                if (this.collisionCooldown > 0 || player.collisionCooldown > 0) {
+                if (this.collisionCooldown > 0 || player.collisionCooldown > 0 || player.isRespawning) {
                     return;
                 }
 
@@ -967,7 +1051,7 @@
             }
 
             fire(player) {
-                if (this.fireCounter <= 0 && !isAnimating) {
+                if (this.fireCounter <= 0 && !isAnimating && !player.isRespawning) {
                     const bulletSize = calculateSize({width: 15, height: 15});
                     const bulletX = this.x + this.width / 2;
                     const bulletY = this.y + this.height / 2;
@@ -1044,6 +1128,7 @@
                 playerSize.height
             );
             updateEnergyBar();
+            updateLives();
             updateWaveInfo();
 
             startNextWave();
