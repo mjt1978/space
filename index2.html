@@ -1129,24 +1129,30 @@
             updateWaveInfo();
         }
 
-        function checkWaveCompletion() {
-            const level = LEVELS.find(l => l.id === currentLevel);
-            if (!level || currentWave >= level.waves.length) return;
+function checkWaveCompletion() {
+    const level = LEVELS.find(l => l.id === currentLevel);
+    if (!level || currentWave >= level.waves.length) return;
 
-            const waveConfig = level.waves[currentWave];
-            let enemiesRemaining = enemies.length;
-            
-            if (enemiesRemaining === 0) {
-                currentWave++;
-                if (currentWave >= level.waves.length) {
-                    // All waves completed - level is done
-                    showLevelCompleted();
-                } else {
-                    // Start next wave immediately
-                    startNextWave();
-                }
-            }
+    const waveConfig = level.waves[currentWave];
+    let allEnemiesDestroyed = true;
+
+    // Tarkista kaikki viholliset
+    enemies.forEach(enemy => {
+        if (!enemy.isDestroyed) {
+            allEnemiesDestroyed = false;
         }
+    });
+
+    // Jos kaikki viholliset tuhottu ja aalto on viimeinen
+    if (allEnemiesDestroyed && currentWave === level.waves.length - 1) {
+        showLevelCompleted();
+    }
+    // Jos kaikki viholliset tuhottu, mutta ei viimeinen aalto
+    else if (allEnemiesDestroyed) {
+        currentWave++;
+        startNextWave();
+    }
+}
 
         function checkEllipseCollision(obj1, obj2) {
             const ellipse1 = obj1.getEllipse();
@@ -1166,6 +1172,7 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Pelaajan ja vihollisten piirtäminen ja liikuttaminen
             player.move();
             player.draw();
 
@@ -1196,14 +1203,10 @@
                 enemy.fire(player);
                 enemy.draw();
                 
-                // Tarkista törmäys pelaajaan
                 if (checkEllipseCollision(player, enemy)) {
                     enemy.handleCollision(player);
                 }
             });
-
-            // Poista tuhoutuneet viholliset
-            enemies = enemies.filter(enemy => !enemy.isDestroyed);
 
             enemyBullets.forEach(bullet => {
                 if (bullet.isDestroyed) return;
@@ -1217,10 +1220,7 @@
                 }
             });
 
-            // Poista tuhoutuneet vihollisluodit
-            enemyBullets = enemyBullets.filter(bullet => !bullet.isDestroyed);
-
-            // Tarkista aallon päättyminen
+            // Tarkista aallon päättyminen jokaisen framen jälkeen
             checkWaveCompletion();
 
             animationFrameId = requestAnimationFrame(update);
