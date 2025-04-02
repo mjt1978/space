@@ -67,7 +67,8 @@
         }
 
         #gameOver,
-        #levelCompleted {
+        #levelCompleted,
+        #waveCompleted {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -83,7 +84,8 @@
         }
 
         #gameOver h1,
-        #levelCompleted h1 {
+        #levelCompleted h1,
+        #waveCompleted h1 {
             font-size: 4vw;
             color: red;
             margin: 0 0 2vh 0;
@@ -91,7 +93,8 @@
         }
 
         #gameOver button,
-        #levelCompleted button {
+        #levelCompleted button,
+        #waveCompleted button {
             font-size: 2vw;
             padding: 1vh 2vw;
             margin-top: 2vh;
@@ -103,7 +106,8 @@
         }
 
         #gameOver button:hover,
-        #levelCompleted button:hover {
+        #levelCompleted button:hover,
+        #waveCompleted button:hover {
             background-color: white;
         }
 
@@ -126,6 +130,18 @@
             transition: width 0.3s, background-color 0.3s;
         }
 
+        #waveInfo {
+            position: absolute;
+            top: 1vh;
+            right: 1vw;
+            color: white;
+            font-size: 2vw;
+            text-shadow: 0 0 5px black;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
         @media (max-width: 768px) {
             #startScreen h1 {
                 font-size: 8vw;
@@ -137,18 +153,24 @@
             }
             
             #gameOver h1,
-            #levelCompleted h1 {
+            #levelCompleted h1,
+            #waveCompleted h1 {
                 font-size: 6vw;
             }
             
             #gameOver button,
-            #levelCompleted button {
+            #levelCompleted button,
+            #waveCompleted button {
                 font-size: 4vw;
             }
             
             #energyBar {
                 width: 150px;
                 height: 15px;
+            }
+            
+            #waveInfo {
+                font-size: 4vw;
             }
         }
     </style>
@@ -163,6 +185,7 @@
         <div id="energyBar">
             <div id="energyFill"></div>
         </div>
+        <div id="waveInfo">Aalto: 1/5</div>
         <div id="gameOver">
             <h1>Game Over</h1>
             <button onclick="restartGame()">Uusi yritys</button>
@@ -170,6 +193,10 @@
         <div id="levelCompleted">
             <h1>Taso Suoritettu!</h1>
             <button onclick="nextLevel()">Seuraava taso</button>
+        </div>
+        <div id="waveCompleted">
+            <h1>Aalto Selvitetty!</h1>
+            <button onclick="nextWave()">Seuraava aalto</button>
         </div>
     </div>
     <script>
@@ -250,7 +277,8 @@
             collisionEllipse: {
                 widthRatio: 1,
                 heightRatio: 1
-            }
+            },
+            wavesPerLevel: 5
         };
 
         // Tasojen määrittely
@@ -258,119 +286,305 @@
             {
                 id: 1,
                 name: "Helppo",
-                description: "Tuhotaan yksi UFO!",
-                enemies: [
+                description: "Tuhotaan UFOja aaltoina!",
+                waves: [
                     {
-                        type: "medium",
-                        count: 2,
-                        health: 6,
-                        speed: 3,
-                        fireCooldown: 90,
-                        bulletSpeed: 4,
-                        bulletDamage: 1,
-                        image: 'ufo2.png',
-                        isSplitting: false,
-                        isFinalEnemy: false,
-                        requiredKills: 2,
-                        collisionDamage: 2
+                        enemies: [
+                            {
+                                type: "medium",
+                                count: 2,
+                                health: 6,
+                                speed: 3,
+                                fireCooldown: 90,
+                                bulletSpeed: 4,
+                                bulletDamage: 1,
+                                image: 'ufo2.png',
+                                isSplitting: false,
+                                isFinalEnemy: false,
+                                requiredKills: 2,
+                                collisionDamage: 2
+                            }
+                        ]
+                    },
+                    {
+                        enemies: [
+                            {
+                                type: "medium",
+                                count: 3,
+                                health: 6,
+                                speed: 3,
+                                fireCooldown: 90,
+                                bulletSpeed: 4,
+                                bulletDamage: 1,
+                                image: 'ufo2.png',
+                                isSplitting: false,
+                                isFinalEnemy: false,
+                                requiredKills: 3,
+                                collisionDamage: 2
+                            }
+                        ]
+                    },
+                    {
+                        enemies: [
+                            {
+                                type: "xlarge",
+                                count: 1,
+                                health: 12,
+                                speed: 2,
+                                fireCooldown: 120,
+                                bulletSpeed: 3,
+                                bulletDamage: 1,
+                                image: 'ufo5.png',
+                                isSplitting: true,
+                                isFinalEnemy: false,
+                                requiredKills: 2,
+                                collisionDamage: 3
+                            }
+                        ]
+                    },
+                    {
+                        enemies: [
+                            {
+                                type: "small",
+                                count: 5,
+                                health: 3,
+                                speed: 4,
+                                fireCooldown: 60,
+                                bulletSpeed: 6,
+                                bulletDamage: 1,
+                                image: 'ufo.png',
+                                isSplitting: false,
+                                isFinalEnemy: false,
+                                requiredKills: 5,
+                                collisionDamage: 1
+                            }
+                        ]
+                    },
+                    {
+                        enemies: [
+                            {
+                                type: "large",
+                                count: 1,
+                                health: 24,
+                                speed: 4,
+                                fireCooldown: 30,
+                                bulletSpeed: 8,
+                                bulletDamage: 2,
+                                image: 'ufo3.png',
+                                isSplitting: false,
+                                isFinalEnemy: true,
+                                requiredKills: 1,
+                                collisionDamage: 4
+                            }
+                        ]
                     }
                 ]
             },
             {
                 id: 2,
                 name: "Keskitaso",
-                description: "Iso UFO jakautuu kahteen pienempään!",
-                enemies: [
+                description: "Vaikeampia aaltoja!",
+                waves: [
                     {
-                        type: "xlarge",
-                        count: 1,
-                        health: 12,
-                        speed: 2,
-                        fireCooldown: 120,
-                        bulletSpeed: 3,
-                        bulletDamage: 1,
-                        image: 'ufo5.png',
-                        isSplitting: true,
-                        isFinalEnemy: false,
-                        requiredKills: 2,
-                        collisionDamage: 3
+                        enemies: [
+                            {
+                                type: "small",
+                                count: 8,
+                                health: 3,
+                                speed: 4,
+                                fireCooldown: 60,
+                                bulletSpeed: 6,
+                                bulletDamage: 1,
+                                image: 'ufo.png',
+                                isSplitting: false,
+                                isFinalEnemy: false,
+                                requiredKills: 8,
+                                collisionDamage: 1
+                            }
+                        ]
+                    },
+                    {
+                        enemies: [
+                            {
+                                type: "medium",
+                                count: 4,
+                                health: 6,
+                                speed: 3,
+                                fireCooldown: 90,
+                                bulletSpeed: 4,
+                                bulletDamage: 1,
+                                image: 'ufo2.png',
+                                isSplitting: false,
+                                isFinalEnemy: false,
+                                requiredKills: 4,
+                                collisionDamage: 2
+                            }
+                        ]
+                    },
+                    {
+                        enemies: [
+                            {
+                                type: "xlarge",
+                                count: 2,
+                                health: 12,
+                                speed: 2,
+                                fireCooldown: 120,
+                                bulletSpeed: 3,
+                                bulletDamage: 1,
+                                image: 'ufo5.png',
+                                isSplitting: true,
+                                isFinalEnemy: false,
+                                requiredKills: 4,
+                                collisionDamage: 3
+                            }
+                        ]
+                    },
+                    {
+                        enemies: [
+                            {
+                                type: "small",
+                                count: 10,
+                                health: 3,
+                                speed: 5,
+                                fireCooldown: 60,
+                                bulletSpeed: 6,
+                                bulletDamage: 1,
+                                image: 'ufo.png',
+                                isSplitting: false,
+                                isFinalEnemy: false,
+                                requiredKills: 10,
+                                collisionDamage: 1
+                            }
+                        ]
+                    },
+                    {
+                        enemies: [
+                            {
+                                type: "large",
+                                count: 2,
+                                health: 24,
+                                speed: 4,
+                                fireCooldown: 30,
+                                bulletSpeed: 8,
+                                bulletDamage: 2,
+                                image: 'ufo3.png',
+                                isSplitting: false,
+                                isFinalEnemy: true,
+                                requiredKills: 2,
+                                collisionDamage: 4
+                            }
+                        ]
                     }
                 ]
             },
             {
                 id: 3,
                 name: "Haastava",
-                description: "Monta pientä UFOa!",
-                enemies: [
+                description: "Erittäin vaikeita aaltoja!",
+                waves: [
                     {
-                        type: "small",
-                        count: 5,
-                        health: 3,
-                        speed: 4,
-                        fireCooldown: 60,
-                        bulletSpeed: 6,
-                        bulletDamage: 1,
-                        image: 'ufo.png',
-                        isSplitting: false,
-                        isFinalEnemy: false,
-                        requiredKills: 5,
-                        collisionDamage: 1
-                    }
-                ]
-            },
-            {
-                id: 4,
-                name: "Boss Battle",
-                description: "Lopullinen taistelu!",
-                enemies: [
-                    {
-                        type: "large",
-                        count: 1,
-                        health: 24,
-                        speed: 4,
-                        fireCooldown: 30,
-                        bulletSpeed: 8,
-                        bulletDamage: 2,
-                        image: 'ufo3.png',
-                        isSplitting: false,
-                        isFinalEnemy: true,
-                        requiredKills: 1,
-                        collisionDamage: 4
-                    }
-                ]
-            },
-            {
-                id: 5,
-                name: "Tulva",
-                description: "Lukuisia vihollisia!",
-                enemies: [
-                    {
-                        type: "small",
-                        count: 10,
-                        health: 2,
-                        speed: 5,
-                        fireCooldown: 75,
-                        bulletSpeed: 5,
-                        bulletDamage: 1,
-                        image: 'ufo2.png',
-                        isSplitting: false,
-                        isFinalEnemy: false,
-                        requiredKills: 10,
-                        collisionDamage: 1
+                        enemies: [
+                            {
+                                type: "small",
+                                count: 12,
+                                health: 3,
+                                speed: 5,
+                                fireCooldown: 60,
+                                bulletSpeed: 6,
+                                bulletDamage: 1,
+                                image: 'ufo.png',
+                                isSplitting: false,
+                                isFinalEnemy: false,
+                                requiredKills: 12,
+                                collisionDamage: 1
+                            }
+                        ]
                     },
                     {
-                        type: "medium",
-                        count: 2,
-                        health: 6,
-                        speed: 3,
-                        fireCooldown: 90,
-                        bulletSpeed: 4,
-                        bulletDamage: 1,
-                        image: 'ufo4.png',
-                        isSplitting: true,
-                        isFinalEnemy: false,
-                        requiredKills: 4,
-                        collisionDamage: 2
+                        enemies: [
+                            {
+                                type: "medium",
+                                count: 6,
+                                health: 6,
+                                speed: 3,
+                                fireCooldown: 90,
+                                bulletSpeed: 4,
+                                bulletDamage: 1,
+                                image: 'ufo2.png',
+                                isSplitting: true,
+                                isFinalEnemy: false,
+                                requiredKills: 12,
+                                collisionDamage: 2
+                            }
+                        ]
+                    },
+                    {
+                        enemies: [
+                            {
+                                type: "xlarge",
+                                count: 3,
+                                health: 12,
+                                speed: 2,
+                                fireCooldown: 120,
+                                bulletSpeed: 3,
+                                bulletDamage: 1,
+                                image: 'ufo5.png',
+                                isSplitting: true,
+                                isFinalEnemy: false,
+                                requiredKills: 6,
+                                collisionDamage: 3
+                            }
+                        ]
+                    },
+                    {
+                        enemies: [
+                            {
+                                type: "small",
+                                count: 15,
+                                health: 3,
+                                speed: 5,
+                                fireCooldown: 60,
+                                bulletSpeed: 6,
+                                bulletDamage: 1,
+                                image: 'ufo.png',
+                                isSplitting: false,
+                                isFinalEnemy: false,
+                                requiredKills: 15,
+                                collisionDamage: 1
+                            },
+                            {
+                                type: "medium",
+                                count: 3,
+                                health: 6,
+                                speed: 3,
+                                fireCooldown: 90,
+                                bulletSpeed: 4,
+                                bulletDamage: 1,
+                                image: 'ufo4.png',
+                                isSplitting: true,
+                                isFinalEnemy: false,
+                                requiredKills: 6,
+                                collisionDamage: 2
+                            }
+                        ]
+                    },
+                    {
+                        enemies: [
+                            {
+                                type: "large",
+                                count: 3,
+                                health: 24,
+                                speed: 4,
+                                fireCooldown: 30,
+                                bulletSpeed: 8,
+                                bulletDamage: 2,
+                                image: 'ufo3.png',
+                                isSplitting: false,
+                                isFinalEnemy: true,
+                                requiredKills: 3,
+                                collisionDamage: 4
+                            }
+                        ]
                     }
                 ]
             }
@@ -383,6 +597,7 @@
         const ctx = canvas.getContext('2d');
         const levelButtonsContainer = document.getElementById('levelButtons');
         const energyFill = document.getElementById('energyFill');
+        const waveInfo = document.getElementById('waveInfo');
 
         // Asetetaan canvasin koko
         function resizeCanvas() {
@@ -442,8 +657,10 @@
         let enemyBullets = [];
         let gameRunning = true;
         let currentLevel = 1;
+        let currentWave = 0;
         let destroyedUFOs = 0;
         let levelCompleted = false;
+        let waveCompleted = false;
         let keys = {};
         let isAnimating = false;
         let animationFrameId = null;
@@ -462,6 +679,11 @@
             } else {
                 energyFill.style.backgroundColor = '#ff0000'; // Punainen
             }
+        }
+
+        // Päivitä aaltotiedot
+        function updateWaveInfo() {
+            waveInfo.textContent = `Aalto: ${currentWave + 1}/${GAME_CONFIG.wavesPerLevel}`;
         }
 
         // Pelioliot
@@ -690,12 +912,12 @@
                 } else if (this.isFinalEnemy) {
                     soundEffects.enemyExplosion.play();
                     this.exploding = true;
-                    showLevelCompleted();
+                    showWaveCompleted();
                 } else {
                     soundEffects.enemyExplosion.play();
                     this.exploding = true;
                     destroyedUFOs += 1;
-                    checkLevelCompletion();
+                    checkWaveCompletion();
                 }
             }
 
@@ -814,8 +1036,10 @@
             if (!level) return;
 
             currentLevel = levelId;
+            currentWave = 0;
             destroyedUFOs = 0;
             levelCompleted = false;
+            waveCompleted = false;
             isAnimating = false;
 
             // Alustetaan pelaaja
@@ -828,10 +1052,30 @@
                 playerSize.height
             );
             updateEnergyBar();
+            updateWaveInfo();
+
+            // Aloita ensimmäinen aalto
+            startNextWave();
+        }
+
+        // Aloita seuraava aalto
+        function startNextWave() {
+            const level = LEVELS.find(l => l.id === currentLevel);
+            if (!level || currentWave >= level.waves.length) {
+                // Kaikki aallot suoritettu, taso valmis
+                showLevelCompleted();
+                return;
+            }
+
+            destroyedUFOs = 0;
+            waveCompleted = false;
+            isAnimating = false;
 
             // Alustetaan viholliset
             enemies = [];
-            level.enemies.forEach(enemyConfig => {
+            const waveConfig = level.waves[currentWave];
+            
+            waveConfig.enemies.forEach(enemyConfig => {
                 for (let i = 0; i < enemyConfig.count; i++) {
                     const size = calculateSize(GAME_CONFIG.enemySizes[enemyConfig.type]);
                     const x = canvas.width - size.width - 50 - (i * 50);
@@ -860,21 +1104,23 @@
 
             bullets = [];
             enemyBullets = [];
+            updateWaveInfo();
         }
 
-        function checkLevelCompletion() {
+        function checkWaveCompletion() {
             const level = LEVELS.find(l => l.id === currentLevel);
-            if (!level) return;
+            if (!level || currentWave >= level.waves.length) return;
 
+            const waveConfig = level.waves[currentWave];
             let totalKillsNeeded = 0;
             let totalKillsAchieved = destroyedUFOs;
             
-            level.enemies.forEach(enemyConfig => {
+            waveConfig.enemies.forEach(enemyConfig => {
                 totalKillsNeeded += enemyConfig.requiredKills;
             });
 
             if (totalKillsAchieved >= totalKillsNeeded) {
-                showLevelCompleted();
+                showWaveCompleted();
             }
         }
 
@@ -978,6 +1224,32 @@
             gameRunning = true;
         }
 
+        function showWaveCompleted() {
+            if (waveCompleted) return;
+            waveCompleted = true;
+            document.getElementById('waveCompleted').style.display = 'block';
+            gameRunning = false;
+        }
+
+        function hideWaveCompleted() {
+            document.getElementById('waveCompleted').style.display = 'none';
+            gameRunning = true;
+        }
+
+        function nextWave() {
+            currentWave++;
+            hideWaveCompleted();
+            
+            const level = LEVELS.find(l => l.id === currentLevel);
+            if (currentWave >= level.waves.length) {
+                // Kaikki aallot suoritettu, taso valmis
+                showLevelCompleted();
+            } else {
+                startNextWave();
+                update();
+            }
+        }
+
         function startEndAnimation() {
             isAnimating = true;
             const centerX = canvas.width / 2;
@@ -1046,6 +1318,7 @@
             initializeLevel(currentLevel);
             hideGameOver();
             hideLevelCompleted();
+            hideWaveCompleted();
             update();
             soundEffects.backgroundMusic.play();
         }
@@ -1074,6 +1347,7 @@
             gameContainer.style.display = 'none';
             startScreen.style.display = 'block';
             hideLevelCompleted();
+            hideWaveCompleted();
             soundEffects.backgroundMusic.stop();
         }
 
