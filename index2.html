@@ -9,6 +9,7 @@
             margin: 0;
             overflow: hidden;
             font-family: Arial, sans-serif;
+            background-color: #000; /* Musta tausta varmuuden vuoksi */
         }
 
         /* Aloitusnäytön tyylit */
@@ -18,9 +19,6 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('startimage.png');
-            background-size: cover;
-            background-position: center;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -28,6 +26,32 @@
             text-align: center;
             color: white;
             z-index: 10;
+            overflow: hidden;
+        }
+
+        #startScreen::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('startimage.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -2;
+        }
+
+        #startScreen::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: -1;
         }
 
         #startScreen h1 {
