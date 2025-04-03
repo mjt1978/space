@@ -879,6 +879,7 @@
             constructor(image, x, y, width, height, health, speed, isSplitting, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
                 super(image, x, y, width, height);
                 this.health = health;
+                this.baseHealth = health; // Tallennetaan alkuperäinen terveysarvo
                 this.baseSpeed = speed * (window.innerWidth / 1920);
                 this.speed = this.baseSpeed;
                 this.fireCooldown = fireCooldown;
@@ -1011,54 +1012,59 @@
                 }
             }
 
-            split() {
-                this.isDestroyed = true;
-                const originalType = this.type || 'medium';
-                
-                let newSize;
-                if (originalType === 'xlarge') {
-                    newSize = calculateSize(GAME_CONFIG.enemySizes.large);
-                } else if (originalType === 'large') {
-                    newSize = calculateSize(GAME_CONFIG.enemySizes.medium);
-                } else if (originalType === 'medium') {
-                    newSize = calculateSize(GAME_CONFIG.enemySizes.small);
-                } else {
-                    newSize = calculateSize(GAME_CONFIG.enemySizes.small);
-                }
-                
-                const topUfoY = this.y - newSize.height / 2;
-                const bottomUfoY = this.y + this.height - newSize.height / 2;
-                
-                enemies.push(new Enemy(
-                    this.image, 
-                    this.x + (this.width - newSize.width) / 2,
-                    topUfoY,
-                    newSize.width, 
-                    newSize.height, 
-                    Math.max(1, Math.floor(this.health / 2)),
-                    this.baseSpeed / (window.innerWidth / 1920) + 1,
-                    false,
-                    this.fireCooldown,
-                    this.bulletSpeed,
-                    this.bulletDamage,
-                    Math.max(1, Math.floor(this.collisionDamage / 2))
-                ));
-                
-                enemies.push(new Enemy(
-                    this.image, 
-                    this.x + (this.width - newSize.width) / 2,
-                    bottomUfoY,
-                    newSize.width, 
-                    newSize.height, 
-                    Math.max(1, Math.floor(this.health / 2)),
-                    this.baseSpeed / (window.innerWidth / 1920) + 1,
-                    false,
-                    this.fireCooldown,
-                    this.bulletSpeed,
-                    this.bulletDamage,
-                    Math.max(1, Math.floor(this.collisionDamage / 2))
-                ));
-            }
+split() {
+    this.isDestroyed = true;
+    const originalType = this.type || 'medium';
+    
+    let newSize;
+    if (originalType === 'xlarge') {
+        newSize = calculateSize(GAME_CONFIG.enemySizes.large);
+    } else if (originalType === 'large') {
+        newSize = calculateSize(GAME_CONFIG.enemySizes.medium);
+    } else if (originalType === 'medium') {
+        newSize = calculateSize(GAME_CONFIG.enemySizes.small);
+    } else {
+        newSize = calculateSize(GAME_CONFIG.enemySizes.small);
+    }
+    
+    const topUfoY = this.y - newSize.height / 2;
+    const bottomUfoY = this.y + this.height - newSize.height / 2;
+
+    // Käytetään alkuperäistä health-arvoa (baseHealth) jakamiseen
+    // tai jos sitä ei ole määritelty, käytetään nykyistä health-arvoa
+    const baseHealth = this.baseHealth || this.health;
+    const newHealth = Math.max(1, Math.ceil(baseHealth / 2));
+    
+    enemies.push(new Enemy(
+        this.image, 
+        this.x + (this.width - newSize.width) / 2,
+        topUfoY,
+        newSize.width, 
+        newSize.height, 
+        newHealth,
+        this.baseSpeed / (window.innerWidth / 1920) + 1,
+        false,
+        this.fireCooldown,
+        this.bulletSpeed,
+        this.bulletDamage,
+        Math.max(1, Math.floor(this.collisionDamage / 2))
+    ));
+    
+    enemies.push(new Enemy(
+        this.image, 
+        this.x + (this.width - newSize.width) / 2,
+        bottomUfoY,
+        newSize.width, 
+        newSize.height, 
+        newHealth,
+        this.baseSpeed / (window.innerWidth / 1920) + 1,
+        false,
+        this.fireCooldown,
+        this.bulletSpeed,
+        this.bulletDamage,
+        Math.max(1, Math.floor(this.collisionDamage / 2))
+    ));
+}
 
             fire(player) {
                 if (this.fireCounter <= 0 && !isAnimating && !player.isRespawning) {
