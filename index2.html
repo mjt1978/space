@@ -286,7 +286,8 @@
             enemyExplosion: new SoundPool('explosion_ufo.mp3', 20, 0.5),
             ufoSplit: new SoundPool('split.mp3', 20, 0.9),
             collision: new SoundPool('collision.mp3', 20, 0.5),
-            backgroundMusic: new SoundPool('music.mp3', 1, 0.3, true)
+            backgroundMusic: new SoundPool('music.mp3', 1, 0.3, true),
+            meteorSound: new SoundPool('meteor.mp3', 5, 0.6)
         };
 
         // Pelin globaalit asetukset
@@ -306,7 +307,13 @@
                 widthRatio: 1,
                 heightRatio: 1
             },
-            wavesPerLevel: 5
+            wavesPerLevel: 5,
+            meteor: {
+                minSpeed: 8,
+                maxSpeed: 15,
+                spawnInterval: { min: 300, max: 1000 }, // kehyksissä
+                size: { width: 80, height: 80 }
+            }
         };
 
         // Tasojen määrittely
@@ -638,6 +645,12 @@
                     bullet.width = calculateSize({width: 15, height: 15}).width;
                     bullet.height = calculateSize({width: 15, height: 15}).height;
                 });
+
+                meteors.forEach(meteor => {
+                    const size = calculateSize(GAME_CONFIG.meteor.size);
+                    meteor.width = size.width;
+                    meteor.height = size.height;
+                });
             }
         }
 
@@ -663,11 +676,15 @@
         const enemyBulletImage = new Image();
         enemyBulletImage.src = 'boss_shot.png';
 
+        const meteorImage = new Image();
+        meteorImage.src = 'meteor.png';
+
         // Pelitilamuuttujat
         let player;
         let enemies = [];
         let bullets = [];
         let enemyBullets = [];
+        let meteors = [];
         let gameRunning = true;
         let currentLevel = 1;
         let currentWave = 0;
@@ -676,6 +693,8 @@
         let isAnimating = false;
         let animationFrameId = null;
         let backgroundMusic = null;
+        let meteorSpawnCounter = 0;
+        let nextMeteorSpawn = 0;
 
         // Päivitä energiapalkki
         function updateEnergyBar() {
@@ -814,7 +833,7 @@
                         bulletSize.width, 
                         bulletSize.height,
                         GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920)
-                    ));
+                    );
                     soundEffects.playerShoot.play();
                     this.canShoot = false;
                 }
@@ -1012,59 +1031,59 @@
                 }
             }
 
-split() {
-    this.isDestroyed = true;
-    const originalType = this.type || 'medium';
-    
-    let newSize;
-    if (originalType === 'xlarge') {
-        newSize = calculateSize(GAME_CONFIG.enemySizes.large);
-    } else if (originalType === 'large') {
-        newSize = calculateSize(GAME_CONFIG.enemySizes.medium);
-    } else if (originalType === 'medium') {
-        newSize = calculateSize(GAME_CONFIG.enemySizes.small);
-    } else {
-        newSize = calculateSize(GAME_CONFIG.enemySizes.small);
-    }
-    
-    const topUfoY = this.y - newSize.height / 2;
-    const bottomUfoY = this.y + this.height - newSize.height / 2;
+            split() {
+                this.isDestroyed = true;
+                const originalType = this.type || 'medium';
+                
+                let newSize;
+                if (originalType === 'xlarge') {
+                    newSize = calculateSize(GAME_CONFIG.enemySizes.large);
+                } else if (originalType === 'large') {
+                    newSize = calculateSize(GAME_CONFIG.enemySizes.medium);
+                } else if (originalType === 'medium') {
+                    newSize = calculateSize(GAME_CONFIG.enemySizes.small);
+                } else {
+                    newSize = calculateSize(GAME_CONFIG.enemySizes.small);
+                }
+                
+                const topUfoY = this.y - newSize.height / 2;
+                const bottomUfoY = this.y + this.height - newSize.height / 2;
 
-    // Käytetään alkuperäistä health-arvoa (baseHealth) jakamiseen
-    // tai jos sitä ei ole määritelty, käytetään nykyistä health-arvoa
-    const baseHealth = this.baseHealth || this.health;
-    const newHealth = Math.max(1, Math.ceil(baseHealth / 2));
-    
-    enemies.push(new Enemy(
-        this.image, 
-        this.x + (this.width - newSize.width) / 2,
-        topUfoY,
-        newSize.width, 
-        newSize.height, 
-        newHealth,
-        this.baseSpeed / (window.innerWidth / 1920) + 1,
-        false,
-        this.fireCooldown,
-        this.bulletSpeed,
-        this.bulletDamage,
-        Math.max(1, Math.floor(this.collisionDamage / 2))
-    ));
-    
-    enemies.push(new Enemy(
-        this.image, 
-        this.x + (this.width - newSize.width) / 2,
-        bottomUfoY,
-        newSize.width, 
-        newSize.height, 
-        newHealth,
-        this.baseSpeed / (window.innerWidth / 1920) + 1,
-        false,
-        this.fireCooldown,
-        this.bulletSpeed,
-        this.bulletDamage,
-        Math.max(1, Math.floor(this.collisionDamage / 2))
-    ));
-}
+                // Käytetään alkuperäistä health-arvoa (baseHealth) jakamiseen
+                // tai jos sitä ei ole määritelty, käytetään nykyistä health-arvoa
+                const baseHealth = this.baseHealth || this.health;
+                const newHealth = Math.max(1, Math.ceil(baseHealth / 2));
+                
+                enemies.push(new Enemy(
+                    this.image, 
+                    this.x + (this.width - newSize.width) / 2,
+                    topUfoY,
+                    newSize.width, 
+                    newSize.height, 
+                    newHealth,
+                    this.baseSpeed / (window.innerWidth / 1920) + 1,
+                    false,
+                    this.fireCooldown,
+                    this.bulletSpeed,
+                    this.bulletDamage,
+                    Math.max(1, Math.floor(this.collisionDamage / 2))
+                );
+                
+                enemies.push(new Enemy(
+                    this.image, 
+                    this.x + (this.width - newSize.width) / 2,
+                    bottomUfoY,
+                    newSize.width, 
+                    newSize.height, 
+                    newHealth,
+                    this.baseSpeed / (window.innerWidth / 1920) + 1,
+                    false,
+                    this.fireCooldown,
+                    this.bulletSpeed,
+                    this.bulletDamage,
+                    Math.max(1, Math.floor(this.collisionDamage / 2))
+                );
+            }
 
             fire(player) {
                 if (this.fireCounter <= 0 && !isAnimating && !player.isRespawning) {
@@ -1082,7 +1101,7 @@ split() {
                         angle, 
                         this.bulletSpeed,
                         this.bulletDamage
-                    ));
+                    );
                     soundEffects.enemyShoot.play();
                     this.fireCounter = this.fireCooldown;
                 } else {
@@ -1124,6 +1143,54 @@ split() {
             }
         }
 
+        class Meteor extends GameObject {
+            constructor(image, x, y, width, height, speed) {
+                super(image, x, y, width, height);
+                this.speed = speed;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.1;
+            }
+
+            move() {
+                if (isAnimating) return;
+                this.x -= this.speed;
+                this.rotation += this.rotationSpeed;
+                
+                if (this.x + this.width < 0) {
+                    this.isDestroyed = true;
+                }
+            }
+
+            draw() {
+                if (!this.isDestroyed) {
+                    ctx.save();
+                    ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                    ctx.rotate(this.rotation);
+                    ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+                    ctx.restore();
+                }
+            }
+        }
+
+        // Luo uusi meteoriitti
+        function spawnMeteor() {
+            const size = calculateSize(GAME_CONFIG.meteor.size);
+            const y = Math.random() * (canvas.height - size.height);
+            const speed = GAME_CONFIG.meteor.minSpeed + Math.random() * (GAME_CONFIG.meteor.maxSpeed - GAME_CONFIG.meteor.minSpeed);
+            
+            const meteor = new Meteor(
+                meteorImage,
+                canvas.width,
+                y,
+                size.width,
+                size.height,
+                speed * (window.innerWidth / 1920)
+            );
+            
+            meteors.push(meteor);
+            soundEffects.meteorSound.play();
+        }
+
         // Tason alustus
         function initializeLevel(levelId) {
             const level = LEVELS.find(l => l.id === levelId);
@@ -1133,6 +1200,9 @@ split() {
             currentWave = 0;
             levelCompleted = false;
             isAnimating = false;
+            meteors = [];
+            meteorSpawnCounter = 0;
+            nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
 
             // Alustetaan pelaaja
             const playerSize = calculateSize(GAME_CONFIG.playerSize);
@@ -1230,6 +1300,14 @@ split() {
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Päivitä meteoriittien spawnaus
+            meteorSpawnCounter++;
+            if (meteorSpawnCounter >= nextMeteorSpawn) {
+                spawnMeteor();
+                meteorSpawnCounter = 0;
+                nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
+            }
+
             // Pelaajan ja vihollisten piirtäminen ja liikuttaminen
             player.move();
             player.draw();
@@ -1277,6 +1355,21 @@ split() {
                     bullet.isDestroyed = true;
                 }
             });
+
+            // Meteoriittien liikuttaminen ja piirtäminen
+            meteors.forEach(meteor => {
+                meteor.move();
+                meteor.draw();
+                
+                // Tarkista törmäys pelaajaan
+                if (!player.isRespawning && checkEllipseCollision(player, meteor)) {
+                    soundEffects.playerExplosion.play();
+                    player.loseLife();
+                    meteor.isDestroyed = true;
+                }
+            });
+
+            meteors = meteors.filter(meteor => !meteor.isDestroyed);
 
             // Tarkista aallon päättyminen jokaisen framen jälkeen
             checkWaveCompletion();
@@ -1331,6 +1424,7 @@ split() {
                     enemies.forEach(enemy => enemy.draw());
                     bullets.forEach(bullet => bullet.draw());
                     enemyBullets.forEach(bullet => bullet.draw());
+                    meteors.forEach(meteor => meteor.draw());
                     
                     player.draw();
                     animationFrameId = requestAnimationFrame(moveToCenter);
@@ -1348,6 +1442,7 @@ split() {
                     enemies.forEach(enemy => enemy.draw());
                     bullets.forEach(bullet => bullet.draw());
                     enemyBullets.forEach(bullet => bullet.draw());
+                    meteors.forEach(meteor => meteor.draw());
                     
                     const newWidth = player.width * scale;
                     const newHeight = player.height * scale;
