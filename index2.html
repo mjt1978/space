@@ -818,34 +818,35 @@
     }
 
 updateDirectionIndicator() {
-    const indicatorDistance = Math.max(this.width, this.height) / 2 + this.directionIndicator.radius;
+const indicatorDistance = Math.max(this.width, this.height) / 2 + this.directionIndicator.radius;
+   
+// Calculate the desired direction based on the last movement
+const targetAngle = Math.atan2(this.lastMoveY, this.lastMoveX);
+  
+// Calculate the new target position
+const centerX = this.x + this.width/2;
+const centerY = this.y + this.height/2;
+this.directionIndicator.targetX = centerX + Math.cos(targetAngle) * indicatorDistance;
+this.directionIndicator.targetY = centerY + Math.sin(targetAngle) * indicatorDistance;
     
-    // Calculate the desired direction based on the last movement
-    const targetAngle = Math.atan2(this.lastMoveY, this.lastMoveX);
-    
-    // Calculate the new target position
-    const centerX = this.x + this.width/2;
-    const centerY = this.y + this.height/2;
-    this.directionIndicator.targetX = centerX + Math.cos(targetAngle) * indicatorDistance;
-    this.directionIndicator.targetY = centerY + Math.sin(targetAngle) * indicatorDistance;
-    
-    // Smoothly move the direction indicator towards the target position
-    const dx = this.directionIndicator.targetX - this.directionIndicator.currentX;
-    const dy = this.directionIndicator.targetY - this.directionIndicator.currentY;
-    
-    this.directionIndicator.currentX += dx * this.directionIndicator.smoothingFactor;
-    this.directionIndicator.currentY += dy * this.directionIndicator.smoothingFactor;
+// Smoothly move the direction indicator towards the target position
+const dx = this.directionIndicator.targetX - this.directionIndicator.currentX;
+const dy = this.directionIndicator.targetY - this.directionIndicator.currentY;
 
-    // Update the angle and target position
-    this.directionIndicator.angle += angleDifference;
-    this.directionIndicator.targetX = this.x + this.width/2 + Math.cos(this.directionIndicator.angle) * indicatorDistance;
-    this.directionIndicator.targetY = this.y + this.height/2 + Math.sin(this.directionIndicator.angle) * indicatorDistance;
+this.directionIndicator.currentX += dx * this.directionIndicator.smoothingFactor;
+this.directionIndicator.currentY += dy * this.directionIndicator.smoothingFactor;
 
-    // Smoothly move the direction indicator
-    const smoothingFactor = 0.2;
-    this.directionIndicator.currentX += (this.directionIndicator.targetX - this.directionIndicator.currentX) * smoothingFactor;
-    this.directionIndicator.currentY += (this.directionIndicator.targetY - this.directionIndicator.currentY) * smoothingFactor;
+// Update the angle and target position
+this.directionIndicator.angle += angleDifference;
+this.directionIndicator.targetX = this.x + this.width/2 + Math.cos(this.directionIndicator.angle) * indicatorDistance;
+this.directionIndicator.targetY = this.y + this.height/2 + Math.sin(this.directionIndicator.angle) * indicatorDistance;
+
+// Smoothly move the direction indicator
+const smoothingFactor = 0.2;
+this.directionIndicator.currentX += (this.directionIndicator.targetX - this.directionIndicator.currentX) * smoothingFactor;
+this.directionIndicator.currentY += (this.directionIndicator.targetY - this.directionIndicator.currentY) * smoothingFactor;
 }
+} // Added missing closing brace here
 
     move() {
         if (isAnimating || this.isRespawning) return;
