@@ -597,7 +597,7 @@
             }
 
             shoot() {
-                if (this.canShoot && !isAnimating && !this.isRespawning && this.isMoving()) {
+                if (this.canShoot && !isAnimating && !this.isRespawning) {
                     const bulletSize = calculateSize({width: 20, height: 10});
                     const centerX = this.x + this.width / 2;
                     const centerY = this.y + this.height / 2;
