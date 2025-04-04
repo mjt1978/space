@@ -227,7 +227,7 @@
     </div>
 
     <script>
-        // Äänet
+        // Ääniefektit
         const soundEffects = {
             playerShoot: new Audio('blast_ship.mp3'),
             enemyShoot: new Audio('blast_ufo.mp3'),
@@ -239,7 +239,7 @@
             meteorSound: new Audio('meteor.mp3')
         };
 
-        // Asetetaan äänien äänenvoimakkuus
+        // Aseta äänien äänenvoimakkuus
         Object.values(soundEffects).forEach(sound => {
             sound.volume = 0.3;
             if (sound !== soundEffects.backgroundMusic) {
@@ -275,7 +275,7 @@
             }
         };
 
-        // Tasot
+        // Tasojen määrittely
         const LEVELS = [
             {
                 id: 1,
@@ -548,18 +548,44 @@
 
             updateDirectionIndicator() {
                 const indicatorDistance = Math.max(this.width, this.height) / 2 + this.directionIndicator.radius;
+                
+                // Käytä viimeisintä liikesuuntaa, mutta rajoita kulman muutosnopeutta
                 const targetAngle = Math.atan2(this.lastMoveY, this.lastMoveX);
                 
+                // Rajoita kulman muutosnopeutta (max 45 astetta per frame)
+                const maxAngleChange = Math.PI / 4;
+                let angleDifference = targetAngle - this.directionIndicator.angle;
+                
+                // Normalisoi kulmaero -π ja π välille
+                angleDifference = ((angleDifference + Math.PI) % (2 * Math.PI)) - Math.PI;
+                
+                // Rajoita kulman muutosta
+                if (Math.abs(angleDifference) > maxAngleChange) {
+                    angleDifference = maxAngleChange * Math.sign(angleDifference);
+                }
+                
+                this.directionIndicator.angle += angleDifference;
+                
+                // Laske uusi kohdesijainti
                 const centerX = this.x + this.width/2;
                 const centerY = this.y + this.height/2;
-                this.directionIndicator.targetX = centerX + Math.cos(targetAngle) * indicatorDistance;
-                this.directionIndicator.targetY = centerY + Math.sin(targetAngle) * indicatorDistance;
+                this.directionIndicator.targetX = centerX + Math.cos(this.directionIndicator.angle) * indicatorDistance;
+                this.directionIndicator.targetY = centerY + Math.sin(this.directionIndicator.angle) * indicatorDistance;
                 
+                // Liikuta suuntailmaisinta sulavasti kohti kohdesijaintia
                 const dx = this.directionIndicator.targetX - this.directionIndicator.currentX;
                 const dy = this.directionIndicator.targetY - this.directionIndicator.currentY;
                 
-                this.directionIndicator.currentX += dx * this.directionIndicator.smoothingFactor;
-                this.directionIndicator.currentY += dy * this.directionIndicator.smoothingFactor;
+                // Käytä dynaamista smoothingFactoria nopeiden muutosten aikana
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const dynamicSmoothing = Math.min(0.5, Math.max(0.1, 0.3 * (1 - distance / (indicatorDistance * 2))));
+                
+                this.directionIndicator.currentX += dx * dynamicSmoothing;
+                this.directionIndicator.currentY += dy * dynamicSmoothing;
+                
+                // Varmista että suuntailmaisin pysyy ruudulla
+                this.directionIndicator.currentX = Math.max(0, Math.min(canvas.width, this.directionIndicator.currentX));
+                this.directionIndicator.currentY = Math.max(0, Math.min(canvas.height, this.directionIndicator.currentY));
             }
 
             move() {
@@ -596,9 +622,20 @@
                 }
 
                 if (moved) {
+                    // Normalisoi liikevektori
                     const length = Math.sqrt(moveX * moveX + moveY * moveY);
-                    this.lastMoveX = moveX / length;
-                    this.lastMoveY = moveY / length;
+                    const newMoveX = moveX / length;
+                    const newMoveY = moveY / length;
+                    
+                    // Lisää hitaus liikesuunnan muutoksiin
+                    const inertia = 0.2;
+                    this.lastMoveX = this.lastMoveX * (1 - inertia) + newMoveX * inertia;
+                    this.lastMoveY = this.lastMoveY * (1 - inertia) + newMoveY * inertia;
+                    
+                    // Normalisoi uudelleen hitauksen jälkeen
+                    const newLength = Math.sqrt(this.lastMoveX * this.lastMoveX + this.lastMoveY * this.lastMoveY);
+                    this.lastMoveX /= newLength;
+                    this.lastMoveY /= newLength;
 
                     this.x += this.speed * this.lastMoveX;
                     this.y += this.speed * this.lastMoveY;
@@ -689,6 +726,10 @@
             
             drawDirectionIndicator() {
                 if (this.isRespawning) return;
+                
+                // Varmista että koordinaatit ovat kelvollisia
+                if (isNaN(this.directionIndicator.currentX)) this.directionIndicator.currentX = this.x + this.width;
+                if (isNaN(this.directionIndicator.currentY)) this.directionIndicator.currentY = this.y + this.height/2;
                 
                 const clampedX = Math.max(0, Math.min(canvas.width, this.directionIndicator.currentX));
                 const clampedY = Math.max(0, Math.min(canvas.height, this.directionIndicator.currentY));
@@ -1096,11 +1137,26 @@
 
             try {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Päivitä pelitilanne
+                updateGameState();
+                
+                // Piirrä kaikki objektit järjestyksessä
+                drawAllObjects();
+                
+                // Tarkista aallon päättyminen
+                checkWaveCompletion();
+                
             } catch (e) {
-                console.error("Canvas clearing error:", e);
-                return;
+                console.error("Päivitysvirhe:", e);
+                // Yritä palauttaa peli vakaan tilaan
+                resetGameState();
             }
 
+            animationFrameId = requestAnimationFrame(update);
+        }
+
+        function updateGameState() {
             // Päivitä meteoriittien spawnaus
             meteorSpawnCounter++;
             if (meteorSpawnCounter >= nextMeteorSpawn) {
@@ -1109,10 +1165,23 @@
                 nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
             }
 
-            // Pelaaja
+            // Päivitä pelaaja
             player.move();
             
-            // Ammukset
+            // Päivitä ammukset
+            updateBullets();
+            
+            // Päivitä viholliset
+            updateEnemies();
+            
+            // Päivitä vihollisten ammukset
+            updateEnemyBullets();
+            
+            // Päivitä meteoriitit
+            updateMeteors();
+        }
+
+        function updateBullets() {
             bullets.forEach(bullet => {
                 bullet.move();
             });
@@ -1131,8 +1200,9 @@
                 
                 return !hit;
             });
+        }
 
-            // Viholliset
+        function updateEnemies() {
             enemies.forEach(enemy => {
                 if (enemy.isDestroyed) return;
                 
@@ -1143,8 +1213,9 @@
                     enemy.handleCollision(player);
                 }
             });
+        }
 
-            // Vihollisten ammukset
+        function updateEnemyBullets() {
             enemyBullets.forEach(bullet => {
                 if (bullet.isDestroyed) return;
                 
@@ -1155,8 +1226,9 @@
                     bullet.isDestroyed = true;
                 }
             });
+        }
 
-            // Meteoriitit
+        function updateMeteors() {
             meteors.forEach(meteor => {
                 meteor.move();
                 
@@ -1168,18 +1240,31 @@
             });
 
             meteors = meteors.filter(meteor => !meteor.isDestroyed);
+        }
 
-            // Piirrä kaikki objektit
+        function drawAllObjects() {
+            // Piirrä taustaelementit ensin
             meteors.forEach(meteor => meteor.draw());
             bullets.forEach(bullet => bullet.draw());
             enemyBullets.forEach(bullet => bullet.draw());
-            enemies.forEach(enemy => enemy.draw());
+            
+            // Piirrä viholliset
+            enemies.forEach(enemy => {
+                if (!enemy.isDestroyed) enemy.draw();
+            });
+            
+            // Piirrä pelaaja viimeisenä
             player.draw();
+        }
 
-            // Tarkista aallon päättyminen
-            checkWaveCompletion();
-
-            animationFrameId = requestAnimationFrame(update);
+        function resetGameState() {
+            // Palauta pelaaja turvalliseen sijaintiin
+            if (player) {
+                player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+                player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+                player.directionIndicator.currentX = player.x + player.width/2 + player.width/2;
+                player.directionIndicator.currentY = player.y + player.height/2;
+            }
         }
 
         function showGameOver() {
