@@ -646,11 +646,11 @@
                     // RAJAA ALUS KENTÄN SISÄLLE
                     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
                     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
-                }
-
-                this.updateDirectionIndicator();
+                
+                    this.updateDirectionIndicator();
             }
-
+            }
+            
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
                     const bulletSize = calculateSize({width: 20, height: 10});
