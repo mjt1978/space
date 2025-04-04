@@ -802,6 +802,15 @@
                 this.collisionCooldown = 0;
                 this.respawnCooldown = 0;
                 this.isRespawning = false;
+                this.movementDirection = 0; // 0 = ei liikettä, 1 = oikealle, -1 = vasemmalle
+                this.lastMoveX = 0;
+                this.lastMoveY = 0;
+                this.directionIndicator = {
+                    x: 0,
+                    y: 0,
+                    radius: 10,
+                    angle: 0
+                };
             }
 
             move() {
@@ -817,24 +826,71 @@
                     this.collisionCooldown--;
                 }
                 
-                // Normaali liikkuminen näppäimistöllä
-                if (keys['ArrowUp'] && this.y > 0) this.y -= this.speed;
-                if (keys['ArrowDown'] && this.y < canvas.height - this.height) this.y += this.speed;
-                if (keys['ArrowLeft'] && this.x > 0) this.x -= this.speed;
-                if (keys['ArrowRight'] && this.x < canvas.width - this.width) this.x += this.speed;
+                // Tallenna viimeinen liikesuunta
+                let moved = false;
+                if (keys['ArrowUp'] && this.y > 0) {
+                    this.y -= this.speed;
+                    this.lastMoveY = -1;
+                    moved = true;
+                }
+                if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
+                    this.y += this.speed;
+                    this.lastMoveY = 1;
+                    moved = true;
+                }
+                if (keys['ArrowLeft'] && this.x > 0) {
+                    this.x -= this.speed;
+                    this.lastMoveX = -1;
+                    moved = true;
+                }
+                if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
+                    this.x += this.speed;
+                    this.lastMoveX = 1;
+                    moved = true;
+                }
+                
+                // Jos ei liikuttu, nollataan liikesuunta
+                if (!moved) {
+                    this.lastMoveX = 0;
+                    this.lastMoveY = 0;
+                }
+                
+                // Laske suuntailmaisimen kulma
+                if (this.lastMoveX !== 0 || this.lastMoveY !== 0) {
+                    this.directionIndicator.angle = Math.atan2(this.lastMoveY, this.lastMoveX);
+                }
+                
+                // Laske suuntailmaisimen sijainti
+                const indicatorDistance = Math.max(this.width, this.height) / 2 + this.directionIndicator.radius;
+                this.directionIndicator.x = this.x + this.width/2 + Math.cos(this.directionIndicator.angle) * indicatorDistance;
+                this.directionIndicator.y = this.y + this.height/2 + Math.sin(this.directionIndicator.angle) * indicatorDistance;
             }
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
                     const bulletSize = calculateSize({width: 20, height: 10});
+                    const centerX = this.x + this.width / 2;
+                    const centerY = this.y + this.height / 2;
+                    
+                    // Jos alus ei liiku, ammutaan oikealle
+                    let angle = 0;
+                    if (this.lastMoveX !== 0 || this.lastMoveY !== 0) {
+                        angle = Math.atan2(this.lastMoveY, this.lastMoveX);
+                    }
+                    
+                    // Laske luodin alkupiste
+                    const bulletX = centerX + Math.cos(angle) * this.width/2;
+                    const bulletY = centerY + Math.sin(angle) * this.height/2;
+                    
                     bullets.push(new Bullet(
                         bulletImage, 
-                        this.x + this.width, 
-                        this.y + this.height / 2 - bulletSize.height / 2, 
+                        bulletX - bulletSize.width/2, 
+                        bulletY - bulletSize.height/2, 
                         bulletSize.width, 
                         bulletSize.height,
-                        GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920))
-                    );
+                        GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920),
+                        angle
+                    ));
                     soundEffects.playerShoot.play();
                     this.canShoot = false;
                 }
@@ -887,11 +943,24 @@
                         ctx.save();
                         ctx.globalAlpha = 0.5;
                         super.draw();
+                        this.drawDirectionIndicator();
                         ctx.restore();
                     }
                 } else {
                     super.draw();
+                    this.drawDirectionIndicator();
                 }
+            }
+            
+            drawDirectionIndicator() {
+                if (this.isRespawning) return;
+                
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(this.directionIndicator.x, this.directionIndicator.y, this.directionIndicator.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+                ctx.restore();
             }
         }
 
@@ -1112,16 +1181,28 @@
         }
 
         class Bullet extends GameObject {
-            constructor(image, x, y, width, height, speed) {
+            constructor(image, x, y, width, height, speed, angle) {
                 super(image, x, y, width, height);
                 this.speed = speed;
+                this.angle = angle || 0; // Oletussuunta oikealle
             }
 
             move() {
                 if (isAnimating) return;
-                this.x += this.speed;
-                if (this.x > canvas.width) {
+                this.x += this.speed * Math.cos(this.angle);
+                this.y += this.speed * Math.sin(this.angle);
+                if (this.x > canvas.width || this.x < 0 || this.y > canvas.height || this.y < 0) {
                     this.isDestroyed = true;
+                }
+            }
+            
+            draw() {
+                if (!this.isDestroyed) {
+                    ctx.save();
+                    ctx.translate(this.x + this.width/2, this.y + this.height/2);
+                    ctx.rotate(this.angle);
+                    ctx.drawImage(this.image, -this.width/2, -this.height/2, this.width, this.height);
+                    ctx.restore();
                 }
             }
         }
