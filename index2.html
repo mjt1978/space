@@ -275,7 +275,7 @@
             }
         };
 
-        // Tasojen määrittely
+        // Tasot
         const LEVELS = [
             {
                 id: 1,
@@ -531,84 +531,34 @@
                 this.collisionCooldown = 0;
                 this.respawnCooldown = 0;
                 this.isRespawning = false;
-                this.lastMoveX = 1; // Oletussuunta oikealle
-                this.lastMoveY = 0;
-                this.directionIndicator = {
-                    x: 0,
-                    y: 0,
-                    radius: 5,
-                    angle: 0,
-                    targetX: x + width/2 + width/2,
-                    targetY: y + height/2,
-                    currentX: x + width/2 + width/2,
-                    currentY: y + height/2,
-                    smoothingFactor: 0.3
-                };
+                this.currentDirection = { x: 1, y: 0 }; // Nykyinen liikesuunta
+                this.inputDirection = { x: 0, y: 0 };   // Näppäimistön syöte
+                this.directionIndicatorRadius = Math.max(width, height) / 2 + 5;
             }
 
-            updateDirectionIndicator() {
-                const indicatorDistance = Math.max(this.width, this.height) / 2 + this.directionIndicator.radius;
-                
-                // Nollaa suunta jos ei liikuta
-                if (!this.isMoving()) {
-                this.lastMoveX = 0;
-                this.lastMoveY = 0;
-                }
-                
-                // Käytä viimeisintä liikesuuntaa, mutta rajoita kulman muutosnopeutta
-                const targetAngle = Math.atan2(this.lastMoveY, this.lastMoveX);
-                
-                // Rajoita kulman muutosnopeutta (max 45 astetta per frame)
-                const maxAngleChange = Math.PI / 4;
-                let angleDifference = targetAngle - this.directionIndicator.angle;
-                
-                // Normalisoi kulmaero -π ja π välille
-                angleDifference = ((angleDifference + Math.PI) % (2 * Math.PI)) - Math.PI;
-                
-                // Rajoita kulman muutosta
-                if (Math.abs(angleDifference) > maxAngleChange) {
-                    angleDifference = maxAngleChange * Math.sign(angleDifference);
-                }
-                
-                this.directionIndicator.angle += angleDifference;
-                
-                // Laske uusi kohdesijainti
-                const centerX = this.x + this.width/2;
-                const centerY = this.y + this.height/2;
-                this.directionIndicator.targetX = centerX + Math.cos(this.directionIndicator.angle) * indicatorDistance;
-                this.directionIndicator.targetY = centerY + Math.sin(this.directionIndicator.angle) * indicatorDistance;
-                
-                // Liikuta suuntailmaisinta sulavasti kohti kohdesijaintia
-                const dx = this.directionIndicator.targetX - this.directionIndicator.currentX;
-                const dy = this.directionIndicator.targetY - this.directionIndicator.currentY;
-                
-                // Käytä dynaamista smoothingFactoria nopeiden muutosten aikana
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                const dynamicSmoothing = Math.min(0.5, Math.max(0.1, 0.3 * (1 - distance / (indicatorDistance * 2))));
-                
-                this.directionIndicator.currentX += dx * dynamicSmoothing;
-                this.directionIndicator.currentY += dy * dynamicSmoothing;
-                
-                // Varmista että suuntailmaisin pysyy ruudulla
-                this.directionIndicator.currentX = Math.max(0, Math.min(canvas.width, this.directionIndicator.currentX));
-                this.directionIndicator.currentY = Math.max(0, Math.min(canvas.height, this.directionIndicator.currentY));
+            isMoving() {
+                return this.inputDirection.x !== 0 || this.inputDirection.y !== 0;
             }
 
-           isMoving() {
-           return keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight'];
-           } 
-           
+            updateDirection() {
+                if (this.isMoving()) {
+                    // Päivitä suunta välittömästi syötteen mukaan
+                    this.currentDirection = {
+                        x: this.inputDirection.x,
+                        y: this.inputDirection.y
+                    };
+                    
+                    // Normalisoi suunta
+                    const length = Math.sqrt(this.currentDirection.x ** 2 + this.currentDirection.y ** 2);
+                    this.currentDirection.x /= length;
+                    this.currentDirection.y /= length;
+                }
+            }
+
             move() {
                 if (isAnimating || this.isRespawning) return;
 
-              // Nollaa liikesuunta jos ei liikuta
-              if (!this.isMoving()) {
-              this.lastMoveX = 0;
-              this.lastMoveY = 0;
-              }
-
                 if (this.handleRepulsion()) {
-                    this.updateDirectionIndicator();
                     return;
                 }
 
@@ -616,54 +566,47 @@
                     this.collisionCooldown--;
                 }
 
-                let moveX = 0;
-                let moveY = 0;
-                let moved = false;
-
+                // Päivitä syöte
+                this.inputDirection = { x: 0, y: 0 };
+                
                 if (keys['ArrowUp'] && this.y > 0) {
-                    moveY -= 1;
-                    moved = true;
+                    this.inputDirection.y -= 1;
                 }
                 if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
-                    moveY += 1;
-                    moved = true;
+                    this.inputDirection.y += 1;
                 }
                 if (keys['ArrowLeft'] && this.x > 0) {
-                    moveX -= 1;
-                    moved = true;
+                    this.inputDirection.x -= 1;
                 }
                 if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
-                    moveX += 1;
-                    moved = true;
+                    this.inputDirection.x += 1;
                 }
 
-                if (moved) {
-                    // Normalisoi liikevektori
-                    const length = Math.sqrt(moveX * moveX + moveY * moveY);
-                    const newMoveX = moveX / length;
-                    const newMoveY = moveY / length;
-                    
-                    // RAJAA ALUS KENTÄN SISÄLLE
-                    this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-                    this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
-                
-                    this.updateDirectionIndicator();
+                // Päivitä liikesuunta
+                this.updateDirection();
+
+                // Liikuta alusta
+                if (this.isMoving()) {
+                    this.x += this.speed * this.currentDirection.x;
+                    this.y += this.speed * this.currentDirection.y;
+                }
+
+                // Rajaa alus kentän sisälle
+                this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+                this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
             }
-            }
-            
+
             shoot() {
-                if (this.canShoot && !isAnimating && !this.isRespawning) {
+                if (this.canShoot && !isAnimating && !this.isRespawning && this.isMoving()) {
                     const bulletSize = calculateSize({width: 20, height: 10});
                     const centerX = this.x + this.width / 2;
                     const centerY = this.y + this.height / 2;
                     
-                    const angle = Math.atan2(this.lastMoveY, this.lastMoveX);
+                    const bulletX = centerX + this.currentDirection.x * this.width/2;
+                    const bulletY = centerY + this.currentDirection.y * this.height/2;
                     
-                    const bulletX = centerX + Math.cos(angle) * this.width/2;
-                    const bulletY = centerY + Math.sin(angle) * this.height/2;
-                    
-                    const bulletVelocityX = Math.cos(angle) * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920);
-                    const bulletVelocityY = Math.sin(angle) * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920);
+                    const bulletVelocityX = this.currentDirection.x * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920);
+                    const bulletVelocityY = this.currentDirection.y * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920);
                     
                     bullets.push(new Bullet(
                         bulletImage, 
@@ -673,8 +616,8 @@
                         bulletSize.height,
                         bulletVelocityX,
                         bulletVelocityY,
-                        angle
-                    ));
+                        Math.atan2(this.currentDirection.y, this.currentDirection.x)
+                    );
                     soundEffects.playerShoot.play();
                     this.canShoot = false;
                 }
@@ -708,6 +651,8 @@
                     
                     this.x = canvas.width / 2 - this.width / 2;
                     this.y = canvas.height / 2 - this.height / 2;
+                    this.currentDirection = { x: 1, y: 0 };
+                    this.inputDirection = { x: 0, y: 0 };
                 }
             }
             
@@ -734,16 +679,15 @@
             drawDirectionIndicator() {
                 if (this.isRespawning) return;
                 
-                // Varmista että koordinaatit ovat kelvollisia
-                if (isNaN(this.directionIndicator.currentX)) this.directionIndicator.currentX = this.x + this.width;
-                if (isNaN(this.directionIndicator.currentY)) this.directionIndicator.currentY = this.y + this.height/2;
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
                 
-                const clampedX = Math.max(0, Math.min(canvas.width, this.directionIndicator.currentX));
-                const clampedY = Math.max(0, Math.min(canvas.height, this.directionIndicator.currentY));
+                const indicatorX = centerX + this.currentDirection.x * this.directionIndicatorRadius;
+                const indicatorY = centerY + this.currentDirection.y * this.directionIndicatorRadius;
                 
                 ctx.save();
                 ctx.beginPath();
-                ctx.arc(clampedX, clampedY, this.directionIndicator.radius, 0, Math.PI * 2);
+                ctx.arc(indicatorX, indicatorY, 5, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
                 ctx.fill();
                 ctx.restore();
