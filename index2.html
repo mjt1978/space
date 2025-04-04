@@ -802,25 +802,41 @@
                 this.collisionCooldown = 0;
                 this.respawnCooldown = 0;
                 this.isRespawning = false;
-                this.lastMoveX = 0;
+                this.lastMoveX = 1; // Oletussuunta oikealle
                 this.lastMoveY = 0;
                 this.directionIndicator = {
                     x: 0,
                     y: 0,
-                    radius: 5, // Pienempi pallo
+                    radius: 5,
                     angle: 0,
                     targetX: 0,
                     targetY: 0,
                     currentX: 0,
                     currentY: 0
                 };
+                // Päivitä suuntailmaisin heti alussa
+                this.updateDirectionIndicator();
+            }
+
+            updateDirectionIndicator() {
+                // Laske suuntailmaisimen kohdesijainti
+                const indicatorDistance = Math.max(this.width, this.height) / 2 + this.directionIndicator.radius;
+                this.directionIndicator.angle = Math.atan2(this.lastMoveY, this.lastMoveX);
+                this.directionIndicator.targetX = this.x + this.width/2 + Math.cos(this.directionIndicator.angle) * indicatorDistance;
+                this.directionIndicator.targetY = this.y + this.height/2 + Math.sin(this.directionIndicator.angle) * indicatorDistance;
+                
+                // Liikuta suuntailmaisinta sulavasti
+                const smoothingFactor = 0.2;
+                this.directionIndicator.currentX += (this.directionIndicator.targetX - this.directionIndicator.currentX) * smoothingFactor;
+                this.directionIndicator.currentY += (this.directionIndicator.targetY - this.directionIndicator.currentY) * smoothingFactor;
             }
 
             move() {
                 if (isAnimating || this.isRespawning) return;
-                
+
                 // Käsittele kimpoaminen jos se on käynnissä
                 if (this.handleRepulsion()) {
+                    this.updateDirectionIndicator();
                     return;
                 }
                 
@@ -852,22 +868,8 @@
                     moved = true;
                 }
                 
-                // Jos ei liikuttu, älä nollaa liikesuuntaa (pidetään viimeisin suunta)
-                
-                // Laske suuntailmaisimen kulma
-                if (this.lastMoveX !== 0 || this.lastMoveY !== 0) {
-                    this.directionIndicator.angle = Math.atan2(this.lastMoveY, this.lastMoveX);
-                }
-                
-                // Laske suuntailmaisimen kohdesijainti
-                const indicatorDistance = Math.max(this.width, this.height) / 2 + this.directionIndicator.radius;
-                this.directionIndicator.targetX = this.x + this.width/2 + Math.cos(this.directionIndicator.angle) * indicatorDistance;
-                this.directionIndicator.targetY = this.y + this.height/2 + Math.sin(this.directionIndicator.angle) * indicatorDistance;
-                
-                // Liikuta suuntailmaisinta sulavasti kohti kohdesijaintia
-                const smoothingFactor = 0.2;
-                this.directionIndicator.currentX += (this.directionIndicator.targetX - this.directionIndicator.currentX) * smoothingFactor;
-                this.directionIndicator.currentY += (this.directionIndicator.targetY - this.directionIndicator.currentY) * smoothingFactor;
+                // Päivitä suuntailmaisin aina
+                this.updateDirectionIndicator();
             }
 
             shoot() {
@@ -876,11 +878,6 @@
                     const centerX = this.x + this.width / 2;
                     const centerY = this.y + this.height / 2;
                     
-                    // Jos ei ole vielä liikkunut, ei ammuta ollenkaan
-                    if (this.lastMoveX === 0 && this.lastMoveY === 0) {
-                        return;
-                    }
-                    
                     // Käytetään viimeisintä liikesuuntaa
                     const angle = Math.atan2(this.lastMoveY, this.lastMoveX);
                     
@@ -888,7 +885,7 @@
                     const bulletX = centerX + Math.cos(angle) * this.width/2;
                     const bulletY = centerY + Math.sin(angle) * this.height/2;
                     
-                    // Lisää aluksen liikenopeus ammuksen nopeuteen
+                    // Luodin nopeus
                     const bulletVelocityX = Math.cos(angle) * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920);
                     const bulletVelocityY = Math.sin(angle) * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920);
                     
