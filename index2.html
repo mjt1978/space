@@ -831,46 +831,50 @@
                 this.directionIndicator.currentY += (this.directionIndicator.targetY - this.directionIndicator.currentY) * smoothingFactor;
             }
 
-            move() {
-                if (isAnimating || this.isRespawning) return;
+    move() {
+        if (isAnimating || this.isRespawning) return;
 
-                // Käsittele kimpoaminen jos se on käynnissä
-                if (this.handleRepulsion()) {
-                    this.updateDirectionIndicator();
-                    return;
-                }
-                
-                // Vähennä törmäysjäähdytystä
-                if (this.collisionCooldown > 0) {
-                    this.collisionCooldown--;
-                }
-                
-                // Tallenna viimeinen liikesuunta
-                let moved = false;
-                if (keys['ArrowUp'] && this.y > 0) {
-                    this.y -= this.speed;
-                    this.lastMoveY = -1;
-                    moved = true;
-                }
-                if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
-                    this.y += this.speed;
-                    this.lastMoveY = 1;
-                    moved = true;
-                }
-                if (keys['ArrowLeft'] && this.x > 0) {
-                    this.x -= this.speed;
-                    this.lastMoveX = -1;
-                    moved = true;
-                }
-                if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
-                    this.x += this.speed;
-                    this.lastMoveX = 1;
-                    moved = true;
-                }
-                
-                // Päivitä suuntailmaisin aina
-                this.updateDirectionIndicator();
-            }
+        if (this.handleRepulsion()) {
+            this.updateDirectionIndicator();
+            return;
+        }
+
+        if (this.collisionCooldown > 0) {
+            this.collisionCooldown--;
+        }
+
+        let moved = false;
+        let moveX = 0;
+        let moveY = 0;
+
+        if (keys['ArrowUp'] && this.y > 0) {
+            moveY -= 1;
+            moved = true;
+        }
+        if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
+            moveY += 1;
+            moved = true;
+        }
+        if (keys['ArrowLeft'] && this.x > 0) {
+            moveX -= 1;
+            moved = true;
+        }
+        if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
+            moveX += 1;
+            moved = true;
+        }
+
+        if (moved) {
+            const length = Math.sqrt(moveX * moveX + moveY * moveY);
+            this.lastMoveX = moveX / length;
+            this.lastMoveY = moveY / length;
+
+            this.x += this.speed * this.lastMoveX;
+            this.y += this.speed * this.lastMoveY;
+
+            this.updateDirectionIndicator();
+        }
+    }
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
