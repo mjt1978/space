@@ -600,31 +600,36 @@
                 this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
                 this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-// Jos alus liikkui, päivitetään viimeisin suuntakulma
-if (this.velocityX !== 0 || this.velocityY !== 0) {
+// Päivitä rotaatio liikkeen suunnan mukaan
+const movementThreshold = 0.01;
+const moving = Math.abs(this.velocityX) > movementThreshold || Math.abs(this.velocityY) > movementThreshold;
+
+if (moving) {
+    // Päivitetään vain jos liike on merkittävää
     this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-    this.lastMovementRotation = this.targetRotation; // ← tallennetaan viimeisin liikesuunta
+    this.lastMovementRotation = this.targetRotation; // tallennetaan suunta
 }
 
-// Käytetään viimeisintä liikesuuntaa rotaatioon, vaikka nykyinen nopeus olisi nolla
-if (this.lastMovementRotation !== undefined) {
-    let angleDiff = this.lastMovementRotation - this.rotation;
-    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+// Käytetään joko nykyistä tai viimeistä liikesuuntaa
+const referenceRotation = moving ? this.targetRotation : this.lastMovementRotation ?? this.rotation;
 
-    // Lukitaan suoraan kulmaan, jos lähellä
-    if (Math.abs(angleDiff) < 0.01) {
-        this.rotation = this.lastMovementRotation;
-    } else {
-        this.rotation += angleDiff * this.rotationSpeed;
-    }
+// Laske lyhin reitti kohti kohderotaatiota
+let angleDiff = referenceRotation - this.rotation;
+if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    // Päivitä ammuksen suunta
-    this.direction = {
-        x: Math.cos(this.rotation),
-        y: Math.sin(this.rotation)
-    };
+// Lukitaan tarkasti, jos hyvin lähellä
+if (Math.abs(angleDiff) < 0.01) {
+    this.rotation = referenceRotation;
+} else {
+    this.rotation += angleDiff * this.rotationSpeed;
 }
+
+// Päivitä ammuksen suunta
+this.direction = {
+    x: Math.cos(this.rotation),
+    y: Math.sin(this.rotation)
+};
             }
 
             shoot() {
