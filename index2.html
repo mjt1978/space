@@ -600,24 +600,29 @@
                 this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
                 this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-                // Päivitä rotaatio liikkeen suunnan mukaan
-                if (this.velocityX !== 0 || this.velocityY !== 0) {
-                    this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-                    
-                    // Laske lyhin reitti kohti kohderotaatiota
-                    let angleDiff = this.targetRotation - this.rotation;
-                    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-                    
-                    // Interpoloi rotaatiota
-                    this.rotation += angleDiff * this.rotationSpeed;
-                    
-                    // Päivitä ammuksen suunta
-                    this.direction = {
-                        x: Math.cos(this.rotation),
-                        y: Math.sin(this.rotation)
-                    };
-                }
+// Päivitä rotaatio liikkeen suunnan mukaan
+if (this.velocityX !== 0 || this.velocityY !== 0) {
+    this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+
+    // Laske lyhin reitti kohti kohderotaatiota
+    let angleDiff = this.targetRotation - this.rotation;
+    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+    // Jos kulmaero on hyvin pieni, asetetaan rotaatio suoraan kohteeseen
+    if (Math.abs(angleDiff) < 0.01) {
+        this.rotation = this.targetRotation;
+    } else {
+        // Muuten interpoloidaan rotaatiota
+        this.rotation += angleDiff * this.rotationSpeed;
+    }
+
+    // Päivitä ammuksen suunta
+    this.direction = {
+        x: Math.cos(this.rotation),
+        y: Math.sin(this.rotation)
+    };
+}
             }
 
             shoot() {
