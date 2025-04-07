@@ -600,20 +600,22 @@
                 this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
                 this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-// Päivitä rotaatio liikkeen suunnan mukaan
+// Jos alus liikkui, päivitetään viimeisin suuntakulma
 if (this.velocityX !== 0 || this.velocityY !== 0) {
     this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+    this.lastMovementRotation = this.targetRotation; // ← tallennetaan viimeisin liikesuunta
+}
 
-    // Laske lyhin reitti kohti kohderotaatiota
-    let angleDiff = this.targetRotation - this.rotation;
+// Käytetään viimeisintä liikesuuntaa rotaatioon, vaikka nykyinen nopeus olisi nolla
+if (this.lastMovementRotation !== undefined) {
+    let angleDiff = this.lastMovementRotation - this.rotation;
     if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    // Jos kulmaero on hyvin pieni, asetetaan rotaatio suoraan kohteeseen
+    // Lukitaan suoraan kulmaan, jos lähellä
     if (Math.abs(angleDiff) < 0.01) {
-        this.rotation = this.targetRotation;
+        this.rotation = this.lastMovementRotation;
     } else {
-        // Muuten interpoloidaan rotaatiota
         this.rotation += angleDiff * this.rotationSpeed;
     }
 
