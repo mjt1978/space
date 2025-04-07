@@ -524,7 +524,13 @@
         class Player extends GameObject {
             constructor(image, x, y, width, height) {
                 super(image, x, y, width, height);
-                this.speed = GAME_CONFIG.playerSpeed * (window.innerWidth / 1920);
+                this.maxSpeed = GAME_CONFIG.playerSpeed * (window.innerWidth / 1920);
+                this.acceleration = this.maxSpeed * 0.1;
+                this.deceleration = this.maxSpeed * 0.15;
+                this.velocityX = 0;
+                this.velocityY = 0;
+                this.targetVelocityX = 0;
+                this.targetVelocityY = 0;
                 this.canShoot = true;
                 this.energy = GAME_CONFIG.playerEnergy;
                 this.lives = GAME_CONFIG.playerLives;
@@ -532,6 +538,9 @@
                 this.respawnCooldown = 0;
                 this.isRespawning = false;
                 this.direction = { x: 1, y: 0 }; // Ammuksen suunta
+                this.rotation = 0; // Aluksen rotaatio
+                this.targetRotation = 0; // Kohderotaatio
+                this.rotationSpeed = 0.1; // Rotaation nopeus
             }
 
             move() {
@@ -545,40 +554,69 @@
                     this.collisionCooldown--;
                 }
 
-                // Päivitä liike
-                let moved = false;
+                // Päivitä kohdenopeus näppäinten perusteella
+                this.targetVelocityX = 0;
+                this.targetVelocityY = 0;
                 
                 if (keys['ArrowUp'] && this.y > 0) {
-                    this.y -= this.speed;
-                    moved = true;
+                    this.targetVelocityY = -this.maxSpeed;
                 }
                 if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
-                    this.y += this.speed;
-                    moved = true;
+                    this.targetVelocityY = this.maxSpeed;
                 }
                 if (keys['ArrowLeft'] && this.x > 0) {
-                    this.x -= this.speed;
-                    moved = true;
+                    this.targetVelocityX = -this.maxSpeed;
                 }
                 if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
-                    this.x += this.speed;
-                    moved = true;
+                    this.targetVelocityX = this.maxSpeed;
                 }
 
-                // Päivitä ammuksen suunta jos liikuttiin
-                if (moved) {
-                    if (keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight']) {
-                        // Normalisoi suunta
-                        const dirX = (keys['ArrowRight'] ? 1 : 0) + (keys['ArrowLeft'] ? -1 : 0);
-                        const dirY = (keys['ArrowDown'] ? 1 : 0) + (keys['ArrowUp'] ? -1 : 0);
-                        const length = Math.sqrt(dirX * dirX + dirY * dirY);
-                        if (length > 0) {
-                            this.direction = {
-                                x: dirX / length,
-                                y: dirY / length
-                            };
-                        }
-                    }
+                // Interpoloi nykyistä nopeutta kohti kohdenopeutta
+                if (this.velocityX < this.targetVelocityX) {
+                    this.velocityX = Math.min(this.velocityX + this.acceleration, this.targetVelocityX);
+                } else if (this.velocityX > this.targetVelocityX) {
+                    this.velocityX = Math.max(this.velocityX - this.deceleration, this.targetVelocityX);
+                }
+
+                if (this.velocityY < this.targetVelocityY) {
+                    this.velocityY = Math.min(this.velocityY + this.acceleration, this.targetVelocityY);
+                } else if (this.velocityY > this.targetVelocityY) {
+                    this.velocityY = Math.max(this.velocityY - this.deceleration, this.targetVelocityY);
+                }
+
+                // Jos ei liikettä, hidasta vähitellen
+                if (this.targetVelocityX === 0 && Math.abs(this.velocityX) < 0.1) {
+                    this.velocityX = 0;
+                }
+                if (this.targetVelocityY === 0 && Math.abs(this.velocityY) < 0.1) {
+                    this.velocityY = 0;
+                }
+
+                // Päivitä sijainti
+                this.x += this.velocityX;
+                this.y += this.velocityY;
+
+                // Rajaa alus kentän sisälle
+                this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+                this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+
+                // Päivitä rotaatio liikkeen suunnan mukaan
+                if (this.velocityX !== 0 || this.velocityY !== 0) {
+                    this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+                    
+                    // Laske lyhin reitti kohti kohderotaatiota
+                    let angleDiff = this.targetRotation - this.rotation;
+                    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                    
+                    // Interpoloi rotaatiota
+                    this.rotation += angleDiff * this.rotationSpeed;
+                    
+                    // Päivitä ammuksen suunta
+                    this.direction = {
+                        x: Math.cos(this.rotation),
+                        y: Math.sin(this.rotation)
+                    };
                 }
             }
 
@@ -602,11 +640,42 @@
                         bulletSize.height,
                         bulletVelocityX,
                         bulletVelocityY,
-                        Math.atan2(this.direction.y, this.direction.x)
+                        this.rotation
                     ));
                     soundEffects.playerShoot.play();
                     this.canShoot = false;
                 }
+            }
+
+            draw() {
+                if (this.isRespawning) {
+                    this.respawnCooldown--;
+                    if (this.respawnCooldown <= 0) {
+                        this.isRespawning = false;
+                    }
+                    
+                    if (Math.floor(this.respawnCooldown / 10) % 2 === 0) {
+                        ctx.save();
+                        ctx.globalAlpha = 0.5;
+                        this.drawRotated();
+                        ctx.restore();
+                    }
+                } else {
+                    this.drawRotated();
+                }
+            }
+            
+            drawRotated() {
+                if (this.isDestroyed) return;
+                
+                ctx.save();
+                // Siirrä origo aluksen keskelle
+                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                // Kierrä alus
+                ctx.rotate(this.rotation);
+                // Piirrä alus keskipisteestä
+                ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+                ctx.restore();
             }
 
             takeDamage(damage) {
@@ -637,7 +706,13 @@
                     
                     this.x = canvas.width / 2 - this.width / 2;
                     this.y = canvas.height / 2 - this.height / 2;
+                    this.velocityX = 0;
+                    this.velocityY = 0;
+                    this.targetVelocityX = 0;
+                    this.targetVelocityY = 0;
                     this.direction = { x: 1, y: 0 };
+                    this.rotation = 0;
+                    this.targetRotation = 0;
                 }
             }
         }
