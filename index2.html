@@ -531,28 +531,7 @@
                 this.collisionCooldown = 0;
                 this.respawnCooldown = 0;
                 this.isRespawning = false;
-                this.currentDirection = { x: 1, y: 0 }; // Nykyinen liikesuunta
-                this.inputDirection = { x: 0, y: 0 };   // Näppäimistön syöte
-                this.directionIndicatorRadius = Math.max(width, height) / 2 + 5;
-            }
-
-            isMoving() {
-                return this.inputDirection.x !== 0 || this.inputDirection.y !== 0;
-            }
-
-            updateDirection() {
-                if (this.isMoving()) {
-                    // Päivitä suunta välittömästi syötteen mukaan
-                    this.currentDirection = {
-                        x: this.inputDirection.x,
-                        y: this.inputDirection.y
-                    };
-                    
-                    // Normalisoi suunta
-                    const length = Math.sqrt(this.currentDirection.x ** 2 + this.currentDirection.y ** 2);
-                    this.currentDirection.x /= length;
-                    this.currentDirection.y /= length;
-                }
+                this.direction = { x: 1, y: 0 }; // Ammuksen suunta
             }
 
             move() {
@@ -566,34 +545,41 @@
                     this.collisionCooldown--;
                 }
 
-                // Päivitä syöte
-                this.inputDirection = { x: 0, y: 0 };
+                // Päivitä liike
+                let moved = false;
                 
                 if (keys['ArrowUp'] && this.y > 0) {
-                    this.inputDirection.y -= 1;
+                    this.y -= this.speed;
+                    moved = true;
                 }
                 if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
-                    this.inputDirection.y += 1;
+                    this.y += this.speed;
+                    moved = true;
                 }
                 if (keys['ArrowLeft'] && this.x > 0) {
-                    this.inputDirection.x -= 1;
+                    this.x -= this.speed;
+                    moved = true;
                 }
                 if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
-                    this.inputDirection.x += 1;
+                    this.x += this.speed;
+                    moved = true;
                 }
 
-                // Päivitä liikesuunta
-                this.updateDirection();
-
-                // Liikuta alusta
-                if (this.isMoving()) {
-                    this.x += this.speed * this.currentDirection.x;
-                    this.y += this.speed * this.currentDirection.y;
+                // Päivitä ammuksen suunta jos liikuttiin
+                if (moved) {
+                    if (keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight']) {
+                        // Normalisoi suunta
+                        const dirX = (keys['ArrowRight'] ? 1 : 0) + (keys['ArrowLeft'] ? -1 : 0);
+                        const dirY = (keys['ArrowDown'] ? 1 : 0) + (keys['ArrowUp'] ? -1 : 0);
+                        const length = Math.sqrt(dirX * dirX + dirY * dirY);
+                        if (length > 0) {
+                            this.direction = {
+                                x: dirX / length,
+                                y: dirY / length
+                            };
+                        }
+                    }
                 }
-
-                // Rajaa alus kentän sisälle
-                this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-                this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
             }
 
             shoot() {
@@ -602,11 +588,11 @@
                     const centerX = this.x + this.width / 2;
                     const centerY = this.y + this.height / 2;
                     
-                    const bulletX = centerX + this.currentDirection.x * this.width/2;
-                    const bulletY = centerY + this.currentDirection.y * this.height/2;
+                    const bulletX = centerX + this.direction.x * this.width/2;
+                    const bulletY = centerY + this.direction.y * this.height/2;
                     
-                    const bulletVelocityX = this.currentDirection.x * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920);
-                    const bulletVelocityY = this.currentDirection.y * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920);
+                    const bulletVelocityX = this.direction.x * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920);
+                    const bulletVelocityY = this.direction.y * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920);
                     
                     bullets.push(new Bullet(
                         bulletImage, 
@@ -616,7 +602,7 @@
                         bulletSize.height,
                         bulletVelocityX,
                         bulletVelocityY,
-                        Math.atan2(this.currentDirection.y, this.currentDirection.x)
+                        Math.atan2(this.direction.y, this.direction.x)
                     ));
                     soundEffects.playerShoot.play();
                     this.canShoot = false;
@@ -651,46 +637,8 @@
                     
                     this.x = canvas.width / 2 - this.width / 2;
                     this.y = canvas.height / 2 - this.height / 2;
-                    this.currentDirection = { x: 1, y: 0 };
-                    this.inputDirection = { x: 0, y: 0 };
+                    this.direction = { x: 1, y: 0 };
                 }
-            }
-            
-            draw() {
-                if (this.isRespawning) {
-                    this.respawnCooldown--;
-                    if (this.respawnCooldown <= 0) {
-                        this.isRespawning = false;
-                    }
-                    
-                    if (Math.floor(this.respawnCooldown / 10) % 2 === 0) {
-                        ctx.save();
-                        ctx.globalAlpha = 0.5;
-                        super.draw();
-                        this.drawDirectionIndicator();
-                        ctx.restore();
-                    }
-                } else {
-                    super.draw();
-                    this.drawDirectionIndicator();
-                }
-            }
-            
-            drawDirectionIndicator() {
-                if (this.isRespawning) return;
-                
-                const centerX = this.x + this.width / 2;
-                const centerY = this.y + this.height / 2;
-                
-                const indicatorX = centerX + this.currentDirection.x * this.directionIndicatorRadius;
-                const indicatorY = centerY + this.currentDirection.y * this.directionIndicatorRadius;
-                
-                ctx.save();
-                ctx.beginPath();
-                ctx.arc(indicatorX, indicatorY, 5, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.fill();
-                ctx.restore();
             }
         }
 
@@ -1213,8 +1161,6 @@
             if (player) {
                 player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
                 player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
-                player.directionIndicator.currentX = player.x + player.width/2 + player.width/2;
-                player.directionIndicator.currentY = player.y + player.height/2;
             }
         }
 
