@@ -525,8 +525,8 @@
     constructor(image, x, y, width, height) {
         super(image, x, y, width, height);
         this.maxSpeed = GAME_CONFIG.playerSpeed * (window.innerWidth / 1920);
-        this.acceleration = this.maxSpeed * 0.1;
-        this.deceleration = this.maxSpeed * 0.15;
+        this.acceleration = this.maxSpeed * 0.15;  // Lisättiin kiihdytyksen voimakkuutta
+        this.deceleration = this.maxSpeed * 0.2;   // Lisättiin hidastuksen voimakkuutta
         this.velocityX = 0;
         this.velocityY = 0;
         this.targetVelocityX = 0;
@@ -537,97 +537,118 @@
         this.collisionCooldown = 0;
         this.respawnCooldown = 0;
         this.isRespawning = false;
-        this.direction = { x: 1, y: 0 }; // Ammuksen suunta
-        this.rotation = 0; // Aluksen rotaatio
-        this.targetRotation = 0; // Kohderotaatio
-        this.rotationSpeed = 0.2; // Rotaation nopeus
-        this.lastMovingRotation = 0; // Tallentaa viimeisen liikkeen suunnan
-        this.isStopping = false;
+        this.direction = { x: 1, y: 0 };
+        this.rotation = 0;
+        this.targetRotation = 0;
+        this.rotationSpeed = 0.15;  // Hidastettiin rotaation nopeutta
+        this.lastMovingRotation = 0;
+        this.isMoving = false;
+        this.lockRotation = false;  // Uusi lukitusmekanismi
     }
 
-move() {
-    if (isAnimating || this.isRespawning) return;
+    move() {
+        if (isAnimating || this.isRespawning) return;
 
-    if (this.handleRepulsion()) {
-        return;
-    }
+        if (this.handleRepulsion()) {
+            return;
+        }
 
-    if (this.collisionCooldown > 0) {
-        this.collisionCooldown--;
-    }
+        if (this.collisionCooldown > 0) {
+            this.collisionCooldown--;
+        }
 
-    // Päivitä kohdenopeus näppäinten perusteella
-    this.targetVelocityX = 0;
-    this.targetVelocityY = 0;
-    
-    if (keys['ArrowUp'] && this.y > 0) {
-        this.targetVelocityY = -this.maxSpeed;
-    }
-    if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
-        this.targetVelocityY = this.maxSpeed;
-    }
-    if (keys['ArrowLeft'] && this.x > 0) {
-        this.targetVelocityX = -this.maxSpeed;
-    }
-    if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
-        this.targetVelocityX = this.maxSpeed;
-    }
-
-    // Tarkista pysähtymistila
-    this.isStopping = this.targetVelocityX === 0 && this.targetVelocityY === 0;
-
-    // Interpoloi nykyistä nopeutta kohti kohdenopeutta
-    if (this.velocityX < this.targetVelocityX) {
-        this.velocityX = Math.min(this.velocityX + this.acceleration, this.targetVelocityX);
-    } else if (this.velocityX > this.targetVelocityX) {
-        this.velocityX = Math.max(this.velocityX - this.deceleration, this.targetVelocityX);
-    }
-
-    if (this.velocityY < this.targetVelocityY) {
-        this.velocityY = Math.min(this.velocityY + this.acceleration, this.targetVelocityY);
-    } else if (this.velocityY > this.targetVelocityY) {
-        this.velocityY = Math.max(this.velocityY - this.deceleration, this.targetVelocityY);
-    }
-
-    // Jos ei liikettä, hidasta vähitellen
-    if (this.targetVelocityX === 0 && Math.abs(this.velocityX) < 0.1) {
-        this.velocityX = 0;
-    }
-    if (this.targetVelocityY === 0 && Math.abs(this.velocityY) < 0.1) {
-        this.velocityY = 0;
-    }
-
-    // Päivitä sijainti
-    this.x += this.velocityX;
-    this.y += this.velocityY;
-
-    // Rajaa alus kentän sisälle
-    this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-    this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
-
-    // Päivitä rotaatio vain jos liikutaan
-    if (this.velocityX !== 0 || this.velocityY !== 0) {
-        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+        // Tallenna edellinen liiketila
+        const wasMoving = this.isMoving;
         
-        // Laske lyhin reitti kohti kohderotaatiota
-        let angleDiff = this.targetRotation - this.rotation;
-        if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-        if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        // Päivitä kohdenopeus näppäinten perusteella
+        this.targetVelocityX = 0;
+        this.targetVelocityY = 0;
         
-        // Interpoloi rotaatiota
-        this.rotation += angleDiff * this.rotationSpeed;
-        this.lastMovingRotation = this.rotation; // Päivitetään viimeinen liikesuunta
-        
-        // Päivitä ammuksen suunta
-        this.direction = {
-            x: Math.cos(this.rotation),
-            y: Math.sin(this.rotation)
-        };
-    } else if (this.isStopping) {
-        // Kun pysähdytään, käytetään viimeistä liikesuuntaa ilman interpolaatiota
-        this.rotation = this.lastMovingRotation;
+        if (keys['ArrowUp'] && this.y > 0) {
+            this.targetVelocityY = -this.maxSpeed;
+        }
+        if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
+            this.targetVelocityY = this.maxSpeed;
+        }
+        if (keys['ArrowLeft'] && this.x > 0) {
+            this.targetVelocityX = -this.maxSpeed;
+        }
+        if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
+            this.targetVelocityX = this.maxSpeed;
+        }
+
+        // Päivitä liiketila
+        this.isMoving = this.targetVelocityX !== 0 || this.targetVelocityY !== 0;
+
+        // Jos liiketila muuttui pysähtymisestä liikkeeseen, vapauta rotaation lukitus
+        if (!wasMoving && this.isMoving) {
+            this.lockRotation = false;
+        }
+
+        // Interpoloi nopeutta kohti kohdenopeutta erikseen X ja Y suunnissa
+        this.velocityX = this.approach(this.velocityX, this.targetVelocityX, this.isMoving ? this.acceleration : this.deceleration);
+        this.velocityY = this.approach(this.velocityY, this.targetVelocityY, this.isMoving ? this.acceleration : this.deceleration);
+
+        // Päivitä sijainti
+        this.x += this.velocityX;
+        this.y += this.velocityY;
+
+        // Rajaa alus kentän sisälle
+        this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+        this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+
+        // Rotaation hallinta
+        if (this.isMoving) {
+            // Laske uusi kohderotaatio liikesuunnan mukaan
+            const newTargetRotation = Math.atan2(this.velocityY, this.velocityX);
+            
+            // Laske kulmaero nykyisen ja uuden rotaation välillä
+            let angleDiff = newTargetRotation - this.targetRotation;
+            
+            // Normalisoi kulmaero lyhimpää reittiä pitkin
+            if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+            if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+            
+            // Jos liikesuunta muuttui merkittävästi, päivitä kohderotaatio
+            if (Math.abs(angleDiff) > Math.PI/4) {
+                this.targetRotation = newTargetRotation;
+            }
+            
+            // Interpoloi rotaatiota kohti kohderotaatiota
+            this.rotation = this.approachAngle(this.rotation, this.targetRotation, this.rotationSpeed);
+            this.lastMovingRotation = this.rotation;
+            
+            // Päivitä ammuksen suunta
+            this.direction = {
+                x: Math.cos(this.rotation),
+                y: Math.sin(this.rotation)
+            };
+        } else if (!this.lockRotation) {
+            // Kun pysähdytään ensimmäistä kertaa, lukitse rotaatio
+            this.lockRotation = true;
+        }
     }
-}
+
+    // Apufunktio nopeuden interpolointiin
+    approach(current, target, step) {
+        if (current < target) {
+            return Math.min(current + step, target);
+        } else if (current > target) {
+            return Math.max(current - step, target);
+        }
+        return target;
+    }
+
+    // Apufunktio rotaation interpolointiin
+    approachAngle(current, target, step) {
+        let diff = target - current;
+        if (diff > Math.PI) diff -= Math.PI * 2;
+        if (diff < -Math.PI) diff += Math.PI * 2;
+        
+        if (diff > step) return current + step;
+        if (diff < -step) return current - step;
+        return target;
+    }
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
