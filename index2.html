@@ -1110,8 +1110,6 @@ move() {
             return distanceSquared <= 1;
         }
 
-        let lastDirection = { x: 0, y: 0 };
-
         function update() {
             if (!gameRunning) return;
 
@@ -1132,29 +1130,6 @@ move() {
                 // Yritä palauttaa peli vakaan tilaan
                 resetGameState();
             }
-
-    if (keys["ArrowUp"] && ship.y > 0) {
-        ship.y -= ship.speed;
-        lastDirection = { x: 0, y: -1 };
-    }
-    if (keys["ArrowDown"] && ship.y + ship.height < canvas.height) {
-        ship.y += ship.speed;
-        lastDirection = { x: 0, y: 1 };
-    }
-    if (keys["ArrowLeft"] && ship.x > 0) {
-        ship.x -= ship.speed;
-        lastDirection = { x: -1, y: 0 };
-    }
-    if (keys["ArrowRight"] && ship.x + ship.width < canvas.width) {
-        ship.x += ship.speed;
-        lastDirection = { x: 1, y: 0 };
-    }
-    
-    // Maintain direction when keys are released
-    if (!keys["ArrowUp"] && !keys["ArrowDown"] && !keys["ArrowLeft"] && !keys["ArrowRight"]) {
-        ship.x += lastDirection.x * ship.speed;
-        ship.y += lastDirection.y * ship.speed;
-    }
 
             animationFrameId = requestAnimationFrame(update);
         }
