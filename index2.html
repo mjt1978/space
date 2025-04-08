@@ -546,16 +546,19 @@
 move() {
     if (isAnimating || this.isRespawning) return;
 
+    // Hylkimisreaktio (esim. törmäyksissä)
     if (this.handleRepulsion()) return;
 
+    // Törmäysten jäähdytys
     if (this.collisionCooldown > 0) {
         this.collisionCooldown--;
     }
 
-    // Asetetaan kohdenopeudet
+    // Nollataan kohdenopeudet
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
+    // Ohjausnäppäimet
     if (keys['ArrowUp'] && this.y > 0) {
         this.targetVelocityY = -this.maxSpeed;
     }
@@ -569,57 +572,57 @@ move() {
         this.targetVelocityX = this.maxSpeed;
     }
 
-    // Kiihdytys / hidastus
+    // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
     this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
     this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
-    // Pysäytetään, jos lähes nolla
-    if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) this.velocityX = 0;
-    if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) this.velocityY = 0;
+    // Nollataan pienet nopeudet (kitka)
+    if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
+        this.velocityX = 0;
+    }
+    if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
+        this.velocityY = 0;
+    }
 
     // Päivitä sijainti
     this.x += this.velocityX;
     this.y += this.velocityY;
 
-    // Rajaa kenttään
+    // Kentän rajat
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    // Liikkuuko alus?
+    // Liikesuunnan tarkastus
     const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
     if (moving) {
-        // Onko liike oikeasti diagonaalista (tai selkeästi kulmasuuntaista)
-        const diagonaali = Math.abs(this.velocityX) > 0.5 && Math.abs(this.velocityY) > 0.5;
-
-        if (diagonaali || !this.lastRotation) {
-            // Päivitä suunnan vain jos liike ei ole epämääräinen
-            this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-            this.lastRotation = this.targetRotation;
-        }
+        // Lasketaan suunta ja tallennetaan
+        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+        this.lastRotation = this.targetRotation;
     }
 
-    // Käytetään viimeistä validia suuntaa
+    // Käytetään viimeisintä liikettä, jos ei liiku
     const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
 
-    // Lyhin kulmaero
+    // Erotus ja lyhin suunta
     let angleDiff = desiredRotation - this.rotation;
     if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    // Lukitaan suunta, jos tarpeeksi lähellä
+    // Lukitaan suunta jos hyvin lähellä
     if (Math.abs(angleDiff) < 0.01) {
         this.rotation = desiredRotation;
     } else {
         this.rotation += angleDiff * this.rotationSpeed;
     }
 
-    // Suunta ampumista varten
+    // Päivitä ampumissuunta
     this.direction = {
         x: Math.cos(this.rotation),
         y: Math.sin(this.rotation)
     };
 }
+
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
