@@ -554,46 +554,44 @@
             this.collisionCooldown--;
         }
 
-        // Tallennetaan edellinen liiketila
-        const wasMoving = this.isMoving;
-        const prevVelocityX = this.velocityX;
-        const prevVelocityY = this.velocityY;
+        // Tallennetaan edellinen nopeus
+        const prevSpeed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
 
         // Nollataan kohdenopeudet
         this.targetVelocityX = 0;
         this.targetVelocityY = 0;
 
         // Ohjausnäppäimet
-        let movingX = false;
-        let movingY = false;
-        
         if (keys['ArrowUp'] && this.y > 0) {
             this.targetVelocityY = -this.maxSpeed;
-            movingY = true;
         }
         if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
             this.targetVelocityY = this.maxSpeed;
-            movingY = true;
         }
         if (keys['ArrowLeft'] && this.x > 0) {
             this.targetVelocityX = -this.maxSpeed;
-            movingX = true;
         }
         if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
             this.targetVelocityX = this.maxSpeed;
-            movingX = true;
         }
-
-        // Päivitä liiketila
-        this.isMoving = movingX || movingY;
 
         // Interpoloi nopeus kohti kohdenopeutta
         this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
         this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
-        // Nollataan pienet nopeudet (kitka)
-        if (Math.abs(this.velocityX) < 0.1) this.velocityX = 0;
-        if (Math.abs(this.velocityY) < 0.1) this.velocityY = 0;
+        // Nykyinen nopeus
+        const currentSpeed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
+
+        // Kitka (hidastus kun ei näppäimiä painettu)
+        if (this.targetVelocityX === 0 && this.targetVelocityY === 0) {
+            const friction = this.deceleration * (currentSpeed / this.maxSpeed);
+            this.velocityX *= (1 - friction);
+            this.velocityY *= (1 - friction);
+            
+            // Nollaa liian pienet nopeudet
+            if (Math.abs(this.velocityX) < 0.01) this.velocityX = 0;
+            if (Math.abs(this.velocityY) < 0.01) this.velocityY = 0;
+        }
 
         // Päivitä sijainti
         this.x += this.velocityX;
@@ -603,43 +601,34 @@
         this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
         this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-        // Päivitä rotaatio vain jos:
-        // 1. Liikutaan aktiivisesti (nopeus yli kynnyksen) TAI
-        // 2. Liiketila on muuttunut (alkoi/pysähtyi liikkumaan)
-        const speed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
-        const speedThreshold = this.maxSpeed * 0.2;
-        
-        if (speed > speedThreshold || this.isMoving !== wasMoving) {
-            this.updateRotation(prevVelocityX, prevVelocityY, speed);
-        }
+        // Päivitä rotaatio
+        this.updateRotation(prevSpeed, currentSpeed);
     }
 
-    updateRotation(prevVelX, prevVelY, currentSpeed) {
-        // Jos liikutaan riittävällä nopeudella, päivitetään suunta
-        if (currentSpeed > this.maxSpeed * 0.1) {
+    updateRotation(prevSpeed, currentSpeed) {
+        // Jos liikkuu (nykyinen nopeus > kynnys)
+        if (currentSpeed > this.maxSpeed * 0.05) {
+            // Päivitä kohderotaatio
             this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-            this.lastRotation = this.targetRotation;
-        }
-
-        // Interpoloi rotaatio kohti kohderotaatiota
-        let angleDiff = this.targetRotation - this.rotation;
-        
-        // Normalisoi kulmaero (-PI to PI)
-        if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-        if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-
-        // Dynaaminen interpolointinopeus nopeuden mukaan
-        const speedRatio = Math.min(1, currentSpeed / this.maxSpeed);
-        const dynamicRotationSpeed = this.rotationSpeed * (0.5 + speedRatio * 0.5);
-
-        // Päivitä rotaatio
-        if (Math.abs(angleDiff) > 0.001) {
-            this.rotation += angleDiff * dynamicRotationSpeed;
             
-            // Normalisoi rotaatio
-            if (this.rotation > Math.PI) this.rotation -= Math.PI * 2;
-            if (this.rotation < -Math.PI) this.rotation += Math.PI * 2;
-        } else {
+            // Jos liike alkoi juuri nyt, aseta rotaatio suoraan
+            if (prevSpeed <= this.maxSpeed * 0.05) {
+                this.rotation = this.targetRotation;
+            } else {
+                // Muuten interpoloi rotaatio
+                let angleDiff = this.targetRotation - this.rotation;
+                
+                // Normalisoi kulmaero (-PI to PI)
+                if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                
+                // Interpoloi
+                this.rotation += angleDiff * this.rotationSpeed;
+            }
+        }
+        // Jos pysähtyi juuri nyt (nykyinen nopeus <= kynnys, mutta edellinen > kynnys)
+        else if (prevSpeed > this.maxSpeed * 0.05) {
+            // Lukitse rotaatio viimeiseen liikesuuntaan
             this.rotation = this.targetRotation;
         }
 
