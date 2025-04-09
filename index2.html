@@ -644,29 +644,6 @@ updateRotation() {
     };
 }
 
-        // Interpoloi rotaatio kohti kohderotaatiota
-        let angleDiff = this.targetRotation - this.rotation;
-        
-        // Normalisoi kulmaero (-PI..PI)
-        if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-        if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-        
-        // Jos hyvin lähellä, aseta suoraan kohderotaatioon
-        if (Math.abs(angleDiff) < 0.01) {
-            this.rotation = this.targetRotation;
-        } else {
-            // Muuten interpoloi
-            this.rotation += angleDiff * this.rotationSpeed;
-        }
-
-        // Päivitä ampumissuunta aina nykyisen rotaation mukaan
-        this.direction = {
-            x: Math.cos(this.rotation),
-            y: Math.sin(this.rotation)
-        };
-    }
-
-
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
                     const bulletSize = calculateSize({width: 20, height: 10});
