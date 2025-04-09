@@ -541,7 +541,6 @@
             this.rotation = 0; // Aluksen rotaatio
             this.targetRotation = 0; // Kohderotaatio
             this.rotationSpeed = 0.2; // Rotaation nopeus
-            this.lastDirection = { x: 1, y: 0 };
         }
 
 move() {
@@ -597,12 +596,9 @@ move() {
     const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
     if (moving) {
-            // Päivitä suunta ja tallenna viimeisin
-            this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-            this.lastDirection = { 
-                x: Math.cos(this.targetRotation),
-                y: Math.sin(this.targetRotation)
-            };
+        // Lasketaan suunta ja tallennetaan
+        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+        this.lastRotation = this.targetRotation;
     }
 
     // Käytetään viimeisintä liikettä, jos ei liiku
@@ -621,10 +617,10 @@ move() {
     }
 
     // Päivitä ampumissuunta
-        this.direction = moving ? {
-            x: Math.cos(this.targetRotation),
-            y: Math.sin(this.targetRotation)
-        } : this.lastDirection;
+    this.direction = {
+        x: Math.cos(this.rotation),
+        y: Math.sin(this.rotation)
+    };
 }
 
 
