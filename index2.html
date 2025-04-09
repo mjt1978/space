@@ -224,9 +224,6 @@
             <h1>Taso Suoritettu!</h1>
             <button onclick="nextLevel()">Seuraava taso</button>
         </div>
-        <div id="directionDisplay" style="position: absolute; top: 7vh; left: 1vw; color: white; font-size: 16px; background-color: rgba(0,0,0,0.5); padding: 5px; border-radius: 5px;">
-        Suunta: 0°
-        </div>
     </div>
 
     <script>
@@ -601,8 +598,6 @@ move() {
     if (moving) {
         // Lasketaan suunta ja tallennetaan
         this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-        console.log("Rotation:", this.rotation * 180 / Math.PI);
-        console.log("Direction from velocity:", Math.atan2(this.velocityY, this.velocityX) * 180 / Math.PI);
         this.lastRotation = this.targetRotation;
     }
 
@@ -626,9 +621,6 @@ move() {
         x: Math.cos(this.rotation),
         y: Math.sin(this.rotation)
     };
-
-    // Päivitä suunnan näyttö
-    updateDirectionDisplay(this.rotation);
 }
 
 
@@ -1001,11 +993,6 @@ move() {
             }
         }
 
-        function updateDirectionDisplay(angle) {
-        const degrees = Math.round((angle * 180 / Math.PI + 360) % 360);
-        document.getElementById('directionDisplay').textContent = `Suunta: ${degrees}°`;
-        }
-
         // Luo uusi meteoriitti
         function spawnMeteor() {
             const sizeValue = Math.floor(Math.random() * (GAME_CONFIG.meteor.maxSize - GAME_CONFIG.meteor.minSize + 1)) + GAME_CONFIG.meteor.minSize;
@@ -1025,33 +1012,32 @@ move() {
         }
 
         // Tason alustus
-function initializeLevel(levelId) {
-    const level = LEVELS.find(l => l.id === levelId);
-    if (!level) return;
+        function initializeLevel(levelId) {
+            const level = LEVELS.find(l => l.id === levelId);
+            if (!level) return;
 
-    currentLevel = levelId;
-    currentWave = 0;
-    levelCompleted = false;
-    isAnimating = false;
-    meteors = [];
-    meteorSpawnCounter = 0;
-    nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
+            currentLevel = levelId;
+            currentWave = 0;
+            levelCompleted = false;
+            isAnimating = false;
+            meteors = [];
+            meteorSpawnCounter = 0;
+            nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
 
-    const playerSize = calculateSize(GAME_CONFIG.playerSize);
-    player = new Player(
-        playerImage, 
-        canvas.width / 2 - playerSize.width / 2,
-        canvas.height / 2 - playerSize.height / 2, 
-        playerSize.width, 
-        playerSize.height
-    );
-    updateEnergyBar();
-    updateLives();
-    updateWaveInfo();
-    updateDirectionDisplay(player.rotation); // Lisätty tämä rivi
+            const playerSize = calculateSize(GAME_CONFIG.playerSize);
+            player = new Player(
+                playerImage, 
+                canvas.width / 2 - playerSize.width / 2,
+                canvas.height / 2 - playerSize.height / 2, 
+                playerSize.width, 
+                playerSize.height
+            );
+            updateEnergyBar();
+            updateLives();
+            updateWaveInfo();
 
-    startNextWave();
-}
+            startNextWave();
+        }
 
         // Aloita seuraava aalto
         function startNextWave() {
@@ -1359,24 +1345,6 @@ function initializeLevel(levelId) {
         }
 
         // Alustus
-let lastKeyupTimes = {};
-
-document.addEventListener("keyup", (e) => {
-    const now = performance.now(); // tarkka aika millisekunneissa
-
-    if (e.key === "ArrowUp" || e.key === "ArrowRight") {
-        lastKeyupTimes[e.key] = now;
-
-        const otherKey = e.key === "ArrowUp" ? "ArrowRight" : "ArrowUp";
-
-        if (lastKeyupTimes[otherKey]) {
-            const delta = Math.abs(now - lastKeyupTimes[otherKey]);
-            console.log(`Aikaero ${e.key} ja ${otherKey} vapautuksissa: ${delta.toFixed(2)} ms`);
-        }
-    }
-});
-
-        
         window.addEventListener('load', () => {
             initializeLevelButtons();
             enableAudio();
