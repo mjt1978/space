@@ -608,16 +608,41 @@
         this.updateRotation();
     }
 
-    updateRotation() {
-        // Jos liikettä, päivitä suunta
-        if (this.isMoving) {
-            // Käytä nopeusvektoria suunnan määrittämiseen
-            const speed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
-            if (speed > 0.1) { // Vain jos liikkuu merkittävästi
-                this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-                this.lastRotation = this.targetRotation;
-            }
+updateRotation() {
+    // Jos liikettä, päivitä suunta
+    if (this.isMoving) {
+        // Käytä nopeusvektoria suunnan määrittämiseen
+        const speed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
+        if (speed > 0.1) { // Vain jos liikkuu merkittävästi
+            this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+            this.lastRotation = this.targetRotation; // Päivitetään viimeisin aktiivinen suunta
         }
+    } else {
+        // Kun ei liikettä, palauta viimeisin aktiivinen suunta
+        this.targetRotation = this.lastRotation;
+    }
+
+    // Interpoloi rotaatio kohti kohderotaatiota
+    let angleDiff = this.targetRotation - this.rotation;
+    
+    // Normalisoi kulmaero (-PI..PI)
+    if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+    if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+    
+    // Jos hyvin lähellä, aseta suoraan kohderotaatioon
+    if (Math.abs(angleDiff) < 0.01) {
+        this.rotation = this.targetRotation;
+    } else {
+        // Muuten interpoloi
+        this.rotation += angleDiff * this.rotationSpeed;
+    }
+
+    // Päivitä ampumissuunta aina nykyisen rotaation mukaan
+    this.direction = {
+        x: Math.cos(this.rotation),
+        y: Math.sin(this.rotation)
+    };
+}
 
         // Interpoloi rotaatio kohti kohderotaatiota
         let angleDiff = this.targetRotation - this.rotation;
