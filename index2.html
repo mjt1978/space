@@ -599,11 +599,10 @@ move() {
     const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
     if (moving) {
-    // Tarkistetaan ettei suunta vaihdu vaakaan/pystyyn aivan liikkeen lopussa
-    if (Math.abs(this.velocityX) > 0.01 && Math.abs(this.velocityY) > 0.01) {
+        // Lasketaan suunta ja tallennetaan
         this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+        console.log("New rotation:", this.targetRotation * 180 / Math.PI);
         this.lastRotation = this.targetRotation;
-    }
     }
 
     // Käytetään viimeisintä liikettä, jos ei liiku
