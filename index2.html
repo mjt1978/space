@@ -1359,6 +1359,24 @@ function initializeLevel(levelId) {
         }
 
         // Alustus
+let lastKeyupTimes = {};
+
+document.addEventListener("keyup", (e) => {
+    const now = performance.now(); // tarkka aika millisekunneissa
+
+    if (e.key === "ArrowUp" || e.key === "ArrowRight") {
+        lastKeyupTimes[e.key] = now;
+
+        const otherKey = e.key === "ArrowUp" ? "ArrowRight" : "ArrowUp";
+
+        if (lastKeyupTimes[otherKey]) {
+            const delta = Math.abs(now - lastKeyupTimes[otherKey]);
+            console.log(`Aikaero ${e.key} ja ${otherKey} vapautuksissa: ${delta.toFixed(2)} ms`);
+        }
+    }
+});
+
+        
         window.addEventListener('load', () => {
             initializeLevelButtons();
             enableAudio();
