@@ -601,7 +601,8 @@ move() {
     if (moving) {
         // Lasketaan suunta ja tallennetaan
         this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-        console.log("New rotation:", this.targetRotation * 180 / Math.PI);
+        console.log("Rotation:", this.rotation * 180 / Math.PI);
+        console.log("Direction from velocity:", Math.atan2(this.velocityY, this.velocityX) * 180 / Math.PI);
         this.lastRotation = this.targetRotation;
     }
 
