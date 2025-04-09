@@ -522,127 +522,107 @@
         }
 
         class Player extends GameObject {
-    constructor(image, x, y, width, height) {
-        super(image, x, y, width, height);
-        this.maxSpeed = GAME_CONFIG.playerSpeed * (window.innerWidth / 1920);
-        this.acceleration = this.maxSpeed * 0.1;
-        this.deceleration = this.maxSpeed * 0.15;
-        this.velocityX = 0;
-        this.velocityY = 0;
-        this.targetVelocityX = 0;
-        this.targetVelocityY = 0;
-        this.canShoot = true;
-        this.energy = GAME_CONFIG.playerEnergy;
-        this.lives = GAME_CONFIG.playerLives;
-        this.collisionCooldown = 0;
-        this.respawnCooldown = 0;
-        this.isRespawning = false;
-        this.direction = { x: 1, y: 0 }; // Ammuksen suunta
-        this.rotation = 0; // Aluksen rotaatio
-        this.targetRotation = 0; // Kohderotaatio
-        this.rotationSpeed = 0.2; // Rotaation nopeus
-        this.lastRotation = 0; // Lisätty: Viimeisin rotaatio
-        this.isMoving = false; // Lisätty: Liikkuuko alus
-    }
-
-    move() {
-        if (isAnimating || this.isRespawning) return;
-
-        // Hylkimisreaktio (esim. törmäyksissä)
-        if (this.handleRepulsion()) return;
-
-        // Törmäysten jäähdytys
-        if (this.collisionCooldown > 0) {
-            this.collisionCooldown--;
-        }
-
-        // Nollataan kohdenopeudet
-        this.targetVelocityX = 0;
-        this.targetVelocityY = 0;
-
-        // Ohjausnäppäimet
-        let movingX = false;
-        let movingY = false;
-        
-        if (keys['ArrowUp'] && this.y > 0) {
-            this.targetVelocityY = -this.maxSpeed;
-            movingY = true;
-        }
-        if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
-            this.targetVelocityY = this.maxSpeed;
-            movingY = true;
-        }
-        if (keys['ArrowLeft'] && this.x > 0) {
-            this.targetVelocityX = -this.maxSpeed;
-            movingX = true;
-        }
-        if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
-            this.targetVelocityX = this.maxSpeed;
-            movingX = true;
-        }
-
-        // Päivitä liiketila
-        this.isMoving = movingX || movingY;
-
-        // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
-        this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
-        this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
-
-        // Nollataan pienet nopeudet (kitka)
-        if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
+        constructor(image, x, y, width, height) {
+            super(image, x, y, width, height);
+            this.maxSpeed = GAME_CONFIG.playerSpeed * (window.innerWidth / 1920);
+            this.acceleration = this.maxSpeed * 0.1;
+            this.deceleration = this.maxSpeed * 0.15;
             this.velocityX = 0;
-        }
-        if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
             this.velocityY = 0;
+            this.targetVelocityX = 0;
+            this.targetVelocityY = 0;
+            this.canShoot = true;
+            this.energy = GAME_CONFIG.playerEnergy;
+            this.lives = GAME_CONFIG.playerLives;
+            this.collisionCooldown = 0;
+            this.respawnCooldown = 0;
+            this.isRespawning = false;
+            this.direction = { x: 1, y: 0 }; // Ammuksen suunta
+            this.rotation = 0; // Aluksen rotaatio
+            this.targetRotation = 0; // Kohderotaatio
+            this.rotationSpeed = 0.2; // Rotaation nopeus
         }
 
-        // Päivitä sijainti
-        this.x += this.velocityX;
-        this.y += this.velocityY;
+move() {
+    if (isAnimating || this.isRespawning) return;
 
-        // Kentän rajat
-        this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-        this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+    // Hylkimisreaktio (esim. törmäyksissä)
+    if (this.handleRepulsion()) return;
 
-        // Päivitä rotaatio
-        this.updateRotation();
+    // Törmäysten jäähdytys
+    if (this.collisionCooldown > 0) {
+        this.collisionCooldown--;
     }
 
-updateRotation() {
-    // Jos liikettä, päivitä suunta
-    if (this.isMoving) {
-        // Käytä nopeusvektoria suunnan määrittämiseen
-        const speed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
-        if (speed > 0.1) { // Vain jos liikkuu merkittävästi
-            this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-            this.lastRotation = this.targetRotation; // Päivitetään viimeisin aktiivinen suunta
-        }
-    } else {
-        // Kun ei liikettä, palauta viimeisin aktiivinen suunta
-        this.targetRotation = this.lastRotation;
+    // Nollataan kohdenopeudet
+    this.targetVelocityX = 0;
+    this.targetVelocityY = 0;
+
+    // Ohjausnäppäimet
+    if (keys['ArrowUp'] && this.y > 0) {
+        this.targetVelocityY = -this.maxSpeed;
+    }
+    if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
+        this.targetVelocityY = this.maxSpeed;
+    }
+    if (keys['ArrowLeft'] && this.x > 0) {
+        this.targetVelocityX = -this.maxSpeed;
+    }
+    if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
+        this.targetVelocityX = this.maxSpeed;
     }
 
-    // Interpoloi rotaatio kohti kohderotaatiota
-    let angleDiff = this.targetRotation - this.rotation;
-    
-    // Normalisoi kulmaero (-PI..PI)
-    if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-    if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-    
-    // Jos hyvin lähellä, aseta suoraan kohderotaatioon
+    // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
+    this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
+    this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
+
+    // Nollataan pienet nopeudet (kitka)
+    if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
+        this.velocityX = 0;
+    }
+    if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
+        this.velocityY = 0;
+    }
+
+    // Päivitä sijainti
+    this.x += this.velocityX;
+    this.y += this.velocityY;
+
+    // Kentän rajat
+    this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+    this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+
+    // Liikesuunnan tarkastus
+    const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+
+    if (moving) {
+        // Lasketaan suunta ja tallennetaan
+        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+        this.lastRotation = this.targetRotation;
+    }
+
+    // Käytetään viimeisintä liikettä, jos ei liiku
+    const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
+
+    // Erotus ja lyhin suunta
+    let angleDiff = desiredRotation - this.rotation;
+    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+    // Lukitaan suunta jos hyvin lähellä
     if (Math.abs(angleDiff) < 0.01) {
-        this.rotation = this.targetRotation;
+        this.rotation = desiredRotation;
     } else {
-        // Muuten interpoloi
         this.rotation += angleDiff * this.rotationSpeed;
     }
 
-    // Päivitä ampumissuunta aina nykyisen rotaation mukaan
+    // Päivitä ampumissuunta
     this.direction = {
         x: Math.cos(this.rotation),
         y: Math.sin(this.rotation)
     };
 }
+
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
