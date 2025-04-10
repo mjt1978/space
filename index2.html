@@ -596,23 +596,29 @@ move() {
 const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
 if (moving) {
-    // Lasketaan suunta
     const angle = Math.atan2(this.velocityY, this.velocityX);
     this.targetRotation = angle;
     this.lastRotation = angle;
 
-    // Tarkistetaan onko liike diagonaalinen (nopeutta molemmilla akseleilla)
-    const minDiagonalSpeed = 0.5; // Voit säätää tämän mukaan
-    if (Math.abs(this.velocityX) > minDiagonalSpeed && Math.abs(this.velocityY) > minDiagonalSpeed) {
+    // Tallenna eri suunnat erikseen
+    const absVX = Math.abs(this.velocityX);
+    const absVY = Math.abs(this.velocityY);
+    const minSpeed = 0.5;
+
+    if (absVX > minSpeed && absVY > minSpeed) {
         this.lastDiagonalRotation = angle;
+        this.lastAxis = "diagonal";
+    } else if (absVX > minSpeed) {
+        this.lastAxis = "horizontal";
+        this.lastHorizontalRotation = angle;
+    } else if (absVY > minSpeed) {
+        this.lastAxis = "vertical";
+        this.lastVerticalRotation = angle;
     }
 } else {
-    // Ei liiku: lukitaan suunta jos viimeinen liike oli diagonaalinen
-    if (this.lastDiagonalRotation !== undefined) {
-        // Lasketaan kulma asteina [0, 360)
+    // Ei liikettä — lukitaan viimeiseen liikesuuntaan
+    if (this.lastAxis === "diagonal" && this.lastDiagonalRotation !== undefined) {
         const angleDeg = (this.lastDiagonalRotation * 180 / Math.PI + 360) % 360;
-
-        // Tarkistetaan lähin diagonaalikulma
         const diagonals = [45, 135, 225, 315];
         let closest = diagonals[0];
         let minDiff = Math.abs(angleDeg - diagonals[0]);
@@ -624,9 +630,15 @@ if (moving) {
                 closest = diag;
             }
         }
-
-        // Lukitaan lähimpään diagonaaliin
         this.lastRotation = closest * Math.PI / 180;
+
+    } else if (this.lastAxis === "horizontal" && this.lastHorizontalRotation !== undefined) {
+        const vx = Math.cos(this.lastHorizontalRotation);
+        this.lastRotation = vx >= 0 ? 0 : Math.PI; // Oikealle vai vasemmalle
+
+    } else if (this.lastAxis === "vertical" && this.lastVerticalRotation !== undefined) {
+        const vy = Math.sin(this.lastVerticalRotation);
+        this.lastRotation = vy >= 0 ? Math.PI / 2 : 3 * Math.PI / 2; // Alas vai ylös
     }
 }
 
