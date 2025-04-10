@@ -594,7 +594,14 @@ move() {
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
     // Liikesuunnan tarkastus
-    const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+const velMagnitude = Math.hypot(this.velocityX, this.velocityY);
+const angle = Math.atan2(this.velocityY, this.velocityX);
+// Vain jos liike on "vakaata" ja "tasapainoista"
+const isStableMotion = velMagnitude > 1 && Math.abs(Math.abs(this.velocityX) - Math.abs(this.velocityY)) < 0.5;
+if (isStableMotion) {
+    this.stableRotation = angle;
+}
 
 // Päivitä suunta vain jos liike on riittävä
 if (Math.hypot(this.velocityX, this.velocityY) > 1) {
@@ -602,8 +609,8 @@ if (Math.hypot(this.velocityX, this.velocityY) > 1) {
     this.stableRotation = this.targetRotation;
 }
 
-// Käytetään vakaata suuntaa pysähdyksissä
-const desiredRotation = moving ? this.targetRotation : this.stableRotation;
+// Käytetään vakaata suuntaa jos ei liiku
+const desiredRotation = moving ? angle : this.stableRotation;
 
     // Erotus ja lyhin suunta
     let angleDiff = desiredRotation - this.rotation;
