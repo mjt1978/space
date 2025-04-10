@@ -558,7 +558,10 @@ move() {
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
-    // Ohjausnäppäimet ja viimeisin aktiivinen suunta kullakin akselilla
+    // Liikkuuko pelaaja tällä framella
+    let wasMoving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+
+    // Ohjausnäppäimet
     if (keys['ArrowUp'] && this.y > 0) {
         this.targetVelocityY = -this.maxSpeed;
         this.lastVerticalDirection = -1; // Ylös
@@ -588,6 +591,15 @@ move() {
         this.velocityY = 0;
     }
 
+    // Tarkista pysähtyikö pelaaja
+    const isMoving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+    
+    // Jos pelaaja pysähtyi juuri nyt, nollataan suuntamuistit
+    if (wasMoving && !isMoving) {
+        this.lastHorizontalDirection = undefined;
+        this.lastVerticalDirection = undefined;
+    }
+
     // Päivitä sijainti
     this.x += this.velocityX;
     this.y += this.velocityY;
@@ -597,10 +609,8 @@ move() {
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
     // Liikesuunnan tarkastus
-    const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
-
     let desiredRotation;
-    if (moving) {
+    if (isMoving) {
         // Lasketaan suunta nykyisen nopeuden perusteella
         desiredRotation = Math.atan2(this.velocityY, this.velocityX);
         this.lastRotation = desiredRotation;
@@ -630,7 +640,6 @@ move() {
         y: Math.sin(this.rotation)
     };
 }
-
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
                     const bulletSize = calculateSize({width: 20, height: 10});
