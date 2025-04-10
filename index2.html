@@ -1,76 +1,4 @@
-move() {
-    if (isAnimating || this.isRespawning) return;
-
-    // Hylkimisreaktio (esim. törmäyksissä)
-    if (this.handleRepulsion()) return;
-
-    // Törmäysten jäähdytys
-    if (this.collisionCooldown > 0) {
-        this.collisionCooldown--;
-    }
-
-    // Lasketaan kohdenopeudet (alustavasti nolla)
-    this.targetVelocityX = 0;
-    this.targetVelocityY = 0;
-
-    // Lasketaan liikesuunta: määritellään nuolien painallukset
-    let directionX = 0;
-    let directionY = 0;
-    
-    // Päivitetään suunta ja nopeus nuolien mukaan
-    if (keys['ArrowUp'] && this.y > 0) {
-        directionY -= 1;
-        this.targetVelocityY = -this.maxSpeed;
-    }
-    if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
-        directionY += 1;
-        this.targetVelocityY = this.maxSpeed;
-    }
-    if (keys['ArrowLeft'] && this.x > 0) {
-        directionX -= 1;
-        this.targetVelocityX = -this.maxSpeed;
-    }
-    if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
-        directionX += 1;
-        this.targetVelocityX = this.maxSpeed;
-    }
-
-    // Liikenneohjaus: vain jos suunta muuttuu (koko liikettä ei oteta käyttöön tyhjästä)
-    if (directionX !== 0 || directionY !== 0) {
-        // Lasketaan uusi kulma suuntaan
-        const newRotation = Math.atan2(directionY, directionX);
-        if (Math.abs(newRotation - this.rotation) > 0.05) {
-            this.rotation = newRotation;
-        }
-    }
-
-    // Kiihdytyksen ja hidastuksen interpolointi
-    this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
-    this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
-
-    // Nollataan pienet nopeudet (kitka)
-    if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
-        this.velocityX = 0;
-    }
-    if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
-        this.velocityY = 0;
-    }
-
-    // Päivitetään sijainti
-    this.x += this.velocityX;
-    this.y += this.velocityY;
-
-    // Kentän rajat
-    this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-    this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
-
-    // Suunta päivitetään liikkeen mukaan
-    this.direction = {
-        x: Math.cos(this.rotation),
-        y: Math.sin(this.rotation)
-    };
-}
-movr<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -613,7 +541,6 @@ movr<!DOCTYPE html>
             this.rotation = 0; // Aluksen rotaatio
             this.targetRotation = 0; // Kohderotaatio
             this.rotationSpeed = 0.2; // Rotaation nopeus
-            this.justStopped = 0;
         }
 
 move() {
@@ -688,8 +615,6 @@ move() {
         y: Math.sin(this.rotation)
     };
 }
-
-
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
