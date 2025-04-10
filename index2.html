@@ -546,40 +546,42 @@
 move() {
     if (isAnimating || this.isRespawning) return;
 
-    // Nollataan nopeudet joka framella
-    this.velocityX = 0;
-    this.velocityY = 0;
+    // Hylkimisreaktio (esim. törmäyksissä)
+    if (this.handleRepulsion()) return;
 
-    // Ohjausnäppäimet - 8 suuntaa
+    // Törmäysten jäähdytys
+    if (this.collisionCooldown > 0) {
+        this.collisionCooldown--;
+    }
+
+    // Nollataan kohdenopeudet
+    this.targetVelocityX = 0;
+    this.targetVelocityY = 0;
+
+    // Ohjausnäppäimet
     if (keys['ArrowUp'] && this.y > 0) {
-        this.velocityY = -this.maxSpeed;
+        this.targetVelocityY = -this.maxSpeed;
     }
     if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
-        this.velocityY = this.maxSpeed;
+        this.targetVelocityY = this.maxSpeed;
     }
     if (keys['ArrowLeft'] && this.x > 0) {
-        this.velocityX = -this.maxSpeed;
+        this.targetVelocityX = -this.maxSpeed;
     }
     if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
-        this.velocityX = this.maxSpeed;
+        this.targetVelocityX = this.maxSpeed;
     }
 
-    // Diagonaaliliike (yhdistetään nuolinäppäimet)
-    if ((keys['ArrowUp'] && keys['ArrowLeft']) && this.y > 0 && this.x > 0) {
-        this.velocityX = -this.maxSpeed * Math.cos(Math.PI/4); // 45 astetta
-        this.velocityY = -this.maxSpeed * Math.sin(Math.PI/4);
+    // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
+    this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
+    this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
+
+    // Nollataan pienet nopeudet (kitka)
+    if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
+        this.velocityX = 0;
     }
-    if ((keys['ArrowUp'] && keys['ArrowRight']) && this.y > 0 && this.x < canvas.width - this.width) {
-        this.velocityX = this.maxSpeed * Math.cos(Math.PI/4);
-        this.velocityY = -this.maxSpeed * Math.sin(Math.PI/4);
-    }
-    if ((keys['ArrowDown'] && keys['ArrowLeft']) && this.y < canvas.height - this.height && this.x > 0) {
-        this.velocityX = -this.maxSpeed * Math.cos(Math.PI/4);
-        this.velocityY = this.maxSpeed * Math.sin(Math.PI/4);
-    }
-    if ((keys['ArrowDown'] && keys['ArrowRight']) && this.y < canvas.height - this.height && this.x < canvas.width - this.width) {
-        this.velocityX = this.maxSpeed * Math.cos(Math.PI/4);
-        this.velocityY = this.maxSpeed * Math.sin(Math.PI/4);
+    if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
+        this.velocityY = 0;
     }
 
     // Päivitä sijainti
@@ -590,13 +592,35 @@ move() {
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    // Päivitä ampumissuunta (jos liikkuu)
-    if (this.velocityX !== 0 || this.velocityY !== 0) {
-        this.direction = {
-            x: this.velocityX !== 0 ? Math.sign(this.velocityX) : 0,
-            y: this.velocityY !== 0 ? Math.sign(this.velocityY) : 0
-        };
+    // Liikesuunnan tarkastus
+    const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+
+    if (moving) {
+        // Lasketaan suunta ja tallennetaan
+        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+        this.lastRotation = this.targetRotation;
     }
+
+    // Käytetään viimeisintä liikettä, jos ei liiku
+    const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
+
+    // Erotus ja lyhin suunta
+    let angleDiff = desiredRotation - this.rotation;
+    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+    // Lukitaan suunta jos hyvin lähellä
+    if (Math.abs(angleDiff) < 0.01) {
+        this.rotation = desiredRotation;
+    } else {
+        this.rotation += angleDiff * this.rotationSpeed;
+    }
+
+    // Päivitä ampumissuunta
+    this.direction = {
+        x: Math.cos(this.rotation),
+        y: Math.sin(this.rotation)
+    };
 }
 
 
