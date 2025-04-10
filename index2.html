@@ -598,7 +598,7 @@ move() {
 
     // UUSI OSA: Pysähdysviive suunnanpäivitykselle
     if (!moving && (this.velocityX !== 0 || this.velocityY !== 0)) {
-        this.justStopped = 5; // 5 framea viivettä
+        this.justStopped = 50; // 5 framea viivettä
     }
     if (this.justStopped > 0) {
         this.justStopped--;
