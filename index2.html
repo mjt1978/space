@@ -581,12 +581,16 @@ move() {
 
     // Jos liikutaan, päivitämme suuntaa ja nopeutta erikseen
     if (directionX !== 0 || directionY !== 0) {
+        // Lasketaan uusi kulma suuntaan
         const newRotation = Math.atan2(directionY, directionX);
-        
-        // Suunnan päivitys vain, jos se eroaa riittävästi nykyisestä
+
+        // Suunnan päivitys vain, jos se eroaa riittävästi nykyisestä kulmasta
         if (Math.abs(newRotation - this.rotation) > 0.05) {
             this.rotation = newRotation;
         }
+    } else {
+        // Jos ei liikuta, pidetään edellinen rotaatio
+        this.rotation = this.rotation;
     }
 
     // Kiihdytys ja hidastus liikkeelle
