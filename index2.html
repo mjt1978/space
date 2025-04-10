@@ -597,7 +597,7 @@ move() {
     const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
 // Päivitä suunta vain jos liike on riittävä
-if (Math.hypot(this.velocityX, this.velocityY) > 1) {
+if (Math.hypot(this.velocityX, this.velocityY) > 2) {
     this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
     this.stableRotation = this.targetRotation;
 }
