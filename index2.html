@@ -595,14 +595,31 @@ move() {
     // Liikesuunnan tarkastus
     const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
-    if (moving) {
-        // Lasketaan suunta ja tallennetaan
-        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-        this.lastRotation = this.targetRotation;
-    }
 
-    // Käytetään viimeisintä liikettä, jos ei liiku
-    const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
+if (moving) {
+    // Lasketaan suunta ja tallennetaan
+    this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+    this.lastRotation = this.targetRotation;
+} else {
+    // Ei liiku: lukitaan suunta, jos viimeisin liike oli diagonaalinen
+    if (this.lastRotation !== undefined) {
+        // Lasketaan kulma asteina [0, 360)
+        const angleDeg = (this.lastRotation * 180 / Math.PI + 360) % 360;
+
+        // Tarkistetaan, oliko suunta diagonaalinen (kulma lähellä 45°, 135°, 225°, 315°)
+        const diagonals = [45, 135, 225, 315];
+        for (const diag of diagonals) {
+            if (Math.abs(angleDeg - diag) < 10) { // Säädettävä toleranssi
+                // Lukitaan suunta lähimpään diagonaaliin
+                this.lastRotation = diag * Math.PI / 180;
+                break;
+            }
+        }
+    }
+}
+
+// Käytetään viimeisintä liikettä, jos ei liiku
+const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
 
     // Erotus ja lyhin suunta
     let angleDiff = desiredRotation - this.rotation;
