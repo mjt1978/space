@@ -601,17 +601,17 @@ move() {
         this.lastRotation = this.targetRotation;
     }
 
-    // Tarkistetaan, onko liike diagonaalinen (molemmat X ja Y liikkeet yhtäaikaisia)
+    // Tarkistetaan onko liike diagonaalinen
     const isDiagonal = (this.targetVelocityX !== 0 && this.targetVelocityY !== 0);
 
-    // Käytetään toista viimeisintä liikettä, jos liike on diagonaalinen
+    // Käytetään edellistä suuntaa, jos liike on diagonaalinen
     let desiredRotation;
-    if (moving && !isDiagonal) {
-        // Jos liike ei ole diagonaalinen, käytetään viimeisintä suuntaa
-        desiredRotation = this.targetRotation;
-    } else {
+    if (isDiagonal) {
         // Jos liike on diagonaalinen, käytetään edellistä suuntaa
         desiredRotation = this.lastRotation ?? this.rotation;
+    } else {
+        // Jos liike ei ole diagonaalinen, käytetään nykyistä suuntaa
+        desiredRotation = this.targetRotation;
     }
 
     // Erotus ja lyhin suunta
@@ -632,6 +632,7 @@ move() {
         y: Math.sin(this.rotation)
     };
 }
+
 
 
             shoot() {
