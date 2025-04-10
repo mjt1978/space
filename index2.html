@@ -554,15 +554,14 @@ move() {
         this.collisionCooldown--;
     }
 
-    // Lasketaan kohdenopeudet (alustavasti nolla)
+    // Nollataan kohdenopeudet
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
-    // Lasketaan liikesuunta: määritellään nuolien painallukset
+    // Lasketaan suunta vain nuolten painalluksen perusteella
     let directionX = 0;
     let directionY = 0;
-    
-    // Päivitetään suunta ja nopeus nuolien mukaan
+
     if (keys['ArrowUp'] && this.y > 0) {
         directionY -= 1;
         this.targetVelocityY = -this.maxSpeed;
@@ -580,16 +579,17 @@ move() {
         this.targetVelocityX = this.maxSpeed;
     }
 
-    // Liikenneohjaus: vain jos suunta muuttuu (koko liikettä ei oteta käyttöön tyhjästä)
+    // Jos liikutaan, päivitämme suuntaa ja nopeutta erikseen
     if (directionX !== 0 || directionY !== 0) {
-        // Lasketaan uusi kulma suuntaan
         const newRotation = Math.atan2(directionY, directionX);
+        
+        // Suunnan päivitys vain, jos se eroaa riittävästi nykyisestä
         if (Math.abs(newRotation - this.rotation) > 0.05) {
             this.rotation = newRotation;
         }
     }
 
-    // Kiihdytyksen ja hidastuksen interpolointi
+    // Kiihdytys ja hidastus liikkeelle
     this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
     this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
@@ -609,7 +609,7 @@ move() {
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    // Suunta päivitetään liikkeen mukaan
+    // Päivitetään suunta liikkuessa
     this.direction = {
         x: Math.cos(this.rotation),
         y: Math.sin(this.rotation)
