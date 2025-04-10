@@ -541,6 +541,7 @@
             this.rotation = 0; // Aluksen rotaatio
             this.targetRotation = 0; // Kohderotaatio
             this.rotationSpeed = 0.2; // Rotaation nopeus
+            this.stableRotation = this.rotation;
         }
 
 move() {
@@ -595,14 +596,14 @@ move() {
     // Liikesuunnan tarkastus
     const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
-    if (moving) {
-        // Lasketaan suunta ja tallennetaan
-        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-        this.lastRotation = this.targetRotation;
-    }
+// Päivitä suunta vain jos liike on riittävä
+if (Math.hypot(this.velocityX, this.velocityY) > 1) {
+    this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+    this.stableRotation = this.targetRotation;
+}
 
-    // Käytetään viimeisintä liikettä, jos ei liiku
-    const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
+// Käytetään vakaata suuntaa pysähdyksissä
+const desiredRotation = moving ? this.targetRotation : this.stableRotation;
 
     // Erotus ja lyhin suunta
     let angleDiff = desiredRotation - this.rotation;
