@@ -541,93 +541,110 @@
             this.rotation = 0; // Aluksen rotaatio
             this.targetRotation = 0; // Kohderotaatio
             this.rotationSpeed = 0.2; // Rotaation nopeus
+            this.lastActiveDirections = {
+    up: false,
+    down: false,
+    left: false,
+    right: false
+};
         }
 
 move() {
     if (isAnimating || this.isRespawning) return;
-
-    // Hylkimisreaktio (esim. törmäyksissä)
     if (this.handleRepulsion()) return;
+    if (this.collisionCooldown > 0) this.collisionCooldown--;
 
-    // Törmäysten jäähdytys
-    if (this.collisionCooldown > 0) {
-        this.collisionCooldown--;
-    }
-
-    // Nollataan kohdenopeudet
+    // Nollaa kohdenopeudet
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
-    // Liikkuuko pelaaja tällä framella
-    let wasMoving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+    // Tarkista aktiiviset näppäimet
+    const activeDirections = {
+        up: keys['ArrowUp'] && this.y > 0,
+        down: keys['ArrowDown'] && this.y < canvas.height - this.height,
+        left: keys['ArrowLeft'] && this.x > 0,
+        right: keys['ArrowRight'] && this.x < canvas.width - this.width
+    };
 
-    // Ohjausnäppäimet
-    if (keys['ArrowUp'] && this.y > 0) {
+    // Aseta nopeudet ja suunnat
+    if (activeDirections.up) {
         this.targetVelocityY = -this.maxSpeed;
-        this.lastVerticalDirection = -1; // Ylös
-    }
-    if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
-        this.targetVelocityY = this.maxSpeed;
-        this.lastVerticalDirection = 1; // Alas
-    }
-    if (keys['ArrowLeft'] && this.x > 0) {
-        this.targetVelocityX = -this.maxSpeed;
-        this.lastHorizontalDirection = -1; // Vasen
-    }
-    if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
-        this.targetVelocityX = this.maxSpeed;
-        this.lastHorizontalDirection = 1; // Oikea
+        this.lastActiveDirections.up = true;
+    } else {
+        this.lastActiveDirections.up = false;
     }
 
-    // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
+    if (activeDirections.down) {
+        this.targetVelocityY = this.maxSpeed;
+        this.lastActiveDirections.down = true;
+    } else {
+        this.lastActiveDirections.down = false;
+    }
+
+    if (activeDirections.left) {
+        this.targetVelocityX = -this.maxSpeed;
+        this.lastActiveDirections.left = true;
+    } else {
+        this.lastActiveDirections.left = false;
+    }
+
+    if (activeDirections.right) {
+        this.targetVelocityX = this.maxSpeed;
+        this.lastActiveDirections.right = true;
+    } else {
+        this.lastActiveDirections.right = false;
+    }
+
+    // Interpoloi nopeudet
     this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
     this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
-    // Nollataan pienet nopeudet (kitka)
-    if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
-        this.velocityX = 0;
-    }
-    if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
-        this.velocityY = 0;
-    }
-
-    // Tarkista pysähtyikö pelaaja
-    const isMoving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
-    
-    // Jos pelaaja pysähtyi juuri nyt, nollataan suuntamuistit
-    if (wasMoving && !isMoving) {
-        this.lastHorizontalDirection = undefined;
-        this.lastVerticalDirection = undefined;
-    }
+    // Kitka
+    if (Math.abs(this.velocityX) < 0.1) this.velocityX = 0;
+    if (Math.abs(this.velocityY) < 0.1) this.velocityY = 0;
 
     // Päivitä sijainti
     this.x += this.velocityX;
     this.y += this.velocityY;
 
-    // Kentän rajat
+    // Rajojen tarkistus
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    // Liikesuunnan tarkastus
+    // Määritä haluttu suunta
     let desiredRotation;
+    const isMoving = this.velocityX !== 0 || this.velocityY !== 0;
+    const isDiagonal = 
+        (activeDirections.up || activeDirections.down) && 
+        (activeDirections.left || activeDirections.right);
+
     if (isMoving) {
-        // Lasketaan suunta nykyisen nopeuden perusteella
-        desiredRotation = Math.atan2(this.velocityY, this.velocityX);
+        if (isDiagonal) {
+            // Diagonaaliliike - käytä molempien aktiivisten suuntien keskiarvoa
+            let vertical = 0;
+            if (activeDirections.up) vertical = -1;
+            if (activeDirections.down) vertical = 1;
+            
+            let horizontal = 0;
+            if (activeDirections.left) horizontal = -1;
+            if (activeDirections.right) horizontal = 1;
+            
+            desiredRotation = Math.atan2(vertical, horizontal);
+        } else {
+            // Yksisuuntainen liike
+            desiredRotation = Math.atan2(this.velocityY, this.velocityX);
+        }
         this.lastRotation = desiredRotation;
-    } else if (this.lastHorizontalDirection !== undefined && this.lastVerticalDirection !== undefined) {
-        // Jos ei liiku, mutta on viimeisimmät suunnat tallennettuna, käytetään niitä
-        desiredRotation = Math.atan2(this.lastVerticalDirection, this.lastHorizontalDirection);
     } else {
-        // Käytetään viimeisintä kiertoa jos ei muuta
+        // Ei liiku - käytä viimeistä tunnettua suuntaa
         desiredRotation = this.lastRotation ?? this.rotation;
     }
 
-    // Erotus ja lyhin suunta
+    // Käännetään pelaajaa
     let angleDiff = desiredRotation - this.rotation;
     if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    // Lukitaan suunta jos hyvin lähellä
     if (Math.abs(angleDiff) < 0.01) {
         this.rotation = desiredRotation;
     } else {
