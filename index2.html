@@ -592,17 +592,46 @@ move() {
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    // Liikesuunnan tarkastus
-    const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+// Liikesuunnan tarkastus
+const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
-    if (moving) {
-        // Lasketaan suunta ja tallennetaan
-        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-        this.lastRotation = this.targetRotation;
+if (moving) {
+    // Lasketaan suunta
+    const angle = Math.atan2(this.velocityY, this.velocityX);
+    this.targetRotation = angle;
+    this.lastRotation = angle;
+
+    // Tarkistetaan onko liike diagonaalinen (nopeutta molemmilla akseleilla)
+    const minDiagonalSpeed = 0.5; // Voit säätää tämän mukaan
+    if (Math.abs(this.velocityX) > minDiagonalSpeed && Math.abs(this.velocityY) > minDiagonalSpeed) {
+        this.lastDiagonalRotation = angle;
     }
+} else {
+    // Ei liiku: lukitaan suunta jos viimeinen liike oli diagonaalinen
+    if (this.lastDiagonalRotation !== undefined) {
+        // Lasketaan kulma asteina [0, 360)
+        const angleDeg = (this.lastDiagonalRotation * 180 / Math.PI + 360) % 360;
 
-    // Käytetään viimeisintä liikettä, jos ei liiku
-    const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
+        // Tarkistetaan lähin diagonaalikulma
+        const diagonals = [45, 135, 225, 315];
+        let closest = diagonals[0];
+        let minDiff = Math.abs(angleDeg - diagonals[0]);
+
+        for (const diag of diagonals) {
+            const diff = Math.abs(angleDeg - diag);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closest = diag;
+            }
+        }
+
+        // Lukitaan lähimpään diagonaaliin
+        this.lastRotation = closest * Math.PI / 180;
+    }
+}
+
+// Käytetään haluttua suuntaa
+const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
 
     // Erotus ja lyhin suunta
     let angleDiff = desiredRotation - this.rotation;
