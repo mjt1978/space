@@ -558,18 +558,23 @@ move() {
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
-    // Ohjausnäppäimet
-    if (keys['ArrowUp'] && this.y > 0) {
-        this.targetVelocityY = -this.maxSpeed;
+    // Ohjausnäppäimet (päivitetään priorisoinnin avulla)
+    const upPressed = keys['ArrowUp'];
+    const downPressed = keys['ArrowDown'];
+    const leftPressed = keys['ArrowLeft'];
+    const rightPressed = keys['ArrowRight'];
+
+    if (upPressed && this.y > 0) {
+        this.targetVelocityY -= this.maxSpeed;
     }
-    if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
-        this.targetVelocityY = this.maxSpeed;
+    if (downPressed && this.y < canvas.height - this.height) {
+        this.targetVelocityY += this.maxSpeed;
     }
-    if (keys['ArrowLeft'] && this.x > 0) {
-        this.targetVelocityX = -this.maxSpeed;
+    if (leftPressed && this.x > 0) {
+        this.targetVelocityX -= this.maxSpeed;
     }
-    if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
-        this.targetVelocityX = this.maxSpeed;
+    if (rightPressed && this.x < canvas.width - this.width) {
+        this.targetVelocityX += this.maxSpeed;
     }
 
     // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
@@ -622,7 +627,6 @@ move() {
         y: Math.sin(this.rotation)
     };
 }
-
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
