@@ -558,23 +558,22 @@ move() {
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
-    // Ohjausnäppäimet (päivitetään priorisoinnin avulla)
-    const upPressed = keys['ArrowUp'];
-    const downPressed = keys['ArrowDown'];
-    const leftPressed = keys['ArrowLeft'];
-    const rightPressed = keys['ArrowRight'];
-
-    if (upPressed && this.y > 0) {
-        this.targetVelocityY -= this.maxSpeed;
+    // Ohjausnäppäimet ja viimeisin aktiivinen suunta kullakin akselilla
+    if (keys['ArrowUp'] && this.y > 0) {
+        this.targetVelocityY = -this.maxSpeed;
+        this.lastVerticalDirection = -1; // Ylös
     }
-    if (downPressed && this.y < canvas.height - this.height) {
-        this.targetVelocityY += this.maxSpeed;
+    if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
+        this.targetVelocityY = this.maxSpeed;
+        this.lastVerticalDirection = 1; // Alas
     }
-    if (leftPressed && this.x > 0) {
-        this.targetVelocityX -= this.maxSpeed;
+    if (keys['ArrowLeft'] && this.x > 0) {
+        this.targetVelocityX = -this.maxSpeed;
+        this.lastHorizontalDirection = -1; // Vasen
     }
-    if (rightPressed && this.x < canvas.width - this.width) {
-        this.targetVelocityX += this.maxSpeed;
+    if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
+        this.targetVelocityX = this.maxSpeed;
+        this.lastHorizontalDirection = 1; // Oikea
     }
 
     // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
@@ -600,14 +599,18 @@ move() {
     // Liikesuunnan tarkastus
     const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
+    let desiredRotation;
     if (moving) {
-        // Lasketaan suunta ja tallennetaan
-        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-        this.lastRotation = this.targetRotation;
+        // Lasketaan suunta nykyisen nopeuden perusteella
+        desiredRotation = Math.atan2(this.velocityY, this.velocityX);
+        this.lastRotation = desiredRotation;
+    } else if (this.lastHorizontalDirection !== undefined && this.lastVerticalDirection !== undefined) {
+        // Jos ei liiku, mutta on viimeisimmät suunnat tallennettuna, käytetään niitä
+        desiredRotation = Math.atan2(this.lastVerticalDirection, this.lastHorizontalDirection);
+    } else {
+        // Käytetään viimeisintä kiertoa jos ei muuta
+        desiredRotation = this.lastRotation ?? this.rotation;
     }
-
-    // Käytetään viimeisintä liikettä, jos ei liiku
-    const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
 
     // Erotus ja lyhin suunta
     let angleDiff = desiredRotation - this.rotation;
