@@ -579,8 +579,11 @@ move() {
         this.targetVelocityX = this.maxSpeed;
     }
 
-    // Jos liikutaan, päivitämme suuntaa ja nopeutta erikseen
-    if (directionX !== 0 || directionY !== 0) {
+    // Jos liikutaan, päivitetään suuntaa ja nopeutta erikseen
+    const moving = directionX !== 0 || directionY !== 0;
+
+    if (moving) {
+        // Lasketaan uusi kulma suuntaan
         const newRotation = Math.atan2(directionY, directionX);
 
         // Suunnan päivitys vain, jos se eroaa riittävästi nykyisestä kulmasta
@@ -588,9 +591,10 @@ move() {
             this.rotation = newRotation;
         }
     } else {
-        // Pysäytä rotaatio kokonaan, jos ei liikuta
-        // Tämä estää sen, että rotaatio menee virheellisiin suuntiin
-        this.rotation = this.rotation; // Säilytetään nykyinen rotaatio, älä muuta
+        // Pysäytetään rotaatio, jos ei liikuteta
+        // Tällöin säilytetään nykyinen rotaatio
+        // Tässä voidaan käyttää myös "suoraa lukitusta"
+        this.rotation = this.rotation; // Tämä estää väärän kääntymisen
     }
 
     // Kiihdytys ja hidastus liikkeelle
@@ -619,6 +623,7 @@ move() {
         y: Math.sin(this.rotation)
     };
 }
+
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
