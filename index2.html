@@ -559,18 +559,32 @@ move() {
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
-    // Ohjausnäppäimet
+    // Ohjausnäppäimet — lasketaan pohjassa olevat suunnat
+    let directionX = 0;
+    let directionY = 0;
+
     if (keys['ArrowUp'] && this.y > 0) {
+        directionY -= 1;
         this.targetVelocityY = -this.maxSpeed;
     }
     if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
+        directionY += 1;
         this.targetVelocityY = this.maxSpeed;
     }
     if (keys['ArrowLeft'] && this.x > 0) {
+        directionX -= 1;
         this.targetVelocityX = -this.maxSpeed;
     }
     if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
+        directionX += 1;
         this.targetVelocityX = this.maxSpeed;
+    }
+
+    // Suunnan päivitys vain jos näppäimiä oikeasti pohjassa
+    if (directionX !== 0 || directionY !== 0) {
+        const angle = Math.atan2(directionY, directionX);
+        this.targetRotation = angle;
+        this.lastRotation = angle;
     }
 
     // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
@@ -593,25 +607,8 @@ move() {
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    // Liikesuunnan tarkastus
-    const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
-
-    // UUSI OSA: Pysähdysviive suunnanpäivitykselle
-    if (!moving && (this.velocityX !== 0 || this.velocityY !== 0)) {
-        this.justStopped = 5; // 5 framea viivettä
-    }
-    if (this.justStopped > 0) {
-        this.justStopped--;
-    }
-
-    if (moving && this.justStopped === 0) {
-        // Lasketaan suunta ja tallennetaan
-        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-        this.lastRotation = this.targetRotation;
-    }
-
     // Käytetään viimeisintä liikettä, jos ei liiku
-    const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
+    const desiredRotation = this.lastRotation ?? this.rotation;
 
     // Erotus ja lyhin suunta
     let angleDiff = desiredRotation - this.rotation;
@@ -631,6 +628,7 @@ move() {
         y: Math.sin(this.rotation)
     };
 }
+
 
 
             shoot() {
