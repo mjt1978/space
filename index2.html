@@ -558,18 +558,44 @@ move() {
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
-    // Ohjausnäppäimet
+    // Ohjausnäppäimet ja loggaus
     if (keys['ArrowUp'] && this.y > 0) {
         this.targetVelocityY = -this.maxSpeed;
+        console.log('Paineetut näppäin: ArrowUp');
     }
     if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
         this.targetVelocityY = this.maxSpeed;
+        console.log('Paineetut näppäin: ArrowDown');
     }
     if (keys['ArrowLeft'] && this.x > 0) {
         this.targetVelocityX = -this.maxSpeed;
+        console.log('Paineetut näppäin: ArrowLeft');
     }
     if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
         this.targetVelocityX = this.maxSpeed;
+        console.log('Paineetut näppäin: ArrowRight');
+    }
+
+    // Näppäinyhdistelmien käsittely
+    if (keys['ArrowUp'] && keys['ArrowLeft']) {
+        console.log('Paineetut näppäinyhdistelmä: ArrowUp + ArrowLeft');
+    }
+    if (keys['ArrowUp'] && keys['ArrowRight']) {
+        console.log('Paineetut näppäinyhdistelmä: ArrowUp + ArrowRight');
+    }
+    if (keys['ArrowDown'] && keys['ArrowLeft']) {
+        console.log('Paineetut näppäinyhdistelmä: ArrowDown + ArrowLeft');
+    }
+    if (keys['ArrowDown'] && keys['ArrowRight']) {
+        console.log('Paineetut näppäinyhdistelmä: ArrowDown + ArrowRight');
+    }
+
+    // Esimerkki muista mahdollisista näppäinyhdistelmistä
+    if (keys['Shift'] && keys['ArrowUp']) {
+        console.log('Paineetut näppäinyhdistelmä: Shift + ArrowUp');
+    }
+    if (keys['Ctrl'] && keys['ArrowDown']) {
+        console.log('Paineetut näppäinyhdistelmä: Ctrl + ArrowDown');
     }
 
     // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
@@ -622,6 +648,7 @@ move() {
         y: Math.sin(this.rotation)
     };
 }
+
 
 
             shoot() {
