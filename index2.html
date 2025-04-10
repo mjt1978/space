@@ -409,17 +409,6 @@
         let animationFrameId = null;
         let meteorSpawnCounter = 0;
         let nextMeteorSpawn = 0;
-        // Lisää muuttujia viiveen ja aikaleiman seuraamiseen
-let keyPressTime = {
-    'ArrowUp': 0,
-    'ArrowDown': 0,
-    'ArrowLeft': 0,
-    'ArrowRight': 0,
-    'Shift': 0,
-    'Ctrl': 0
-};
-
-let keyDelay = 100; // Viive millisekunteina (100 ms)
 
         // Canvasin koon asetus
         function resizeCanvas() {
@@ -569,50 +558,18 @@ move() {
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
-    const now = Date.now(); // Nykyinen aikaleima
-
-    // Ohjausnäppäimet ja loggaus
-    if (keys['ArrowUp'] && this.y > 0 && now - keyPressTime['ArrowUp'] > keyDelay) {
+    // Ohjausnäppäimet
+    if (keys['ArrowUp'] && this.y > 0) {
         this.targetVelocityY = -this.maxSpeed;
-        keyPressTime['ArrowUp'] = now;
-        console.log('Paineetut näppäin: ArrowUp');
     }
-    if (keys['ArrowDown'] && this.y < canvas.height - this.height && now - keyPressTime['ArrowDown'] > keyDelay) {
+    if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
         this.targetVelocityY = this.maxSpeed;
-        keyPressTime['ArrowDown'] = now;
-        console.log('Paineetut näppäin: ArrowDown');
     }
-    if (keys['ArrowLeft'] && this.x > 0 && now - keyPressTime['ArrowLeft'] > keyDelay) {
+    if (keys['ArrowLeft'] && this.x > 0) {
         this.targetVelocityX = -this.maxSpeed;
-        keyPressTime['ArrowLeft'] = now;
-        console.log('Paineetut näppäin: ArrowLeft');
     }
-    if (keys['ArrowRight'] && this.x < canvas.width - this.width && now - keyPressTime['ArrowRight'] > keyDelay) {
+    if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
         this.targetVelocityX = this.maxSpeed;
-        keyPressTime['ArrowRight'] = now;
-        console.log('Paineetut näppäin: ArrowRight');
-    }
-
-    // Näppäinyhdistelmien käsittely
-    if (keys['ArrowUp'] && keys['ArrowLeft'] && now - keyPressTime['ArrowUp'] > keyDelay && now - keyPressTime['ArrowLeft'] > keyDelay) {
-        console.log('Paineetut näppäinyhdistelmä: ArrowUp + ArrowLeft');
-    }
-    if (keys['ArrowUp'] && keys['ArrowRight'] && now - keyPressTime['ArrowUp'] > keyDelay && now - keyPressTime['ArrowRight'] > keyDelay) {
-        console.log('Paineetut näppäinyhdistelmä: ArrowUp + ArrowRight');
-    }
-    if (keys['ArrowDown'] && keys['ArrowLeft'] && now - keyPressTime['ArrowDown'] > keyDelay && now - keyPressTime['ArrowLeft'] > keyDelay) {
-        console.log('Paineetut näppäinyhdistelmä: ArrowDown + ArrowLeft');
-    }
-    if (keys['ArrowDown'] && keys['ArrowRight'] && now - keyPressTime['ArrowDown'] > keyDelay && now - keyPressTime['ArrowRight'] > keyDelay) {
-        console.log('Paineetut näppäinyhdistelmä: ArrowDown + ArrowRight');
-    }
-
-    // Esimerkki muista mahdollisista näppäinyhdistelmistä
-    if (keys['Shift'] && keys['ArrowUp'] && now - keyPressTime['Shift'] > keyDelay && now - keyPressTime['ArrowUp'] > keyDelay) {
-        console.log('Paineetut näppäinyhdistelmä: Shift + ArrowUp');
-    }
-    if (keys['Ctrl'] && keys['ArrowDown'] && now - keyPressTime['Ctrl'] > keyDelay && now - keyPressTime['ArrowDown'] > keyDelay) {
-        console.log('Paineetut näppäinyhdistelmä: Ctrl + ArrowDown');
     }
 
     // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
@@ -665,8 +622,6 @@ move() {
         y: Math.sin(this.rotation)
     };
 }
-
-
 
 
             shoot() {
