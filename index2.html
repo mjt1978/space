@@ -603,16 +603,19 @@ if (moving) {
 
     // Tarkistetaan onko liike diagonaalinen (nopeutta molemmilla akseleilla)
     const minDiagonalSpeed = 0.5; // Voit säätää tämän mukaan
-    if (Math.abs(this.velocityX) > minDiagonalSpeed && Math.abs(this.velocityY) > minDiagonalSpeed) {
+    const isDiagonal = Math.abs(this.velocityX) > minDiagonalSpeed && Math.abs(this.velocityY) > minDiagonalSpeed;
+
+    if (isDiagonal) {
         this.lastDiagonalRotation = angle;
+    } else {
+        this.lastDiagonalRotation = undefined; // Nollataan jos ei liiku diagonaalisesti
     }
+
 } else {
     // Ei liiku: lukitaan suunta jos viimeinen liike oli diagonaalinen
     if (this.lastDiagonalRotation !== undefined) {
-        // Lasketaan kulma asteina [0, 360)
         const angleDeg = (this.lastDiagonalRotation * 180 / Math.PI + 360) % 360;
 
-        // Tarkistetaan lähin diagonaalikulma
         const diagonals = [45, 135, 225, 315];
         let closest = diagonals[0];
         let minDiff = Math.abs(angleDeg - diagonals[0]);
@@ -625,7 +628,6 @@ if (moving) {
             }
         }
 
-        // Lukitaan lähimpään diagonaaliin
         this.lastRotation = closest * Math.PI / 180;
     }
 }
