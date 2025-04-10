@@ -595,24 +595,13 @@ move() {
     // Liikesuunnan tarkastus
     const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
+    // Tallennetaan viimeinen liikesuunta
     if (moving) {
-        // Lasketaan suunta ja tallennetaan
         this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-        this.lastRotation = this.targetRotation;
     }
 
-    // Tarkistetaan onko liike diagonaalinen
-    const isDiagonal = (this.targetVelocityX !== 0 && this.targetVelocityY !== 0);
-
-    // Käytetään edellistä suuntaa, jos liike on diagonaalinen
-    let desiredRotation;
-    if (isDiagonal) {
-        // Jos liike on diagonaalinen, käytetään edellistä suuntaa
-        desiredRotation = this.lastRotation ?? this.rotation;
-    } else {
-        // Jos liike ei ole diagonaalinen, käytetään nykyistä suuntaa
-        desiredRotation = this.targetRotation;
-    }
+    // Käytetään viimeisintä liikettä vain, jos liikettä ei ole enää
+    const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
 
     // Erotus ja lyhin suunta
     let angleDiff = desiredRotation - this.rotation;
@@ -631,9 +620,12 @@ move() {
         x: Math.cos(this.rotation),
         y: Math.sin(this.rotation)
     };
+
+    // Tallennetaan viimeinen liikesuunta
+    if (!moving) {
+        this.lastRotation = this.targetRotation;
+    }
 }
-
-
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
