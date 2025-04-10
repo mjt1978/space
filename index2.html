@@ -409,6 +409,17 @@
         let animationFrameId = null;
         let meteorSpawnCounter = 0;
         let nextMeteorSpawn = 0;
+        // Lisää muuttujia viiveen ja aikaleiman seuraamiseen
+let keyPressTime = {
+    'ArrowUp': 0,
+    'ArrowDown': 0,
+    'ArrowLeft': 0,
+    'ArrowRight': 0,
+    'Shift': 0,
+    'Ctrl': 0
+};
+
+let keyDelay = 100; // Viive millisekunteina (100 ms)
 
         // Canvasin koon asetus
         function resizeCanvas() {
@@ -542,18 +553,6 @@
             this.targetRotation = 0; // Kohderotaatio
             this.rotationSpeed = 0.2; // Rotaation nopeus
         }
-
-// Lisää muuttujia viiveen ja aikaleiman seuraamiseen
-let keyPressTime = {
-    'ArrowUp': 0,
-    'ArrowDown': 0,
-    'ArrowLeft': 0,
-    'ArrowRight': 0,
-    'Shift': 0,
-    'Ctrl': 0
-};
-
-let keyDelay = 100; // Viive millisekunteina (100 ms)
 
 move() {
     if (isAnimating || this.isRespawning) return;
