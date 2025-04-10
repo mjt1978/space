@@ -559,32 +559,32 @@ move() {
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
-    // Ohjausnäppäimet — lasketaan pohjassa olevat suunnat
-    let directionX = 0;
-    let directionY = 0;
+    // Tarkistetaan suunta vain jos liikutaan, eikä olla pysähdyksissä
+    if (this.velocityX === 0 && this.velocityY === 0) {
+        // Pelaaja on täysin pysähdyksissä
+        let directionX = 0;
+        let directionY = 0;
 
-    if (keys['ArrowUp'] && this.y > 0) {
-        directionY -= 1;
-        this.targetVelocityY = -this.maxSpeed;
-    }
-    if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
-        directionY += 1;
-        this.targetVelocityY = this.maxSpeed;
-    }
-    if (keys['ArrowLeft'] && this.x > 0) {
-        directionX -= 1;
-        this.targetVelocityX = -this.maxSpeed;
-    }
-    if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
-        directionX += 1;
-        this.targetVelocityX = this.maxSpeed;
-    }
+        if (keys['ArrowUp'] && this.y > 0) {
+            directionY -= 1;
+        }
+        if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
+            directionY += 1;
+        }
+        if (keys['ArrowLeft'] && this.x > 0) {
+            directionX -= 1;
+        }
+        if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
+            directionX += 1;
+        }
 
-    // Suunnan päivitys vain jos näppäimiä oikeasti pohjassa
-    if (directionX !== 0 || directionY !== 0) {
-        const angle = Math.atan2(directionY, directionX);
-        this.targetRotation = angle;
-        this.lastRotation = angle;
+        // Suunta vain jos nuolia painetaan
+        if (directionX !== 0 || directionY !== 0) {
+            this.targetRotation = Math.atan2(directionY, directionX);
+            this.lastRotation = this.targetRotation;
+            this.targetVelocityX = directionX * this.maxSpeed;
+            this.targetVelocityY = directionY * this.maxSpeed;
+        }
     }
 
     // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
@@ -607,7 +607,7 @@ move() {
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    // Käytetään viimeisintä liikettä, jos ei liiku
+    // Suunta päivitetään liikkeen mukaan
     const desiredRotation = this.lastRotation ?? this.rotation;
 
     // Erotus ja lyhin suunta
