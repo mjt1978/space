@@ -621,18 +621,7 @@ move() {
         x: Math.cos(this.rotation),
         y: Math.sin(this.rotation)
     };
-
-    // Loggaa arvot vain, jos liike on pysähtynyt
-    if (!moving) {
-        console.log(`VelocityX: ${this.velocityX}, VelocityY: ${this.velocityY}`);
-        console.log(`TargetVelocityX: ${this.targetVelocityX}, TargetVelocityY: ${this.targetVelocityY}`);
-        console.log(`TargetRotation: ${this.targetRotation}, LastRotation: ${this.lastRotation}`);
-        console.log(`DesiredRotation: ${desiredRotation}, AngleDiff: ${angleDiff}`);
-        console.log(`Direction: x: ${this.direction.x}, y: ${this.direction.y}`);
-    }
 }
-
-
 
 
             shoot() {
