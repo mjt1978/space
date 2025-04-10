@@ -541,9 +541,6 @@
             this.rotation = 0; // Aluksen rotaatio
             this.targetRotation = 0; // Kohderotaatio
             this.rotationSpeed = 0.2; // Rotaation nopeus
-            this.reliableRotation = null;
-            this.reliableAxis = null;
-            this.reliableTimer = 0;
         }
 
 move() {
@@ -595,66 +592,17 @@ move() {
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-// Liikesuunnan tarkastus
-const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
-const now = performance.now();
+    // Liikesuunnan tarkastus
+    const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
-if (moving) {
-    const angle = Math.atan2(this.velocityY, this.velocityX);
-    this.targetRotation = angle;
-    this.lastRotation = angle;
-
-    const absVX = Math.abs(this.velocityX);
-    const absVY = Math.abs(this.velocityY);
-    const minSpeed = 0.5;
-
-    let newAxis = null;
-
-    if (absVX > minSpeed && absVY > minSpeed) {
-        newAxis = "diagonal";
-    } else if (absVX > minSpeed) {
-        newAxis = "horizontal";
-    } else if (absVY > minSpeed) {
-        newAxis = "vertical";
+    if (moving) {
+        // Lasketaan suunta ja tallennetaan
+        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+        this.lastRotation = this.targetRotation;
     }
 
-    // Jos akseli muuttui tai riittävästi aikaa kulunut, päivitetään "luotettava" suunta
-    if (newAxis && (this.reliableAxis !== newAxis || now - this.reliableTimer > 250)) {
-        this.reliableRotation = angle;
-        this.reliableAxis = newAxis;
-        this.reliableTimer = now;
-    }
-
-} else {
-    // Ei liikettä – lukitaan vanhaan "luotettavaan" kulmaan
-    if (this.reliableRotation !== null) {
-        const angleDeg = (this.reliableRotation * 180 / Math.PI + 360) % 360;
-
-        if (this.reliableAxis === "diagonal") {
-            const diagonals = [45, 135, 225, 315];
-            let closest = diagonals[0];
-            let minDiff = Math.abs(angleDeg - diagonals[0]);
-
-            for (const diag of diagonals) {
-                const diff = Math.abs(angleDeg - diag);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    closest = diag;
-                }
-            }
-            this.lastRotation = closest * Math.PI / 180;
-
-        } else if (this.reliableAxis === "horizontal") {
-            this.lastRotation = (Math.cos(this.reliableRotation) >= 0) ? 0 : Math.PI;
-
-        } else if (this.reliableAxis === "vertical") {
-            this.lastRotation = (Math.sin(this.reliableRotation) >= 0) ? Math.PI / 2 : 3 * Math.PI / 2;
-        }
-    }
-}
-
-// Käytetään haluttua suuntaa
-const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
+    // Käytetään viimeisintä liikettä, jos ei liiku
+    const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
 
     // Erotus ja lyhin suunta
     let angleDiff = desiredRotation - this.rotation;
