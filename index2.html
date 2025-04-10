@@ -601,11 +601,18 @@ move() {
         this.lastRotation = this.targetRotation;
     }
 
-    // Tarkistetaan, onko liikettä diagonaalisti
+    // Tarkistetaan, onko liike diagonaalinen (molemmat X ja Y liikkeet yhtäaikaisia)
     const isDiagonal = (this.targetVelocityX !== 0 && this.targetVelocityY !== 0);
-    
-    // Jos liikutaan diagonaalisti, käytetään edellistä liikettä, ei viimeisintä näppäinpainallusta
-    const desiredRotation = moving && !isDiagonal ? this.targetRotation : this.lastRotation ?? this.rotation;
+
+    // Käytetään toista viimeisintä liikettä, jos liike on diagonaalinen
+    let desiredRotation;
+    if (moving && !isDiagonal) {
+        // Jos liike ei ole diagonaalinen, käytetään viimeisintä suuntaa
+        desiredRotation = this.targetRotation;
+    } else {
+        // Jos liike on diagonaalinen, käytetään edellistä suuntaa
+        desiredRotation = this.lastRotation ?? this.rotation;
+    }
 
     // Erotus ja lyhin suunta
     let angleDiff = desiredRotation - this.rotation;
@@ -625,6 +632,7 @@ move() {
         y: Math.sin(this.rotation)
     };
 }
+
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
