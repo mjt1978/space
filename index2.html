@@ -637,10 +637,11 @@
                 if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
                 // Lukitaan suunta jos hyvin lähellä
-                if (Math.abs(angleDiff) < 0.01) {
-                    this.rotation = desiredRotation;
+                if (Math.abs(angleDiff) > 0.01) {
+                    const rotationStep = Math.sign(angleDiff) * Math.min(Math.abs(angleDiff), this.rotationSpeed);
+                    this.rotation += rotationStep;
                 } else {
-                    this.rotation += angleDiff * this.rotationSpeed;
+                    this.rotation = desiredRotation;  // Lukitaan suunta, kun ero on pieni
                 }
 
                 // Päivitä ampumissuunta
@@ -1399,8 +1400,8 @@
                         console.log('Last Rotation:', player.lastRotation);
                         console.log('Moving:', Math.abs(player.velocityX) > 0.01 || Math.abs(player.velocityY) > 0.01);
                         console.log('Desired Rotation:', player.targetRotation);
-                        console.log('Angle Diff:', player.targetRotation - player.rotation);
-                        console.log('Rotation:', player.rotation);
+                        console.log('Angle Diff:', angleDiff);
+                        console.log('Rotation:', this.rotation);
                         console.log('Direction:', player.direction);
                 }, 20);
             }
