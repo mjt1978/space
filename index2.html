@@ -12,6 +12,14 @@
             background-color: black;
         }
 
+            #output {
+      font-size: 2rem;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
         #startScreen {
             position: fixed;
             top: 0;
@@ -227,6 +235,55 @@
     </div>
 
     <script>
+    const output = document.getElementById('output');
+    const pressedKeys = new Set();
+    let lastCombo = "";
+
+    const keyNames = {
+      ArrowUp: "↑",
+      ArrowDown: "↓",
+      ArrowLeft: "←",
+      ArrowRight: "→",
+      " ": "Space"
+    };
+
+    function getComboString(keysSet) {
+      return Array.from(keysSet)
+        .filter(key => key in keyNames)
+        .map(key => keyNames[key])
+        .join(" + ");
+    }
+
+    function updateDisplay() {
+      const currentCombo = getComboString(pressedKeys);
+      if (currentCombo) {
+        lastCombo = currentCombo;
+        output.textContent = currentCombo;
+      } else {
+        output.textContent = lastCombo || "Paina nuolinäppäintä";
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (keyNames[e.key] && !pressedKeys.has(e.key)) {
+        pressedKeys.add(e.key);
+        updateDisplay();
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      if (keyNames[e.key]) {
+        pressedKeys.delete(e.key);
+
+        // Odota pieni hetki ennen päivitystä
+        setTimeout(() => {
+          updateDisplay();
+        }, 20); // pieni viive mahdollistaa kaikkien keyup-tapahtumien käsittelyn
+      }
+    });
+
+
+        
         // Ääniefektit
         const soundEffects = {
             playerShoot: new Audio('blast_ship.mp3'),
