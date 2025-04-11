@@ -12,6 +12,20 @@
             background-color: black;
         }
 
+        #keyDisplay {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 24px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 100;
+            text-shadow: 0 0 5px black;
+        }
+
         #startScreen {
             position: fixed;
             top: 0;
@@ -380,6 +394,7 @@
         const energyFill = document.getElementById('energyFill');
         const waveInfo = document.getElementById('waveInfo');
         const livesContainer = document.getElementById('livesContainer');
+        const keyDisplay = document.getElementById('keyDisplay');
 
         // Kuvat
         const playerImage = new Image();
@@ -408,7 +423,8 @@
         let animationFrameId = null;
         let meteorSpawnCounter = 0;
         let nextMeteorSpawn = 0;
-
+        let lastKeyCombo = "";
+        
         // Nuolinäppäinten seuranta
         const pressedKeys = new Set();
         const keyNames = {
@@ -1361,6 +1377,7 @@
                     if (e.key === ' ') {
                         player.shoot();
                     }
+                    updateKeyDisplay();
                 }
             }
         }
@@ -1372,10 +1389,24 @@
                     player.canShoot = true;
                 }
                 
-                // Lisätty viive nuolinäppäinten tilan päivitykseen
                 setTimeout(() => {
-                    // Ei tarvitse tehdä mitään erityistä, päivitys tapahtuu seuraavassa animaatiokehyksessä
+                    updateKeyDisplay();
                 }, 20);
+            }
+        }
+
+        // Uusi funktio näppäinkomennon päivittämiseen
+        function updateKeyDisplay() {
+            const currentCombo = Array.from(pressedKeys)
+                .filter(key => key in keyNames)
+                .map(key => keyNames[key])
+                .join(" + ");
+            
+            if (currentCombo) {
+                lastKeyCombo = currentCombo;
+                keyDisplay.textContent = lastKeyCombo;
+            } else {
+                keyDisplay.textContent = lastKeyCombo || "";
             }
         }
 
@@ -1387,7 +1418,6 @@
             
             document.body.addEventListener('click', enableAudio, { once: true });
             
-            // Nuolinäppäinten kuuntelijat
             document.addEventListener('keydown', handleKeyDown);
             document.addEventListener('keyup', handleKeyUp);
         });
