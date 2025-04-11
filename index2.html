@@ -1393,15 +1393,15 @@
                 
                 setTimeout(() => {
                     updateKeyDisplay();
-                        console.log('VelocityX:', this.velocityX);
-                        console.log('VelocityY:', this.velocityY);
-                        console.log('Target Rotation:', this.targetRotation);
-                        console.log('Last Rotation:', this.lastRotation);
-                        console.log('Moving:', moving);
-                        console.log('Desired Rotation:', desiredRotation);
-                        console.log('Angle Diff:', angleDiff);
-                        console.log('Rotation:', this.rotation);
-                        console.log('Direction:', this.direction);
+                        console.log('VelocityX:', player.velocityX);
+                        console.log('VelocityY:', player.velocityY);
+                        console.log('Target Rotation:', player.targetRotation);
+                        console.log('Last Rotation:', player.lastRotation);
+                        console.log('Moving:', Math.abs(player.velocityX) > 0.01 || Math.abs(player.velocityY) > 0.01);
+                        console.log('Desired Rotation:', player.targetRotation);
+                        console.log('Angle Diff:', player.targetRotation - player.rotation);
+                        console.log('Rotation:', player.rotation);
+                        console.log('Direction:', player.direction);
                 }, 20);
             }
         }
