@@ -227,6 +227,10 @@
     </div>
 
     <script>
+        // Globaalit muuttujat
+        let keys = {};
+        let keyupDelays = {}; // Tallennetaan timeout-id:t, jotta voidaan hallita viiveitä
+
         // Ääniefektit
         const soundEffects = {
             playerShoot: new Audio('blast_ship.mp3'),
@@ -1353,19 +1357,27 @@ move() {
             document.body.addEventListener('click', enableAudio, { once: true });
         });
 
-        window.addEventListener('keydown', (e) => {
-            keys[e.key] = true;
-            if (e.key === ' ' && gameRunning && !isAnimating) {
-                player.shoot();
-            }
-        });
+// Näppäimistön painaminen (keydown)
+window.addEventListener('keydown', (e) => {
+    keys[e.key] = true;
 
-        window.addEventListener('keyup', (e) => {
-            delete keys[e.key];
-            if (e.key === ' ') {
-                player.canShoot = true;
-            }
-        });
+    // Peruuta mahdollinen viivästetty keyup, jos näppäin painetaan uudelleen
+    if (keyupDelays[e.key]) {
+        clearTimeout(keyupDelays[e.key]);
+        delete keyupDelays[e.key];
+    }
+});
+
+// Näppäimistön vapauttaminen (keyup)
+window.addEventListener('keyup', (e) => {
+    const delay = 200; // Viive millisekunteina (200 ms tässä tapauksessa)
+
+    keyupDelays[e.key] = setTimeout(() => {
+        keys[e.key] = false;
+        delete keyupDelays[e.key]; // Poista viittaus viiveeseen
+        console.log(`Näppäin "${e.key}" vapautettu.`);
+    }, delay);
+});
 
         window.addEventListener('resize', () => {
             resizeCanvas();
