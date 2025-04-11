@@ -438,16 +438,10 @@
         };
 
         // Canvasin koon asetus
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    if (player) {
-        // Estä aluksen putoaminen ruudun ulkopuolelle
-        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-        player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
-    }
-}
-
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
 
         // Laskee objektin koon
         function calculateSize(baseSize) {
@@ -555,148 +549,106 @@ function resizeCanvas() {
         }
 
         class Player extends GameObject {
-    constructor(image, x, y, width, height) {
-        super(image, x, y, width, height);
-        this.maxSpeed = GAME_CONFIG.playerSpeed * (window.innerWidth / 1920);
-        this.acceleration = this.maxSpeed * 0.1;
-        this.deceleration = this.maxSpeed * 0.15;
-        this.velocityX = 0;
-        this.velocityY = 0;
-        this.targetVelocityX = 0;
-        this.targetVelocityY = 0;
-        this.canShoot = true;
-        this.energy = GAME_CONFIG.playerEnergy;
-        this.lives = GAME_CONFIG.playerLives;
-        this.collisionCooldown = 0;
-        this.respawnCooldown = 0;
-        this.isRespawning = false;
-        this.direction = { x: 1, y: 0 }; // Ammuksen suunta
-        this.rotation = 0; // Nykyinen rotaatio radiaaneina
-        this.movementAngle = 0; // Liikesuunta radiaaneina
-        this.isMoving = false;
-        this.rotationSpeed = 0.2;
-    }
-    move() {
-        if (isAnimating || this.isRespawning) return;
-        if (this.handleRepulsion()) return;
-        if (this.collisionCooldown > 0) this.collisionCooldown--;
+            constructor(image, x, y, width, height) {
+                super(image, x, y, width, height);
+                this.maxSpeed = GAME_CONFIG.playerSpeed * (window.innerWidth / 1920);
+                this.acceleration = this.maxSpeed * 0.1;
+                this.deceleration = this.maxSpeed * 0.15;
+                this.velocityX = 0;
+                this.velocityY = 0;
+                this.targetVelocityX = 0;
+                this.targetVelocityY = 0;
+                this.canShoot = true;
+                this.energy = GAME_CONFIG.playerEnergy;
+                this.lives = GAME_CONFIG.playerLives;
+                this.collisionCooldown = 0;
+                this.respawnCooldown = 0;
+                this.isRespawning = false;
+                this.direction = { x: 1, y: 0 }; // Ammuksen suunta
+                this.rotation = 0; // Aluksen rotaatio
+                this.targetRotation = 0; // Kohderotaatio
+                this.rotationSpeed = 0.2; // Rotaation nopeus
+            }
 
-        // 1. Hae syöte ja määritä liikesuunta
-        const { inputX, inputY } = this.getInputDirection();
-        this.isMoving = inputX !== 0 || inputY !== 0;
-        
-        // 2. Päivitä liikesuunta vain jos liikutaan
-        if (this.isMoving) {
-            this.movementAngle = Math.atan2(inputY, inputX);
-        }
+            move() {
+                if (isAnimating || this.isRespawning) return;
 
-        // 3. Päivitä nopeudet
-        this.updateVelocity(inputX, inputY);
+                // Hylkimisreaktio (esim. törmäyksissä)
+                if (this.handleRepulsion()) return;
 
-        // 4. Päivitä sijainti
-        this.updatePosition();
+                // Törmäysten jäähdytys
+                if (this.collisionCooldown > 0) {
+                    this.collisionCooldown--;
+                }
 
-        // 5. Päivitä rotaatio
-        this.updateRotation();
-    }
+                // Nollataan kohdenopeudet
+                this.targetVelocityX = 0;
+                this.targetVelocityY = 0;
 
-    //Tarvitaanko tätä?
-    collectInput() {
-        this.inputDirection = { x: 0, y: 0 };
-        
-        if (pressedKeys.has('ArrowUp') && this.y > 0) this.inputDirection.y = -1;
-        if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) this.inputDirection.y = 1;
-        if (pressedKeys.has('ArrowLeft') && this.x > 0) this.inputDirection.x = -1;
-        if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) this.inputDirection.x = 1;
+                // Käytetään pressedKeys -settia liikkumiseen
+                if (pressedKeys.has('ArrowUp') && this.y > 0) {
+                    this.targetVelocityY = -this.maxSpeed;
+                }
+                if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
+                    this.targetVelocityY = this.maxSpeed;
+                }
+                if (pressedKeys.has('ArrowLeft') && this.x > 0) {
+                    this.targetVelocityX = -this.maxSpeed;
+                }
+                if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
+                    this.targetVelocityX = this.maxSpeed;
+                }
 
-        // Normalisoi diagonaaliliike
-        if (this.inputDirection.x !== 0 && this.inputDirection.y !== 0) {
-            const length = Math.sqrt(this.inputDirection.x**2 + this.inputDirection.y**2);
-            this.inputDirection.x /= length;
-            this.inputDirection.y /= length;
-        }
-    }
+                // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
+                this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
+                this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
-    getInputDirection() {
-        let inputX = 0;
-        let inputY = 0;
-        
-        if (pressedKeys.has('ArrowUp')) inputY -= 1;
-        if (pressedKeys.has('ArrowDown')) inputY += 1;
-        if (pressedKeys.has('ArrowLeft')) inputX -= 1;
-        if (pressedKeys.has('ArrowRight')) inputX += 1;
+                // Nollataan pienet nopeudet (kitka)
+                if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
+                    this.velocityX = 0;
+                }
+                if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
+                    this.velocityY = 0;
+                }
 
-        // Normalisoi diagonaaliliike
-        if (inputX !== 0 && inputY !== 0) {
-            const length = Math.sqrt(inputX**2 + inputY**2);
-            inputX /= length;
-            inputY /= length;
-        }
+                // Päivitä sijainti
+                this.x += this.velocityX;
+                this.y += this.velocityY;
 
-        return { inputX, inputY };
-    }
+                // Kentän rajat
+                this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+                this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    updateVelocity(inputX, inputY) {
-        const targetX = inputX * this.maxSpeed;
-        const targetY = inputY * this.maxSpeed;
-        
-        const accel = this.isMoving ? this.acceleration : this.deceleration;
-        
-        this.velocityX += (targetX - this.velocityX) * accel;
-        this.velocityY += (targetY - this.velocityY) * accel;
+                // Liikesuunnan tarkastus
+                const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
-        // Nollaa hyvin pienet nopeudet
-        if (Math.abs(this.velocityX) < 0.1) this.velocityX = 0;
-        if (Math.abs(this.velocityY) < 0.1) this.velocityY = 0;
-    }
+                if (moving) {
+                    // Lasketaan suunta ja tallennetaan
+                    this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+                    this.lastRotation = this.targetRotation;
+                }
 
-    updatePosition() {
-        this.x += this.velocityX;
-        this.y += this.velocityY;
-        
-        // Rajaa kentän sisälle
-        this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-        this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
-    }
+                // Käytetään viimeisintä liikettä, jos ei liiku
+                const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
 
-    updateRotation() {
-        // Laske kulmaero nykyisen ja kohteen välillä
-        let angleDiff = this.movementAngle - this.rotation;
-        
-        // Normalisoi kulma -π ja π välille
-        while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                // Erotus ja lyhin suunta
+                let angleDiff = desiredRotation - this.rotation;
+                if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-        // Päivitä rotaatio
-        if (Math.abs(angleDiff) < 0.01) {
-            this.rotation = this.movementAngle;
-        } else {
-            this.rotation += angleDiff * this.rotationSpeed;
-        }
+                // Lukitaan suunta jos hyvin lähellä
+                if (Math.abs(angleDiff) < 0.01) {
+                    this.rotation = desiredRotation;
+                } else {
+                    this.rotation += angleDiff * this.rotationSpeed;
+                }
 
-        // Päivitä ampumissuunta
-        this.direction = {
-            x: Math.cos(this.rotation),
-            y: Math.sin(this.rotation)
-        };
-    }
-
-                drawRotated() {
-        if (this.isDestroyed) return;
-        
-        ctx.save();
-        ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-        ctx.rotate(this.rotation);
-        
-        // Lisää heijastusvaikutus liikkeelle
-        if (this.isMoving) {
-            ctx.globalAlpha = 0.8;
-        }
-        
-        ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
-        ctx.restore();
-    }
-
+                // Päivitä ampumissuunta
+                this.direction = {
+                    x: Math.cos(this.rotation),
+                    y: Math.sin(this.rotation)
+                };
+            }
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
@@ -1098,14 +1050,14 @@ function resizeCanvas() {
             meteorSpawnCounter = 0;
             nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
 
-    const playerSize = calculateSize(GAME_CONFIG.playerSize);
-    player = new Player(
-        playerImage, 
-        canvas.width / 2 - playerSize.width / 2,
-        canvas.height / 2 - playerSize.height / 2, 
-        playerSize.width, 
-        playerSize.height
-    );
+            const playerSize = calculateSize(GAME_CONFIG.playerSize);
+            player = new Player(
+                playerImage, 
+                canvas.width / 2 - playerSize.width / 2,
+                canvas.height / 2 - playerSize.height / 2, 
+                playerSize.width, 
+                playerSize.height
+            );
             updateEnergyBar();
             updateLives();
             updateWaveInfo();
