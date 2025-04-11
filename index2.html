@@ -1394,6 +1394,16 @@
                 
                 setTimeout(() => {
                     updateKeyDisplay();
+
+          // Ensure the necessary variables are accessible
+            const desiredRotation = player.targetRotation;
+            const currentRotation = player.rotation;
+
+            // Calculate angleDiff here
+            let angleDiff = desiredRotation - currentRotation;
+            if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+            if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                    
                         console.log('VelocityX:', player.velocityX);
                         console.log('VelocityY:', player.velocityY);
                         console.log('Target Rotation:', player.targetRotation);
