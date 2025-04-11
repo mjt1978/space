@@ -438,10 +438,16 @@
         };
 
         // Canvasin koon asetus
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    if (player) {
+        // Estä aluksen putoaminen ruudun ulkopuolelle
+        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+        player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+    }
+}
+
 
         // Laskee objektin koon
         function calculateSize(baseSize) {
@@ -565,30 +571,36 @@
         this.respawnCooldown = 0;
         this.isRespawning = false;
         this.direction = { x: 1, y: 0 }; // Ammuksen suunta
-        this.rotation = 0; // Aluksen nykyinen rotaatio (radiaaneina)
-        this.targetRotation = 0; // Kohderotaatio
-        this.rotationSpeed = 0.2; // Rotaation nopeus
-        this.lastValidRotation = 0; // Viimeisin hyväksytty rotaatio
-        this.inputDirection = { x: 0, y: 0 }; // Käyttäjän syöttämä suunta
+        this.rotation = 0; // Nykyinen rotaatio radiaaneina
+        this.movementAngle = 0; // Liikesuunta radiaaneina
+        this.isMoving = false;
+        this.rotationSpeed = 0.2;
     }
     move() {
         if (isAnimating || this.isRespawning) return;
         if (this.handleRepulsion()) return;
         if (this.collisionCooldown > 0) this.collisionCooldown--;
 
-        // 1. Kerää käyttäjän syöte
-        this.collectInput();
+        // 1. Hae syöte ja määritä liikesuunta
+        const { inputX, inputY } = this.getInputDirection();
+        this.isMoving = inputX !== 0 || inputY !== 0;
         
-        // 2. Päivitä nopeudet syötteen perusteella
-        this.updateVelocity();
-        
-        // 3. Päivitä sijainti
+        // 2. Päivitä liikesuunta vain jos liikutaan
+        if (this.isMoving) {
+            this.movementAngle = Math.atan2(inputY, inputX);
+        }
+
+        // 3. Päivitä nopeudet
+        this.updateVelocity(inputX, inputY);
+
+        // 4. Päivitä sijainti
         this.updatePosition();
-        
-        // 4. Päivitä rotaatio
+
+        // 5. Päivitä rotaatio
         this.updateRotation();
     }
 
+    //Tarvitaanko tätä?
     collectInput() {
         this.inputDirection = { x: 0, y: 0 };
         
@@ -605,16 +617,31 @@
         }
     }
 
-    updateVelocity() {
-        // Kohdenopeus syötteen perusteella
-        const targetX = this.inputDirection.x * this.maxSpeed;
-        const targetY = this.inputDirection.y * this.maxSpeed;
+    getInputDirection() {
+        let inputX = 0;
+        let inputY = 0;
         
-        // Kiihdytys/hidastus
-        const accel = (this.inputDirection.x !== 0 || this.inputDirection.y !== 0) 
-            ? this.acceleration 
-            : this.deceleration;
-            
+        if (pressedKeys.has('ArrowUp')) inputY -= 1;
+        if (pressedKeys.has('ArrowDown')) inputY += 1;
+        if (pressedKeys.has('ArrowLeft')) inputX -= 1;
+        if (pressedKeys.has('ArrowRight')) inputX += 1;
+
+        // Normalisoi diagonaaliliike
+        if (inputX !== 0 && inputY !== 0) {
+            const length = Math.sqrt(inputX**2 + inputY**2);
+            inputX /= length;
+            inputY /= length;
+        }
+
+        return { inputX, inputY };
+    }
+
+    updateVelocity(inputX, inputY) {
+        const targetX = inputX * this.maxSpeed;
+        const targetY = inputY * this.maxSpeed;
+        
+        const accel = this.isMoving ? this.acceleration : this.deceleration;
+        
         this.velocityX += (targetX - this.velocityX) * accel;
         this.velocityY += (targetY - this.velocityY) * accel;
 
@@ -633,33 +660,41 @@
     }
 
     updateRotation() {
-        // 1. Määritä kohderotaatio
-        if (this.inputDirection.x !== 0 || this.inputDirection.y !== 0) {
-            // Liikkeessä - käytä syötteen suuntaa
-            this.targetRotation = Math.atan2(this.inputDirection.y, this.inputDirection.x);
-            this.lastValidRotation = this.targetRotation;
-        } else {
-            // Ei liikettä - käytä viimeistä hyväksyttyä rotaatiota
-            this.targetRotation = this.lastValidRotation;
-        }
-
-        // 2. Laske lyhin pyörimissuunta
-        let angleDiff = this.targetRotation - this.rotation;
+        // Laske kulmaero nykyisen ja kohteen välillä
+        let angleDiff = this.movementAngle - this.rotation;
+        
+        // Normalisoi kulma -π ja π välille
         while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
         while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
 
-        // 3. Sovella rotaatiota
+        // Päivitä rotaatio
         if (Math.abs(angleDiff) < 0.01) {
-            this.rotation = this.targetRotation;
+            this.rotation = this.movementAngle;
         } else {
             this.rotation += angleDiff * this.rotationSpeed;
         }
 
-        // 4. Päivitä ampumissuunta
+        // Päivitä ampumissuunta
         this.direction = {
             x: Math.cos(this.rotation),
             y: Math.sin(this.rotation)
         };
+    }
+
+                drawRotated() {
+        if (this.isDestroyed) return;
+        
+        ctx.save();
+        ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+        ctx.rotate(this.rotation);
+        
+        // Lisää heijastusvaikutus liikkeelle
+        if (this.isMoving) {
+            ctx.globalAlpha = 0.8;
+        }
+        
+        ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+        ctx.restore();
     }
 
 
@@ -1063,14 +1098,14 @@
             meteorSpawnCounter = 0;
             nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
 
-            const playerSize = calculateSize(GAME_CONFIG.playerSize);
-            player = new Player(
-                playerImage, 
-                canvas.width / 2 - playerSize.width / 2,
-                canvas.height / 2 - playerSize.height / 2, 
-                playerSize.width, 
-                playerSize.height
-            );
+    const playerSize = calculateSize(GAME_CONFIG.playerSize);
+    player = new Player(
+        playerImage, 
+        canvas.width / 2 - playerSize.width / 2,
+        canvas.height / 2 - playerSize.height / 2, 
+        playerSize.width, 
+        playerSize.height
+    );
             updateEnergyBar();
             updateLives();
             updateWaveInfo();
