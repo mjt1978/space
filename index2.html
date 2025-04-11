@@ -426,7 +426,6 @@
         let nextMeteorSpawn = 0;
         let lastKeyCombo = "";
         const keyDisplay = document.getElementById('keyDisplay');
-        let lastDirection = { x: 1, y: 0 }; // Oletussuunta oikealle
         
         // Nuolinäppäinten seuranta
         const pressedKeys = new Set();
@@ -569,7 +568,6 @@
                 this.rotation = 0; // Aluksen rotaatio
                 this.targetRotation = 0; // Kohderotaatio
                 this.rotationSpeed = 0.2; // Rotaation nopeus
-                this.lastMovingDirection = { x: 1, y: 0 }; // Viimeisin liikesuunta
             }
 
             move() {
@@ -590,33 +588,15 @@
                 // Käytetään pressedKeys -settia liikkumiseen
                 if (pressedKeys.has('ArrowUp') && this.y > 0) {
                     this.targetVelocityY = -this.maxSpeed;
-                    this.lastMovingDirection = { x: 0, y: -1 };
                 }
                 if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
                     this.targetVelocityY = this.maxSpeed;
-                    this.lastMovingDirection = { x: 0, y: 1 };
                 }
                 if (pressedKeys.has('ArrowLeft') && this.x > 0) {
                     this.targetVelocityX = -this.maxSpeed;
-                    this.lastMovingDirection = { x: -1, y: 0 };
                 }
                 if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
                     this.targetVelocityX = this.maxSpeed;
-                    this.lastMovingDirection = { x: 1, y: 0 };
-                }
-
-                // Jos useampi näppäin painettuna, yhdistetään suunnat
-                if (pressedKeys.has('ArrowUp') && pressedKeys.has('ArrowLeft')) {
-                    this.lastMovingDirection = { x: -0.707, y: -0.707 }; // 45 astetta
-                }
-                if (pressedKeys.has('ArrowUp') && pressedKeys.has('ArrowRight')) {
-                    this.lastMovingDirection = { x: 0.707, y: -0.707 }; // 45 astetta
-                }
-                if (pressedKeys.has('ArrowDown') && pressedKeys.has('ArrowLeft')) {
-                    this.lastMovingDirection = { x: -0.707, y: 0.707 }; // 45 astetta
-                }
-                if (pressedKeys.has('ArrowDown') && pressedKeys.has('ArrowRight')) {
-                    this.lastMovingDirection = { x: 0.707, y: 0.707 }; // 45 astetta
                 }
 
                 // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
@@ -643,18 +623,13 @@
                 const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
                 if (moving) {
-                    // Lasketaan suunta liikkeen perusteella
+                    // Lasketaan suunta ja tallennetaan
                     this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-                } else {
-                    // Jos ei liiku, käytetään viimeistä liikesuuntaa
-                    this.targetRotation = Math.atan2(this.lastMovingDirection.y, this.lastMovingDirection.x);
+                    this.lastRotation = this.targetRotation;
                 }
 
                 // Käytetään viimeisintä liikettä, jos ei liiku
-                const desiredRotation = moving ? this.targetRotation : 
-                                      (this.lastMovingDirection.x !== 0 || this.lastMovingDirection.y !== 0) ? 
-                                      Math.atan2(this.lastMovingDirection.y, this.lastMovingDirection.x) : 
-                                      this.rotation;
+                const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
 
                 // Erotus ja lyhin suunta
                 let angleDiff = desiredRotation - this.rotation;
