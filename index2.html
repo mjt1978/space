@@ -625,7 +625,7 @@
                 if (moving) {
                     // Lasketaan suunta ja tallennetaan
                     this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-                    this.lastRotation = this.targetRotation ?? 0;
+                    this.lastRotation = this.targetRotation;
                 }
 
                 // Käytetään viimeisintä liikettä, jos ei liiku
@@ -637,11 +637,10 @@
                 if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
                 // Lukitaan suunta jos hyvin lähellä
-                if (Math.abs(angleDiff) > 0.01) {
-                    const rotationStep = Math.sign(angleDiff) * Math.min(Math.abs(angleDiff), this.rotationSpeed);
-                    this.rotation += rotationStep;
+                if (Math.abs(angleDiff) < 0.01) {
+                    this.rotation = desiredRotation;
                 } else {
-                    this.rotation = desiredRotation;  // Lukitaan suunta, kun ero on pieni
+                    this.rotation += angleDiff * this.rotationSpeed;
                 }
 
                 // Päivitä ampumissuunta
@@ -1394,26 +1393,6 @@
                 
                 setTimeout(() => {
                     updateKeyDisplay();
-
-          // Ensure the necessary variables are accessible
-            const desiredRotation = player.targetRotation;
-            const currentRotation = player.rotation;
-
-            // Calculate angleDiff here
-            let angleDiff = desiredRotation - currentRotation;
-            if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-            if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-                    
-                        console.log('Key released:', e.key);  // Log the key that was released    
-                        console.log('VelocityX:', player.velocityX);
-                        console.log('VelocityY:', player.velocityY);
-                        console.log('Target Rotation:', player.targetRotation);
-                        console.log('Last Rotation:', player.lastRotation);
-                        console.log('Moving:', Math.abs(player.velocityX) > 0.01 || Math.abs(player.velocityY) > 0.01);
-                        console.log('Desired Rotation:', player.targetRotation);
-                        console.log('Angle Diff:', angleDiff);
-                        console.log('Rotation:', player.rotation);
-                        console.log('Direction:', player.direction);
                 }, 20);
             }
         }
