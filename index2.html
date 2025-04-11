@@ -565,117 +565,97 @@
         this.respawnCooldown = 0;
         this.isRespawning = false;
         this.direction = { x: 1, y: 0 }; // Ammuksen suunta
-        this.rotation = 0; // Aluksen nykyinen rotaatio
+        this.rotation = 0; // Aluksen nykyinen rotaatio (radiaaneina)
         this.targetRotation = 0; // Kohderotaatio
         this.rotationSpeed = 0.2; // Rotaation nopeus
-        this.lastMovingDirection = { x: 1, y: 0 }; // Viimeisin liikesuunta
-        this.isMoving = false;
+        this.lastValidRotation = 0; // Viimeisin hyväksytty rotaatio
+        this.inputDirection = { x: 0, y: 0 }; // Käyttäjän syöttämä suunta
     }
     move() {
         if (isAnimating || this.isRespawning) return;
-
-        // Hylkimisreaktio (esim. törmäyksissä)
         if (this.handleRepulsion()) return;
+        if (this.collisionCooldown > 0) this.collisionCooldown--;
 
-        // Törmäysten jäähdytys
-        if (this.collisionCooldown > 0) {
-            this.collisionCooldown--;
-        }
-
-        // Nollataan kohdenopeudet
-        this.targetVelocityX = 0;
-        this.targetVelocityY = 0;
-
-        // Käytetään pressedKeys -settia liikkumiseen
-        let inputX = 0;
-        let inputY = 0;
+        // 1. Kerää käyttäjän syöte
+        this.collectInput();
         
-        if (pressedKeys.has('ArrowUp') && this.y > 0) inputY = -1;
-        if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) inputY = 1;
-        if (pressedKeys.has('ArrowLeft') && this.x > 0) inputX = -1;
-        if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) inputX = 1;
-
-        // Normalisoi diagonaaliliikkeen nopeus
-        if (inputX !== 0 && inputY !== 0) {
-            const length = Math.sqrt(inputX * inputX + inputY * inputY);
-            inputX /= length;
-            inputY /= length;
-        }
-
-        this.targetVelocityX = inputX * this.maxSpeed;
-        this.targetVelocityY = inputY * this.maxSpeed;
-
-        // Päivitetään liiketila
-        const wasMoving = this.isMoving;
-        this.isMoving = inputX !== 0 || inputY !== 0;
-
-        // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
-        const acceleration = this.isMoving ? this.acceleration : this.deceleration;
-        this.velocityX += (this.targetVelocityX - this.velocityX) * acceleration;
-        this.velocityY += (this.targetVelocityY - this.velocityY) * acceleration;
-
-        // Nollataan pienet nopeudet (kitka)
-        if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
-            this.velocityX = 0;
-        }
-        if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
-            this.velocityY = 0;
-        }
-
-        // Päivitä sijainti
-        this.x += this.velocityX;
-        this.y += this.velocityY;
-
-        // Kentän rajat
-        this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-        this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
-
-        // Päivitä suunta ja rotaatio
+        // 2. Päivitä nopeudet syötteen perusteella
+        this.updateVelocity();
+        
+        // 3. Päivitä sijainti
+        this.updatePosition();
+        
+        // 4. Päivitä rotaatio
         this.updateRotation();
     }
 
+    collectInput() {
+        this.inputDirection = { x: 0, y: 0 };
+        
+        if (pressedKeys.has('ArrowUp') && this.y > 0) this.inputDirection.y = -1;
+        if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) this.inputDirection.y = 1;
+        if (pressedKeys.has('ArrowLeft') && this.x > 0) this.inputDirection.x = -1;
+        if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) this.inputDirection.x = 1;
+
+        // Normalisoi diagonaaliliike
+        if (this.inputDirection.x !== 0 && this.inputDirection.y !== 0) {
+            const length = Math.sqrt(this.inputDirection.x**2 + this.inputDirection.y**2);
+            this.inputDirection.x /= length;
+            this.inputDirection.y /= length;
+        }
+    }
+
+    updateVelocity() {
+        // Kohdenopeus syötteen perusteella
+        const targetX = this.inputDirection.x * this.maxSpeed;
+        const targetY = this.inputDirection.y * this.maxSpeed;
+        
+        // Kiihdytys/hidastus
+        const accel = (this.inputDirection.x !== 0 || this.inputDirection.y !== 0) 
+            ? this.acceleration 
+            : this.deceleration;
+            
+        this.velocityX += (targetX - this.velocityX) * accel;
+        this.velocityY += (targetY - this.velocityY) * accel;
+
+        // Nollaa hyvin pienet nopeudet
+        if (Math.abs(this.velocityX) < 0.1) this.velocityX = 0;
+        if (Math.abs(this.velocityY) < 0.1) this.velocityY = 0;
+    }
+
+    updatePosition() {
+        this.x += this.velocityX;
+        this.y += this.velocityY;
+        
+        // Rajaa kentän sisälle
+        this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+        this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+    }
+
     updateRotation() {
-        // Päivitä viimeisin liikesuunta jos liikutaan
-        if (this.isMoving) {
-            // Käytä syötteen suuntaa, ei nopeutta, jotta saadaan tarkempi suunta
-            let targetAngle;
-            
-            if (pressedKeys.has('ArrowUp') && pressedKeys.has('ArrowRight')) {
-                targetAngle = -Math.PI/4; // Oikea ylös
-            } else if (pressedKeys.has('ArrowUp') && pressedKeys.has('ArrowLeft')) {
-                targetAngle = -3*Math.PI/4; // Vasen ylös
-            } else if (pressedKeys.has('ArrowDown') && pressedKeys.has('ArrowRight')) {
-                targetAngle = Math.PI/4; // Oikea alas
-            } else if (pressedKeys.has('ArrowDown') && pressedKeys.has('ArrowLeft')) {
-                targetAngle = 3*Math.PI/4; // Vasen alas
-            } else if (pressedKeys.has('ArrowUp')) {
-                targetAngle = -Math.PI/2; // Ylös
-            } else if (pressedKeys.has('ArrowDown')) {
-                targetAngle = Math.PI/2; // Alas
-            } else if (pressedKeys.has('ArrowLeft')) {
-                targetAngle = Math.PI; // Vasen
-            } else if (pressedKeys.has('ArrowRight')) {
-                targetAngle = 0; // Oikea
-            }
-            
-            this.lastMovingDirection.x = Math.cos(targetAngle);
-            this.lastMovingDirection.y = Math.sin(targetAngle);
-            this.targetRotation = targetAngle;
+        // 1. Määritä kohderotaatio
+        if (this.inputDirection.x !== 0 || this.inputDirection.y !== 0) {
+            // Liikkeessä - käytä syötteen suuntaa
+            this.targetRotation = Math.atan2(this.inputDirection.y, this.inputDirection.x);
+            this.lastValidRotation = this.targetRotation;
+        } else {
+            // Ei liikettä - käytä viimeistä hyväksyttyä rotaatiota
+            this.targetRotation = this.lastValidRotation;
         }
 
-        // Erotus ja lyhin suunta
+        // 2. Laske lyhin pyörimissuunta
         let angleDiff = this.targetRotation - this.rotation;
-        if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-        if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
 
-        // Lukitaan suunta jos hyvin lähellä
+        // 3. Sovella rotaatiota
         if (Math.abs(angleDiff) < 0.01) {
             this.rotation = this.targetRotation;
         } else {
             this.rotation += angleDiff * this.rotationSpeed;
         }
 
-        // Päivitä ampumissuunta
+        // 4. Päivitä ampumissuunta
         this.direction = {
             x: Math.cos(this.rotation),
             y: Math.sin(this.rotation)
