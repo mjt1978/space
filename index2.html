@@ -236,14 +236,16 @@
 
     <script>
     const output = document.getElementById('output');
+    const pressedKeys = new Set();
     let lastCombo = "";
 
-    function getComboString(keysSet) {
-      return Array.from(keysSet)
-        .filter(key => key in keyNames)
-        .map(key => keyNames[key])
-        .join(" + ");
-    }
+    const keyNames = {
+      ArrowUp: "↑",
+      ArrowDown: "↓",
+      ArrowLeft: "←",
+      ArrowRight: "→"
+      " ": " " // Lisätty välilyönti
+    };
 
     function updateDisplay() {
       const currentCombo = getComboString(pressedKeys);
@@ -456,16 +458,6 @@
         let animationFrameId = null;
         let meteorSpawnCounter = 0;
         let nextMeteorSpawn = 0;
-
-        // Nuolinäppäinten seuranta
-        const pressedKeys = new Set();
-        const keyNames = {
-            ArrowUp: "↑",
-            ArrowDown: "↓",
-            ArrowLeft: "←",
-            ArrowRight: "→",
-            " ": " " // Lisätty välilyönti
-        };
 
         // Canvasin koon asetus
         function resizeCanvas() {
