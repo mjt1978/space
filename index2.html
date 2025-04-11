@@ -625,7 +625,7 @@
                 if (moving) {
                     // Lasketaan suunta ja tallennetaan
                     this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-                    this.lastRotation = this.targetRotation;
+                    this.lastRotation = this.targetRotation ?? 0;
                 }
 
                 // Käytetään viimeisintä liikettä, jos ei liiku
