@@ -1404,6 +1404,7 @@
             if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
             if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
                     
+                        console.log('Key released:', e.key);  // Log the key that was released    
                         console.log('VelocityX:', player.velocityX);
                         console.log('VelocityY:', player.velocityY);
                         console.log('Target Rotation:', player.targetRotation);
