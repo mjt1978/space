@@ -227,7 +227,6 @@
     </div>
 
     <script>
-
         // Ääniefektit
         const soundEffects = {
             playerShoot: new Audio('blast_ship.mp3'),
@@ -409,8 +408,16 @@
         let animationFrameId = null;
         let meteorSpawnCounter = 0;
         let nextMeteorSpawn = 0;
-        let keys = {};
-        let keyupDelays = {}; // Tallennetaan timeout-id:t, jotta voidaan hallita viiveitä
+
+        // Nuolinäppäinten seuranta
+        const pressedKeys = new Set();
+        const keyNames = {
+            ArrowUp: "↑",
+            ArrowDown: "↓",
+            ArrowLeft: "←",
+            ArrowRight: "→",
+            " ": " " // Lisätty välilyönti
+        };
 
         // Canvasin koon asetus
         function resizeCanvas() {
@@ -524,107 +531,106 @@
         }
 
         class Player extends GameObject {
-        constructor(image, x, y, width, height) {
-            super(image, x, y, width, height);
-            this.maxSpeed = GAME_CONFIG.playerSpeed * (window.innerWidth / 1920);
-            this.acceleration = this.maxSpeed * 0.1;
-            this.deceleration = this.maxSpeed * 0.15;
-            this.velocityX = 0;
-            this.velocityY = 0;
-            this.targetVelocityX = 0;
-            this.targetVelocityY = 0;
-            this.canShoot = true;
-            this.energy = GAME_CONFIG.playerEnergy;
-            this.lives = GAME_CONFIG.playerLives;
-            this.collisionCooldown = 0;
-            this.respawnCooldown = 0;
-            this.isRespawning = false;
-            this.direction = { x: 1, y: 0 }; // Ammuksen suunta
-            this.rotation = 0; // Aluksen rotaatio
-            this.targetRotation = 0; // Kohderotaatio
-            this.rotationSpeed = 0.2; // Rotaation nopeus
-        }
+            constructor(image, x, y, width, height) {
+                super(image, x, y, width, height);
+                this.maxSpeed = GAME_CONFIG.playerSpeed * (window.innerWidth / 1920);
+                this.acceleration = this.maxSpeed * 0.1;
+                this.deceleration = this.maxSpeed * 0.15;
+                this.velocityX = 0;
+                this.velocityY = 0;
+                this.targetVelocityX = 0;
+                this.targetVelocityY = 0;
+                this.canShoot = true;
+                this.energy = GAME_CONFIG.playerEnergy;
+                this.lives = GAME_CONFIG.playerLives;
+                this.collisionCooldown = 0;
+                this.respawnCooldown = 0;
+                this.isRespawning = false;
+                this.direction = { x: 1, y: 0 }; // Ammuksen suunta
+                this.rotation = 0; // Aluksen rotaatio
+                this.targetRotation = 0; // Kohderotaatio
+                this.rotationSpeed = 0.2; // Rotaation nopeus
+            }
 
-move() {
-    if (isAnimating || this.isRespawning) return;
+            move() {
+                if (isAnimating || this.isRespawning) return;
 
-    // Hylkimisreaktio (esim. törmäyksissä)
-    if (this.handleRepulsion()) return;
+                // Hylkimisreaktio (esim. törmäyksissä)
+                if (this.handleRepulsion()) return;
 
-    // Törmäysten jäähdytys
-    if (this.collisionCooldown > 0) {
-        this.collisionCooldown--;
-    }
+                // Törmäysten jäähdytys
+                if (this.collisionCooldown > 0) {
+                    this.collisionCooldown--;
+                }
 
-    // Nollataan kohdenopeudet
-    this.targetVelocityX = 0;
-    this.targetVelocityY = 0;
+                // Nollataan kohdenopeudet
+                this.targetVelocityX = 0;
+                this.targetVelocityY = 0;
 
-    // Ohjausnäppäimet
-    if (keys['ArrowUp'] && this.y > 0) {
-        this.targetVelocityY = -this.maxSpeed;
-    }
-    if (keys['ArrowDown'] && this.y < canvas.height - this.height) {
-        this.targetVelocityY = this.maxSpeed;
-    }
-    if (keys['ArrowLeft'] && this.x > 0) {
-        this.targetVelocityX = -this.maxSpeed;
-    }
-    if (keys['ArrowRight'] && this.x < canvas.width - this.width) {
-        this.targetVelocityX = this.maxSpeed;
-    }
+                // Käytetään pressedKeys -settia liikkumiseen
+                if (pressedKeys.has('ArrowUp') && this.y > 0) {
+                    this.targetVelocityY = -this.maxSpeed;
+                }
+                if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
+                    this.targetVelocityY = this.maxSpeed;
+                }
+                if (pressedKeys.has('ArrowLeft') && this.x > 0) {
+                    this.targetVelocityX = -this.maxSpeed;
+                }
+                if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
+                    this.targetVelocityX = this.maxSpeed;
+                }
 
-    // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
-    this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
-    this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
+                // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
+                this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
+                this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
-    // Nollataan pienet nopeudet (kitka)
-    if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
-        this.velocityX = 0;
-    }
-    if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
-        this.velocityY = 0;
-    }
+                // Nollataan pienet nopeudet (kitka)
+                if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
+                    this.velocityX = 0;
+                }
+                if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
+                    this.velocityY = 0;
+                }
 
-    // Päivitä sijainti
-    this.x += this.velocityX;
-    this.y += this.velocityY;
+                // Päivitä sijainti
+                this.x += this.velocityX;
+                this.y += this.velocityY;
 
-    // Kentän rajat
-    this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-    this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+                // Kentän rajat
+                this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+                this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    // Liikesuunnan tarkastus
-    const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+                // Liikesuunnan tarkastus
+                const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
-    if (moving) {
-        // Lasketaan suunta ja tallennetaan
-        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-        this.lastRotation = this.targetRotation;
-    }
+                if (moving) {
+                    // Lasketaan suunta ja tallennetaan
+                    this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+                    this.lastRotation = this.targetRotation;
+                }
 
-    // Käytetään viimeisintä liikettä, jos ei liiku
-    const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
+                // Käytetään viimeisintä liikettä, jos ei liiku
+                const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
 
-    // Erotus ja lyhin suunta
-    let angleDiff = desiredRotation - this.rotation;
-    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                // Erotus ja lyhin suunta
+                let angleDiff = desiredRotation - this.rotation;
+                if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    // Lukitaan suunta jos hyvin lähellä
-    if (Math.abs(angleDiff) < 0.01) {
-        this.rotation = desiredRotation;
-    } else {
-        this.rotation += angleDiff * this.rotationSpeed;
-    }
+                // Lukitaan suunta jos hyvin lähellä
+                if (Math.abs(angleDiff) < 0.01) {
+                    this.rotation = desiredRotation;
+                } else {
+                    this.rotation += angleDiff * this.rotationSpeed;
+                }
 
-    // Päivitä ampumissuunta
-    this.direction = {
-        x: Math.cos(this.rotation),
-        y: Math.sin(this.rotation)
-    };
-}
-
+                // Päivitä ampumissuunta
+                this.direction = {
+                    x: Math.cos(this.rotation),
+                    y: Math.sin(this.rotation)
+                };
+            }
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
@@ -635,8 +641,8 @@ move() {
                     const bulletX = centerX + this.direction.x * this.width/2;
                     const bulletY = centerY + this.direction.y * this.height/2;
                     
-                const bulletVelocityX = this.direction.x * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920) + this.velocityX * 0.5;
-                const bulletVelocityY = this.direction.y * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920) + this.velocityY * 0.5;
+                    const bulletVelocityX = this.direction.x * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920) + this.velocityX * 0.5;
+                    const bulletVelocityY = this.direction.y * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920) + this.velocityY * 0.5;
                     
                     bullets.push(new Bullet(
                         bulletImage, 
@@ -1346,6 +1352,33 @@ move() {
             });
         }
 
+        // Nuolinäppäinten käsittely
+        function handleKeyDown(e) {
+            if (keyNames[e.key]) {
+                const beforeSize = pressedKeys.size;
+                pressedKeys.add(e.key);
+                if (pressedKeys.size !== beforeSize && gameRunning) {
+                    if (e.key === ' ') {
+                        player.shoot();
+                    }
+                }
+            }
+        }
+
+        function handleKeyUp(e) {
+            if (keyNames[e.key]) {
+                pressedKeys.delete(e.key);
+                if (e.key === ' ') {
+                    player.canShoot = true;
+                }
+                
+                // Lisätty viive nuolinäppäinten tilan päivitykseen
+                setTimeout(() => {
+                    // Ei tarvitse tehdä mitään erityistä, päivitys tapahtuu seuraavassa animaatiokehyksessä
+                }, 20);
+            }
+        }
+
         // Alustus
         window.addEventListener('load', () => {
             initializeLevelButtons();
@@ -1353,29 +1386,11 @@ move() {
             resizeCanvas();
             
             document.body.addEventListener('click', enableAudio, { once: true });
+            
+            // Nuolinäppäinten kuuntelijat
+            document.addEventListener('keydown', handleKeyDown);
+            document.addEventListener('keyup', handleKeyUp);
         });
-
-// Näppäimistön painaminen (keydown)
-window.addEventListener('keydown', (e) => {
-    keys[e.key] = true;
-
-    // Peruuta mahdollinen viivästetty keyup, jos näppäin painetaan uudelleen
-    if (keyupDelays[e.key]) {
-        clearTimeout(keyupDelays[e.key]);
-        delete keyupDelays[e.key];
-    }
-});
-
-// Näppäimistön vapauttaminen (keyup)
-window.addEventListener('keyup', (e) => {
-    const delay = 200; // Viive millisekunteina (200 ms tässä tapauksessa)
-
-    keyupDelays[e.key] = setTimeout(() => {
-        keys[e.key] = false;
-        delete keyupDelays[e.key]; // Poista viittaus viiveeseen
-        console.log(`Näppäin "${e.key}" vapautettu.`);
-    }, delay);
-});
 
         window.addEventListener('resize', () => {
             resizeCanvas();
