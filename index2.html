@@ -227,9 +227,6 @@
     </div>
 
     <script>
-        // Globaalit muuttujat
-        let keys = {};
-        let keyupDelays = {}; // Tallennetaan timeout-id:t, jotta voidaan hallita viiveitä
 
         // Ääniefektit
         const soundEffects = {
@@ -413,6 +410,8 @@
         let animationFrameId = null;
         let meteorSpawnCounter = 0;
         let nextMeteorSpawn = 0;
+        let keys = {};
+        let keyupDelays = {}; // Tallennetaan timeout-id:t, jotta voidaan hallita viiveitä
 
         // Canvasin koon asetus
         function resizeCanvas() {
