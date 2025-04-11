@@ -236,16 +236,7 @@
 
     <script>
     const output = document.getElementById('output');
-    const pressedKeys = new Set();
     let lastCombo = "";
-
-    const keyNames = {
-      ArrowUp: "↑",
-      ArrowDown: "↓",
-      ArrowLeft: "←",
-      ArrowRight: "→",
-      " ": "Space"
-    };
 
     function getComboString(keysSet) {
       return Array.from(keysSet)
