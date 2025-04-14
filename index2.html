@@ -629,6 +629,7 @@
     } else if (this.lastRotation === undefined) {
         // Jos alus ei liiku ja viimeistä rotaatiota ei ole määritelty, käytetään nykyistä kulmaa
         this.lastRotation = Math.atan2(this.velocityY, this.velocityX);
+        this.targetRotation = this.lastRotation;
     }
 
     // Käytetään viimeisintä liikettä, jos ei liiku
