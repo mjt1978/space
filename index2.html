@@ -634,10 +634,24 @@ move() {
     let keyX = 0;
     let keyY = 0;
 
-    if (pressedKeys.has('ArrowUp')) keyY -= 1;
-    if (pressedKeys.has('ArrowDown')) keyY += 1;
-    if (pressedKeys.has('ArrowLeft')) keyX -= 1;
-    if (pressedKeys.has('ArrowRight')) keyX += 1;
+    const keysPressed = [];
+
+    if (pressedKeys.has('ArrowUp')) {
+        keyY -= 1;
+        keysPressed.push("↑");
+    }
+    if (pressedKeys.has('ArrowDown')) {
+        keyY += 1;
+        keysPressed.push("↓");
+    }
+    if (pressedKeys.has('ArrowLeft')) {
+        keyX -= 1;
+        keysPressed.push("←");
+    }
+    if (pressedKeys.has('ArrowRight')) {
+        keyX += 1;
+        keysPressed.push("→");
+    }
 
     if (keyX !== 0 || keyY !== 0) {
         const desiredAngleFromKeys = Math.atan2(keyY, keyX);
@@ -646,14 +660,15 @@ move() {
         if (keyAngleDiff > Math.PI) keyAngleDiff -= Math.PI * 2;
         if (keyAngleDiff < -Math.PI) keyAngleDiff += Math.PI * 2;
 
-        // 🐞 DEBUG: Tulosta kulmat ja suunnat
+        // 🐞 DEBUG: Kulmat
         console.log("🧭 SUUNTATARKISTUS");
         console.log("rotation:", this.rotation.toFixed(2));
         console.log("desiredAngleFromKeys:", desiredAngleFromKeys.toFixed(2));
         console.log("angleDiff:", keyAngleDiff.toFixed(2));
 
         if (Math.abs(keyAngleDiff) > 0.1) {
-            console.log("🔄 Suunta korjattu näppäinten mukaiseksi");
+            const keyCombo = keysPressed.join(" + ");
+            console.log(`🔄 Suunta korjattu näppäinyhdistelmän mukaan: ${keyCombo}`);
             this.rotation = desiredAngleFromKeys;
             this.lastRotation = desiredAngleFromKeys;
             this.targetRotation = desiredAngleFromKeys;
@@ -671,6 +686,7 @@ move() {
         y: this.direction.y.toFixed(2)
     });
 }
+
 
 
 
