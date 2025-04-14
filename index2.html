@@ -660,12 +660,16 @@
 displayMovementDirection() {
     const angleInDegrees = this.targetRotation * (180 / Math.PI); // Muutetaan radiaanista asteiksi
     const angleText = `Suunta: ${angleInDegrees.toFixed(2)}°`; // Näytetään kulma desimaalina
+    const liikeX = this.velocityX;
+    const liikeY = this.veloscitY;
     
     // Piirretään ruudulle
     const context = canvas.getContext('2d');
     context.font = '20px Arial';
     context.fillStyle = 'white';
     context.fillText(angleText, 10, 130); // Näytetään kulma ruudun vasemmassa yläkulmassa
+    context.fillText(liikeX, 10, 140); // X
+    context.fillText(liikeY, 10, 150); // Y
 }
 
 
@@ -1413,7 +1417,7 @@ displayMovementDirection() {
                 
                 setTimeout(() => {
                     updateKeyDisplay();
-                }, 200);
+                }, 20);
             }
         }
 
