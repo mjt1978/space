@@ -584,29 +584,33 @@ move() {
         this.collisionCooldown--;
     }
 
-    // Nollaa kohdenopeudet
+    // Nollataan kohdenopeudet
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
-    // Liikesuunnan määritys painettujen näppäinten mukaan
-    if (pressedKeys.has('ArrowUp') && this.y > 0) {
-        this.targetVelocityY = -this.maxSpeed;
-    }
-    if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
-        this.targetVelocityY = this.maxSpeed;
-    }
-    if (pressedKeys.has('ArrowLeft') && this.x > 0) {
-        this.targetVelocityX = -this.maxSpeed;
-    }
-    if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
-        this.targetVelocityX = this.maxSpeed;
+    // Käytetään viimeistä kelvollista näppäinyhdistelmää liikkumiseen
+    let keyX = 0;
+    let keyY = 0;
+    
+    // Lasketaan suunnat viimeisistä painetuista näppäimistä
+    for (const key of lastValidDirectionKeys) {
+        if (key === 'ArrowUp') keyY -= 1;
+        if (key === 'ArrowDown') keyY += 1;
+        if (key === 'ArrowLeft') keyX -= 1;
+        if (key === 'ArrowRight') keyX += 1;
     }
 
-    // Kiihdytys ja hidastus
+    // Asetetaan nopeudet suuntien mukaan
+    if (keyX !== 0 || keyY !== 0) {
+        this.targetVelocityX = keyX * this.maxSpeed;
+        this.targetVelocityY = keyY * this.maxSpeed;
+    }
+
+    // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
     this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
     this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
-    // Kitka pysäyttää
+    // Nollataan pienet nopeudet (kitka)
     if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
         this.velocityX = 0;
     }
@@ -618,11 +622,11 @@ move() {
     this.x += this.velocityX;
     this.y += this.velocityY;
 
-    // Rajat
+    // Kentän rajat
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    // Tarkista liike
+    // Liikesuunnan tarkastus
     const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
     if (moving) {
@@ -630,58 +634,39 @@ move() {
         this.lastRotation = this.targetRotation;
     }
 
-    // Jos ei liikettä, käytetään viimeisintä
+    // Käytetään interpolointia pyörimisen pehmentämiseksi
     const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
 
-    // Erotus ja lyhin käännös
+    // Lyhyimmän kulman laskeminen
     let angleDiff = desiredRotation - this.rotation;
     if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    if (Math.abs(angleDiff) < 0.01) {
-        this.rotation = desiredRotation;
+    // Pehmentää pyörimistä, eli estää nopeita ja jyrkkiä käännöksiä
+    const rotationSpeed = Math.min(Math.abs(angleDiff), this.rotationSpeed);  // Max. nopeus käännökselle
+    if (angleDiff > 0) {
+        this.rotation += rotationSpeed;
     } else {
-        this.rotation += angleDiff * this.rotationSpeed;
+        this.rotation -= rotationSpeed;
     }
 
-    // Lopullinen suuntakorjaus viimeisimmän näppäinyhdistelmän perusteella
-    let keyX = 0;
-    let keyY = 0;
-    for (const key of lastValidDirectionKeys) {
-        if (key === 'ArrowUp') keyY -= 1;
-        if (key === 'ArrowDown') keyY += 1;
-        if (key === 'ArrowLeft') keyX -= 1;
-        if (key === 'ArrowRight') keyX += 1;
-    }
-
-    if (keyX !== 0 || keyY !== 0) {
-        const desiredAngleFromKeys = Math.atan2(keyY, keyX);
-        let keyAngleDiff = desiredAngleFromKeys - this.rotation;
-        if (keyAngleDiff > Math.PI) keyAngleDiff -= Math.PI * 2;
-        if (keyAngleDiff < -Math.PI) keyAngleDiff += Math.PI * 2;
-
-        if (Math.abs(keyAngleDiff) > 0.1) {
-            const keyNameMap = {
-                ArrowUp: '↑',
-                ArrowDown: '↓',
-                ArrowLeft: '←',
-                ArrowRight: '→'
-            };
-            const keyCombo = lastValidDirectionKeys.map(k => keyNameMap[k] || k).join(" + ");
-            console.log(`🔄 Suunta korjattu viimeisimmän yhdistelmän mukaan: ${keyCombo}`);
-
-            this.rotation = desiredAngleFromKeys;
-            this.lastRotation = desiredAngleFromKeys;
-            this.targetRotation = desiredAngleFromKeys;
-        }
-    }
-
-    // Ampumissuunta
+    // Päivitä ampumissuunta
     this.direction = {
         x: Math.cos(this.rotation),
         y: Math.sin(this.rotation)
     };
+
+    // Debug-tilassa, tulosta suunta ja viimeisin näppäinkombinaatio
+    if (debug) {
+        console.log("Rotation:", this.rotation.toFixed(2));
+        console.log("Direction:", {
+            x: this.direction.x.toFixed(2),
+            y: this.direction.y.toFixed(2)
+        });
+        console.log("Last Direction Keys:", lastValidDirectionKeys.join(" + "));
+    }
 }
+
 
 
 
