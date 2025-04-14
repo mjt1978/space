@@ -661,7 +661,7 @@ displayMovementDirection() {
     const angleInDegrees = this.targetRotation * (180 / Math.PI); // Muutetaan radiaanista asteiksi
     const angleText = `Suunta: ${angleInDegrees.toFixed(2)}°`; // Näytetään kulma desimaalina
     const liikeX = this.velocityX;
-    const liikeY = this.veloscitY;
+    const liikeY = this.velocityY;
     
     // Piirretään ruudulle
     const context = canvas.getContext('2d');
