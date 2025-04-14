@@ -437,6 +437,9 @@
             " ": " " // Lisätty välilyönti
         };
 
+        let lastValidDirectionKeys = [];
+        const directionKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+
         // Canvasin koon asetus
         function resizeCanvas() {
             canvas.width = window.innerWidth;
@@ -573,15 +576,19 @@
 move() {
     if (isAnimating || this.isRespawning) return;
 
+    // Hylkimisreaktio (esim. törmäyksissä)
     if (this.handleRepulsion()) return;
 
+    // Törmäysten jäähdytys
     if (this.collisionCooldown > 0) {
         this.collisionCooldown--;
     }
 
+    // Nollaa kohdenopeudet
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
+    // Liikesuunnan määritys painettujen näppäinten mukaan
     if (pressedKeys.has('ArrowUp') && this.y > 0) {
         this.targetVelocityY = -this.maxSpeed;
     }
@@ -595,9 +602,11 @@ move() {
         this.targetVelocityX = this.maxSpeed;
     }
 
+    // Kiihdytys ja hidastus
     this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
     this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
+    // Kitka pysäyttää
     if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
         this.velocityX = 0;
     }
@@ -605,12 +614,15 @@ move() {
         this.velocityY = 0;
     }
 
+    // Päivitä sijainti
     this.x += this.velocityX;
     this.y += this.velocityY;
 
+    // Rajat
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
+    // Tarkista liike
     const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
     if (moving) {
@@ -618,8 +630,10 @@ move() {
         this.lastRotation = this.targetRotation;
     }
 
+    // Jos ei liikettä, käytetään viimeisintä
     const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
 
+    // Erotus ja lyhin käännös
     let angleDiff = desiredRotation - this.rotation;
     if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
@@ -630,61 +644,43 @@ move() {
         this.rotation += angleDiff * this.rotationSpeed;
     }
 
-    // ✅ Suuntatarkistus näppäimistä
+    // Lopullinen suuntakorjaus viimeisimmän näppäinyhdistelmän perusteella
     let keyX = 0;
     let keyY = 0;
-
-    const keysPressed = [];
-
-    if (pressedKeys.has('ArrowUp')) {
-        keyY -= 1;
-        keysPressed.push("↑");
-    }
-    if (pressedKeys.has('ArrowDown')) {
-        keyY += 1;
-        keysPressed.push("↓");
-    }
-    if (pressedKeys.has('ArrowLeft')) {
-        keyX -= 1;
-        keysPressed.push("←");
-    }
-    if (pressedKeys.has('ArrowRight')) {
-        keyX += 1;
-        keysPressed.push("→");
+    for (const key of lastValidDirectionKeys) {
+        if (key === 'ArrowUp') keyY -= 1;
+        if (key === 'ArrowDown') keyY += 1;
+        if (key === 'ArrowLeft') keyX -= 1;
+        if (key === 'ArrowRight') keyX += 1;
     }
 
     if (keyX !== 0 || keyY !== 0) {
         const desiredAngleFromKeys = Math.atan2(keyY, keyX);
-
         let keyAngleDiff = desiredAngleFromKeys - this.rotation;
         if (keyAngleDiff > Math.PI) keyAngleDiff -= Math.PI * 2;
         if (keyAngleDiff < -Math.PI) keyAngleDiff += Math.PI * 2;
 
-        // 🐞 DEBUG: Kulmat
-        console.log("🧭 SUUNTATARKISTUS");
-        console.log("rotation:", this.rotation.toFixed(2));
-        console.log("desiredAngleFromKeys:", desiredAngleFromKeys.toFixed(2));
-        console.log("angleDiff:", keyAngleDiff.toFixed(2));
-
         if (Math.abs(keyAngleDiff) > 0.1) {
-            const keyCombo = keysPressed.join(" + ");
-            console.log(`🔄 Suunta korjattu näppäinyhdistelmän mukaan: ${keyCombo}`);
+            const keyNameMap = {
+                ArrowUp: '↑',
+                ArrowDown: '↓',
+                ArrowLeft: '←',
+                ArrowRight: '→'
+            };
+            const keyCombo = lastValidDirectionKeys.map(k => keyNameMap[k] || k).join(" + ");
+            console.log(`🔄 Suunta korjattu viimeisimmän yhdistelmän mukaan: ${keyCombo}`);
+
             this.rotation = desiredAngleFromKeys;
             this.lastRotation = desiredAngleFromKeys;
             this.targetRotation = desiredAngleFromKeys;
         }
     }
 
+    // Ampumissuunta
     this.direction = {
         x: Math.cos(this.rotation),
         y: Math.sin(this.rotation)
     };
-
-    // 🐞 DEBUG: Suuntavektori
-    console.log("direction:", {
-        x: this.direction.x.toFixed(2),
-        y: this.direction.y.toFixed(2)
-    });
 }
 
 
@@ -1411,31 +1407,42 @@ move() {
         }
 
         // Nuolinäppäinten käsittely
-        function handleKeyDown(e) {
-            if (keyNames[e.key]) {
-                const beforeSize = pressedKeys.size;
-                pressedKeys.add(e.key);
-                if (pressedKeys.size !== beforeSize && gameRunning) {
-                    if (e.key === ' ') {
-                        player.shoot();
-                    }
-                    updateKeyDisplay();
-                }
+function handleKeyDown(e) {
+    if (keyNames[e.key]) {
+        const beforeSize = pressedKeys.size;
+        pressedKeys.add(e.key);
+        if (pressedKeys.size !== beforeSize && gameRunning) {
+            if (e.key === ' ') {
+                player.shoot();
             }
+            updateKeyDisplay();
         }
 
-        function handleKeyUp(e) {
-            if (keyNames[e.key]) {
-                pressedKeys.delete(e.key);
-                if (e.key === ' ') {
-                    player.canShoot = true;
-                }
-                
-                setTimeout(() => {
-                    updateKeyDisplay();
-                }, 20);
-            }
+        // Päivitä suunnat vain jos nuolinäppäin
+        if (directionKeys.includes(e.key)) {
+            lastValidDirectionKeys = Array.from(pressedKeys).filter(k => directionKeys.includes(k));
         }
+    }
+}
+
+function handleKeyUp(e) {
+    if (keyNames[e.key]) {
+        pressedKeys.delete(e.key);
+        if (e.key === ' ') {
+            player.canShoot = true;
+        }
+
+        setTimeout(() => {
+            updateKeyDisplay();
+
+            // Jos jäljellä on nuolinäppäimiä, päivitä viimeinen suunta
+            const remaining = Array.from(pressedKeys).filter(k => directionKeys.includes(k));
+            if (remaining.length > 0) {
+                lastValidDirectionKeys = remaining;
+            }
+        }, 20);
+    }
+}
 
         // Uusi funktio näppäinkomennon päivittämiseen
         function updateKeyDisplay() {
