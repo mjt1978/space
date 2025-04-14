@@ -426,6 +426,7 @@
         let nextMeteorSpawn = 0;
         let lastKeyCombo = "";
         const keyDisplay = document.getElementById('keyDisplay');
+        const debug = true; // Aseta true, jos haluat nähdä debuggauksen, tai false jos ei.
         
         // Nuolinäppäinten seuranta
         const pressedKeys = new Set();
@@ -572,8 +573,6 @@
                 this.targetRotation = 0; // Kohderotaatio
                 this.rotationSpeed = 0.2; // Rotaation nopeus
             }
-
-const debug = true; // Aseta true, jos haluat nähdä debuggauksen, tai false jos ei.
 
 move() {
     if (isAnimating || this.isRespawning) return;
