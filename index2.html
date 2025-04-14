@@ -568,6 +568,8 @@
                 this.rotation = 0; // Aluksen rotaatio
                 this.targetRotation = 0; // Kohderotaatio
                 this.rotationSpeed = 0.2; // Rotaation nopeus
+                this.lastMovingRotation = 0; // Viimeisin liikkeen suunta
+                this.isMoving = false; // Liikkuuko alus
             }
 
             move() {
@@ -619,17 +621,17 @@
                 this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
                 this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-                // Liikesuunnan tarkastus
-                const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+                // Tarkista liikkuuko alus
+                this.isMoving = Math.abs(this.velocityX) > 0.1 || Math.abs(this.velocityY) > 0.1;
 
-                if (moving) {
+                if (this.isMoving) {
                     // Lasketaan suunta ja tallennetaan
                     this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-                    this.lastRotation = this.targetRotation;
+                    this.lastMovingRotation = this.targetRotation;
                 }
 
-                // Käytetään viimeisintä liikettä, jos ei liiku
-                const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
+                // Käytetään viimeisintä liikesuuntaa, jos ei liiku
+                const desiredRotation = this.isMoving ? this.targetRotation : this.lastMovingRotation;
 
                 // Erotus ja lyhin suunta
                 let angleDiff = desiredRotation - this.rotation;
@@ -743,6 +745,7 @@
                     this.direction = { x: 1, y: 0 };
                     this.rotation = 0;
                     this.targetRotation = 0;
+                    this.lastMovingRotation = 0;
                 }
             }
         }
