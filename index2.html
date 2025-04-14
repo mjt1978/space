@@ -573,6 +573,8 @@
                 this.rotationSpeed = 0.2; // Rotaation nopeus
             }
 
+const debug = true; // Aseta true, jos haluat nähdä debuggauksen, tai false jos ei.
+
 move() {
     if (isAnimating || this.isRespawning) return;
 
@@ -588,7 +590,7 @@ move() {
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
-    // Käytetään viimeistä kelvollista näppäinyhdistelmää liikkumiseen
+    // Liikesuunnan määritys painettujen näppäinten mukaan
     let keyX = 0;
     let keyY = 0;
     
@@ -666,6 +668,7 @@ move() {
         console.log("Last Direction Keys:", lastValidDirectionKeys.join(" + "));
     }
 }
+
 
 
 
