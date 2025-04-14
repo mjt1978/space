@@ -604,12 +604,12 @@
                 this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
                 // Nollataan pienet nopeudet (kitka)
-                if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
-                    this.velocityX = 0;
-                }
-                if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
-                    this.velocityY = 0;
-                }
+                //if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
+                //    this.velocityX = 0;
+                //}
+                //if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
+                //    this.velocityY = 0;
+                //}
 
                 // Päivitä sijainti
                 this.x += this.velocityX;
