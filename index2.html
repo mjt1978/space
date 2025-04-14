@@ -573,19 +573,15 @@
 move() {
     if (isAnimating || this.isRespawning) return;
 
-    // Hylkimisreaktio (esim. törmäyksissä)
     if (this.handleRepulsion()) return;
 
-    // Törmäysten jäähdytys
     if (this.collisionCooldown > 0) {
         this.collisionCooldown--;
     }
 
-    // Nollataan kohdenopeudet
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
-    // Käytetään pressedKeys-settiä liikkumiseen
     if (pressedKeys.has('ArrowUp') && this.y > 0) {
         this.targetVelocityY = -this.maxSpeed;
     }
@@ -599,11 +595,9 @@ move() {
         this.targetVelocityX = this.maxSpeed;
     }
 
-    // Interpoloi nopeus kohti kohdenopeutta (kiihtyvyys ja hidastus)
     this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
     this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
-    // Nollataan pienet nopeudet (kitka)
     if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
         this.velocityX = 0;
     }
@@ -611,39 +605,32 @@ move() {
         this.velocityY = 0;
     }
 
-    // Päivitä sijainti
     this.x += this.velocityX;
     this.y += this.velocityY;
 
-    // Kentän rajat
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    // Liikesuunnan tarkastus
     const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
     if (moving) {
-        // Lasketaan suunta ja tallennetaan
         this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
         this.lastRotation = this.targetRotation;
     }
 
-    // Käytetään viimeisintä liikettä, jos ei liiku
     const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
 
-    // Erotus ja lyhin suunta
     let angleDiff = desiredRotation - this.rotation;
     if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    // Lukitaan suunta jos hyvin lähellä
     if (Math.abs(angleDiff) < 0.01) {
         this.rotation = desiredRotation;
     } else {
         this.rotation += angleDiff * this.rotationSpeed;
     }
 
-    // SUUNTATARKISTUS NÄPPÄIMISTÄ
+    // ✅ Suuntatarkistus näppäimistä
     let keyX = 0;
     let keyY = 0;
 
@@ -659,20 +646,32 @@ move() {
         if (keyAngleDiff > Math.PI) keyAngleDiff -= Math.PI * 2;
         if (keyAngleDiff < -Math.PI) keyAngleDiff += Math.PI * 2;
 
-        // Jos suunta poikkeaa näppäimistä, pakotetaan oikeaksi
+        // 🐞 DEBUG: Tulosta kulmat ja suunnat
+        console.log("🧭 SUUNTATARKISTUS");
+        console.log("rotation:", this.rotation.toFixed(2));
+        console.log("desiredAngleFromKeys:", desiredAngleFromKeys.toFixed(2));
+        console.log("angleDiff:", keyAngleDiff.toFixed(2));
+
         if (Math.abs(keyAngleDiff) > 0.1) {
+            console.log("🔄 Suunta korjattu näppäinten mukaiseksi");
             this.rotation = desiredAngleFromKeys;
             this.lastRotation = desiredAngleFromKeys;
             this.targetRotation = desiredAngleFromKeys;
         }
     }
 
-    // Päivitä ampumissuunta
     this.direction = {
         x: Math.cos(this.rotation),
         y: Math.sin(this.rotation)
     };
+
+    // 🐞 DEBUG: Suuntavektori
+    console.log("direction:", {
+        x: this.direction.x.toFixed(2),
+        y: this.direction.y.toFixed(2)
+    });
 }
+
 
 
             shoot() {
