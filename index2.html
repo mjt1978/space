@@ -574,6 +574,10 @@
                 this.rotationSpeed = 0.2; // Rotaation nopeus
             }
 
+// Määrittele debug-muuttuja ylhäällä, jotta se on saatavilla koko koodissa
+const debug = true; // Aseta true, jos haluat nähdä debuggauksen, tai false jos ei.
+
+// move() funktio
 move() {
     if (isAnimating || this.isRespawning) return;
 
@@ -611,11 +615,11 @@ move() {
     this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
     this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
-    // Nollataan pienet nopeudet (kitka)
-    if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
+    // Pysäytetään liike, jos nopeus on tarpeeksi pieni (kitka)
+    if (Math.abs(this.velocityX) < 0.1) {
         this.velocityX = 0;
     }
-    if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
+    if (Math.abs(this.velocityY) < 0.1) {
         this.velocityY = 0;
     }
 
@@ -667,10 +671,6 @@ move() {
         console.log("Last Direction Keys:", lastValidDirectionKeys.join(" + "));
     }
 }
-
-
-
-
 
 
             shoot() {
