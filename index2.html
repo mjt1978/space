@@ -571,84 +571,85 @@
             }
 
             move() {
-                if (isAnimating || this.isRespawning) return;
+    console.log('Pressed Keys:', pressedKeys);
 
-                // Hylkimisreaktio (esim. törmäyksissä)
-                if (this.handleRepulsion()) return;
+    if (isAnimating || this.isRespawning) return;
 
-                // Törmäysten jäähdytys
-                if (this.collisionCooldown > 0) {
-                    this.collisionCooldown--;
-                }
+    if (this.handleRepulsion()) return;
 
-                // Nollataan kohdenopeudet
-                this.targetVelocityX = 0;
-                this.targetVelocityY = 0;
+    if (this.collisionCooldown > 0) {
+        this.collisionCooldown--;
+    }
 
-                // Käytetään pressedKeys -settia liikkumiseen
-                if (pressedKeys.has('ArrowUp') && this.y > 0) {
-                    this.targetVelocityY = -this.maxSpeed;
-                }
-                if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
-                    this.targetVelocityY = this.maxSpeed;
-                }
-                if (pressedKeys.has('ArrowLeft') && this.x > 0) {
-                    this.targetVelocityX = -this.maxSpeed;
-                }
-                if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
-                    this.targetVelocityX = this.maxSpeed;
-                }
+    // Log the velocities before updating them
+    console.log('Target Velocities Before Update:', this.targetVelocityX, this.targetVelocityY);
 
-                // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
-                this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
-                this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
+    this.targetVelocityX = 0;
+    this.targetVelocityY = 0;
 
-                // Nollataan pienet nopeudet (kitka)
-                if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
-                    this.velocityX = 0;
-                }
-                if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
-                    this.velocityY = 0;
-                }
+    if (pressedKeys.has('ArrowUp') && this.y > 0) {
+        this.targetVelocityY = -this.maxSpeed;
+    }
+    if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
+        this.targetVelocityY = this.maxSpeed;
+    }
+    if (pressedKeys.has('ArrowLeft') && this.x > 0) {
+        this.targetVelocityX = -this.maxSpeed;
+    }
+    if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
+        this.targetVelocityX = this.maxSpeed;
+    }
 
-                // Päivitä sijainti
-                this.x += this.velocityX;
-                this.y += this.velocityY;
+    // Log the velocities after setting them
+    console.log('Velocities:', this.velocityX, this.velocityY);
+    console.log('Position Before Update:', this.x, this.y);
 
-                // Kentän rajat
-                this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-                this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+    this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
+    this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
-                // Liikesuunnan tarkastus
-                const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+    if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
+        this.velocityX = 0;
+    }
+    if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
+        this.velocityY = 0;
+    }
 
-                if (moving) {
-                    // Lasketaan suunta ja tallennetaan
-                    this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-                    this.lastRotation = this.targetRotation;
-                }
+    this.x += this.velocityX;
+    this.y += this.velocityY;
 
-                // Käytetään viimeisintä liikettä, jos ei liiku
-                const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
+    this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+    this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-                // Erotus ja lyhin suunta
-                let angleDiff = desiredRotation - this.rotation;
-                if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+    const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
-                // Lukitaan suunta jos hyvin lähellä
-                if (Math.abs(angleDiff) < 0.01) {
-                    this.rotation = desiredRotation;
-                } else {
-                    this.rotation += angleDiff * this.rotationSpeed;
-                }
+    if (moving) {
+        console.log('Current Rotation:', this.rotation);
+        console.log('Target Rotation Calculation:', Math.atan2(this.velocityY, this.velocityX));
+        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+        this.lastRotation = this.targetRotation;
+    }
 
-                // Päivitä ampumissuunta
-                this.direction = {
-                    x: Math.cos(this.rotation),
-                    y: Math.sin(this.rotation)
-                };
-            }
+    const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
+
+    let angleDiff = desiredRotation - this.rotation;
+    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+    if (Math.abs(angleDiff) < 0.01) {
+        this.rotation = desiredRotation;
+    } else {
+        this.rotation += angleDiff * this.rotationSpeed;
+    }
+
+    this.direction = {
+        x: Math.cos(this.rotation),
+        y: Math.sin(this.rotation)
+    };
+
+    // Log the final direction
+    console.log('Final Direction:', this.direction);
+}
+
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
