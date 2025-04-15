@@ -635,9 +635,9 @@
     const desiredRotation = moving ? this.targetRotation : this.lastRotation;
 
     // Erotus ja lyhin suunta
-    //let angleDiff = desiredRotation - this.rotation;
-    //if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-    //if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+    let angleDiff = desiredRotation - this.rotation;
+    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
     // Lukitaan suunta jos hyvin lähellä
     //if (Math.abs(angleDiff) < 0.01) {
