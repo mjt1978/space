@@ -437,14 +437,6 @@
             " ": " " // Lisätty välilyönti
         };
 
-        window.addEventListener('keydown', (e) => {
-    pressedKeys.add(e.key);
-});
-
-window.addEventListener('keyup', (e) => {
-    pressedKeys.delete(e.key);
-});
-
         // Canvasin koon asetus
         function resizeCanvas() {
             canvas.width = window.innerWidth;
@@ -578,106 +570,85 @@ window.addEventListener('keyup', (e) => {
                 this.rotationSpeed = 0.2; // Rotaation nopeus
             }
 
-          move() {
-    if (isAnimating || this.isRespawning) return;
+            move() {
+                if (isAnimating || this.isRespawning) return;
 
-    if (this.handleRepulsion()) return;
+                // Hylkimisreaktio (esim. törmäyksissä)
+                if (this.handleRepulsion()) return;
 
-    if (this.collisionCooldown > 0) {
-        this.collisionCooldown--;
-    }
+                // Törmäysten jäähdytys
+                if (this.collisionCooldown > 0) {
+                    this.collisionCooldown--;
+                }
 
-    this.targetVelocityX = 0;
-    this.targetVelocityY = 0;
+                // Nollataan kohdenopeudet
+                this.targetVelocityX = 0;
+                this.targetVelocityY = 0;
 
-    // Liikkuminen näppäinten mukaan
-    if (pressedKeys.has('ArrowUp') && this.y > 0) {
-        this.targetVelocityY = -this.maxSpeed;
-    }
-    if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
-        this.targetVelocityY = this.maxSpeed;
-    }
-    if (pressedKeys.has('ArrowLeft') && this.x > 0) {
-        this.targetVelocityX = -this.maxSpeed;
-    }
-    if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
-        this.targetVelocityX = this.maxSpeed;
-    }
+                // Käytetään pressedKeys -settia liikkumiseen
+                if (pressedKeys.has('ArrowUp') && this.y > 0) {
+                    this.targetVelocityY = -this.maxSpeed;
+                }
+                if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
+                    this.targetVelocityY = this.maxSpeed;
+                }
+                if (pressedKeys.has('ArrowLeft') && this.x > 0) {
+                    this.targetVelocityX = -this.maxSpeed;
+                }
+                if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
+                    this.targetVelocityX = this.maxSpeed;
+                }
 
-    // Kiihdytys/hidastus
-    this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
-    this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
+                // Interpoloi nopeus kohti kohdenopeutta (kiihdytys ja hidastus)
+                this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
+                this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
-    // Kitka
-    if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) this.velocityX = 0;
-    if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) this.velocityY = 0;
+                // Nollataan pienet nopeudet (kitka)
+                if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) {
+                    this.velocityX = 0;
+                }
+                if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) {
+                    this.velocityY = 0;
+                }
 
-    // Sijainnin päivitys
-    this.x += this.velocityX;
-    this.y += this.velocityY;
+                // Päivitä sijainti
+                this.x += this.velocityX;
+                this.y += this.velocityY;
 
-    this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-    this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+                // Kentän rajat
+                this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+                this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    // Liikkuuko alus?
-    const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+                // Liikesuunnan tarkastus
+                const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
 
-    if (moving) {
-        this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
-        this.lastRotation = this.targetRotation;
-    } else {
-        // Ei liikettä – lasketaan yhdistelmäsyötesuunta
-        let dx = 0, dy = 0;
-        if (pressedKeys.has('ArrowLeft')) dx -= 1;
-        if (pressedKeys.has('ArrowRight')) dx += 1;
-        if (pressedKeys.has('ArrowUp')) dy -= 1;
-        if (pressedKeys.has('ArrowDown')) dy += 1;
+                if (moving) {
+                    // Lasketaan suunta ja tallennetaan
+                    this.targetRotation = Math.atan2(this.velocityY, this.velocityX);
+                    this.lastRotation = this.targetRotation;
+                }
 
-        if (dx !== 0 || dy !== 0) {
-            this.lastRotation = Math.atan2(dy, dx);
-        }
-    }
+                // Käytetään viimeisintä liikettä, jos ei liiku
+                const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? this.rotation;
 
-    const desiredRotation = moving ? this.targetRotation : this.lastRotation ?? 0;
+                // Erotus ja lyhin suunta
+                let angleDiff = desiredRotation - this.rotation;
+                if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    // Kääntyminen kohti haluttua suuntaa
-    let angleDiff = desiredRotation - this.rotation;
-    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                // Lukitaan suunta jos hyvin lähellä
+                if (Math.abs(angleDiff) < 0.01) {
+                    this.rotation = desiredRotation;
+                } else {
+                    this.rotation += angleDiff * this.rotationSpeed;
+                }
 
-    if (Math.abs(angleDiff) < 0.01) {
-        this.rotation = desiredRotation;
-    } else {
-        this.rotation += angleDiff * this.rotationSpeed;
-    }
-
-    // Päivitä ampumissuunta
-    this.direction = {
-        x: Math.cos(this.rotation),
-        y: Math.sin(this.rotation)
-    };
-
-    this.displayMovementDirection();
-}
-
-
-// Funktio liikesuunnan näyttämiseksi
-displayMovementDirection() {
-    const angleInDegrees = this.targetRotation * (180 / Math.PI); // Muutetaan radiaanista asteiksi
-    const angleText = `Suunta: ${angleInDegrees.toFixed(2)}°`; // Näytetään kulma desimaalina
-    const liikeX = this.velocityX;
-    const liikeY = this.velocityY;
-    
-    // Piirretään ruudulle
-    const context = canvas.getContext('2d');
-    context.font = '20px Arial';
-    context.fillStyle = 'white';
-    context.fillText(angleText, 10, 130); // Näytetään kulma ruudun vasemmassa yläkulmassa
-    context.fillText(liikeX, 10, 140); // X
-    context.fillText(liikeY, 10, 150); // Y
-}
-
-
+                // Päivitä ampumissuunta
+                this.direction = {
+                    x: Math.cos(this.rotation),
+                    y: Math.sin(this.rotation)
+                };
+            }
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
