@@ -1395,6 +1395,13 @@
         }
 
         function handleKeyUp(e) {
+                pressedKeys.delete(e.key);
+                updateCurrentCombo();
+            if (pressedKeys.size === 0 && !allKeysReleased) {
+                allKeysReleased = true;
+                lastPressedCombo = currentPressedCombo;
+                console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo);
+            }
             if (keyNames[e.key]) {
                 pressedKeys.delete(e.key);
                 if (e.key === ' ') {
@@ -1409,13 +1416,6 @@
 
         // Uusi funktio näppäinkomennon päivittämiseen
         function updateKeyDisplay() {
-                pressedKeys.delete(e.key);
-                updateCurrentCombo();
-            if (pressedKeys.size === 0 && !allKeysReleased) {
-                allKeysReleased = true;
-                lastPressedCombo = currentPressedCombo;
-                console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo);
-            }
             const currentCombo = Array.from(pressedKeys)
                 .filter(key => key in keyNames)
                 .map(key => keyNames[key])
