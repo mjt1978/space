@@ -601,52 +601,62 @@ move() {
         this.collisionCooldown--;
     }
 
-    // 1. Selvitä haluttu suunta näppäimistä
+    // 1. Tarkista suunnanohjaus
     const dir = getDirectionFromKeySet(pressedKeys);
     const hasDirectionInput = dir.x !== 0 || dir.y !== 0;
 
+    // 2. Päivitä haluttu kulma, jos ohjaus on aktiivinen
     if (hasDirectionInput) {
-        // Päivitä haluttu kulma
         this.desiredRotation = Math.atan2(dir.y, dir.x);
     }
 
-    // 2. Laske kulmaero ja käännä kohti suuntaa
+    // 3. Pyöritä pehmeästi kohti haluttua kulmaa
     let angleDiff = this.desiredRotation - this.rotation;
     if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    if (Math.abs(angleDiff) < 0.05) {
-        this.rotation = this.desiredRotation;
+    this.rotation += angleDiff * this.rotationSpeed;
 
-        if (hasDirectionInput) {
-            // Suunta saavutettu ja näppäintä pidetään pohjassa → liiku eteenpäin
-            this.velocityX = Math.cos(this.rotation) * this.maxSpeed;
-            this.velocityY = Math.sin(this.rotation) * this.maxSpeed;
-        } else {
-            // Ei näppäimiä painettuna → pysähdy
-            this.velocityX = 0;
-            this.velocityY = 0;
+    // 4. Kiihdytys: jos suunta saavutettu ja näppäimiä pohjassa
+    const directionAligned = Math.abs(angleDiff) < 0.1;
+
+    if (hasDirectionInput && directionAligned) {
+        const accelX = Math.cos(this.rotation) * this.acceleration;
+        const accelY = Math.sin(this.rotation) * this.acceleration;
+        this.velocityX += accelX;
+        this.velocityY += accelY;
+
+        // Rajoita maksimiin
+        const speed = Math.hypot(this.velocityX, this.velocityY);
+        if (speed > this.maxSpeed) {
+            const factor = this.maxSpeed / speed;
+            this.velocityX *= factor;
+            this.velocityY *= factor;
         }
     } else {
-        // Pyöritään kohti haluttua suuntaa → ei liikettä vielä
-        this.rotation += angleDiff * this.rotationSpeed;
-        this.velocityX = 0;
-        this.velocityY = 0;
+        // Pidä liukuminen päällä mutta vähennä vauhtia hitaasti
+        this.velocityX *= 0.95;
+        this.velocityY *= 0.95;
+
+        if (Math.abs(this.velocityX) < 0.01) this.velocityX = 0;
+        if (Math.abs(this.velocityY) < 0.01) this.velocityY = 0;
     }
 
-    // 3. Päivitä sijainti
+    // 5. Liikuta alusta
     this.x += this.velocityX;
     this.y += this.velocityY;
 
+    // 6. Rajoita kentän sisään
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    // 4. Päivitä suuntavektori (esim. ampumista varten)
+    // 7. Päivitä ampumasuunta
     this.direction = {
         x: Math.cos(this.rotation),
         y: Math.sin(this.rotation)
     };
 }
+
 
 
             shoot() {
