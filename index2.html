@@ -397,10 +397,10 @@
         const waveInfo = document.getElementById('waveInfo');
         const livesContainer = document.getElementById('livesContainer');
 
-        let lastPressedCombo = '';       // Viimeinen näppäinyhdistelmä ennen vapautusta
-        //let currentPressedCombo = '';    // Nykyinen yhdistelmä
-        let allKeysReleased = true;      // Aiempi tila: kaikki näppäimet ylhäällä
-        let releaseTimeout = null;
+let lastPressedCombo = '';
+let allKeysReleased = true;
+let releaseTimeout = null;
+let previousPressedKeys = new Set(); // Kopio painetuista näppäimistä
 
         // Kuvat
         const playerImage = new Image();
@@ -1375,9 +1375,9 @@
             });
         }
 
-        function updateCurrentCombo() {
-            return Array.from(pressedKeys).sort().join(' + ');
-        }
+function updateComboFromSet(keySet) {
+    return Array.from(keySet).sort().join(' + ');
+}
 
         // Nuolinäppäinten käsittely
 function handleKeyDown(e) {
@@ -1386,7 +1386,10 @@ function handleKeyDown(e) {
         pressedKeys.add(e.key);
         allKeysReleased = false;
 
-        // Jos jokin näppäin painetaan, perutaan mahdollinen vapautuksen viive
+        // Tallenna kopio nykyisestä näppäintilasta
+        previousPressedKeys = new Set(pressedKeys);
+
+        // Peru viive jos painetaan lisää
         if (releaseTimeout) {
             clearTimeout(releaseTimeout);
             releaseTimeout = null;
@@ -1414,16 +1417,14 @@ function handleKeyUp(e) {
         }, 20);
     }
 
-    // Jos näppäimiä ei enää paineta, käynnistetään viiveellinen tarkistus
     if (pressedKeys.size === 0 && !allKeysReleased) {
         allKeysReleased = true;
 
-        // Viivästetty tarkistus, jos viimeiset näppäimet nousivat eri aikaan
+        // Käytetään tallennettua kopiota viiveen jälkeen
         releaseTimeout = setTimeout(() => {
-            // Tallennetaan viimeinen yhdistelmä ennen kuin kaikki nousi
-            lastPressedCombo = updateCurrentCombo(); // palauttaa tyhjän, mutta...
-            console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(vain yksi näppäin tai liian nopea vapautus)");
-        }, 50); // 50ms viive
+            lastPressedCombo = updateComboFromSet(previousPressedKeys);
+            console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(ei ehtinyt tallentua)");
+        }, 50);
     }
 }
 
