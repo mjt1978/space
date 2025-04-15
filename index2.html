@@ -1422,7 +1422,7 @@ function handleKeyUp(e) {
 
         setTimeout(() => {
             updateKeyDisplay();
-        }, 0);
+        }, 20);
     }
 
     if (pressedKeys.size === 0 && !allKeysReleased) {
@@ -1430,7 +1430,7 @@ function handleKeyUp(e) {
         releaseTimeout = setTimeout(() => {
             const lastCombo = keyOrder.join(' + ');
             console.log("Viimeinen näppäinyhdistelmä vapautusjärjestyksessä:", lastCombo || "(ei ehtinyt tallentua)");
-        }, 0);
+        }, 20);
     }
 }
 
