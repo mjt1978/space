@@ -1394,25 +1394,31 @@
             }
         }
 
-        function handleKeyUp(e) {
-                pressedKeys.delete(e.key);
-                updateCurrentCombo();
-            if (pressedKeys.size === 0 && !allKeysReleased) {
-                allKeysReleased = true;
-                lastPressedCombo = currentPressedCombo;
-                console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo);
-            }
-            if (keyNames[e.key]) {
-                pressedKeys.delete(e.key);
-                if (e.key === ' ') {
-                    player.canShoot = true;
-                }
-                
-                setTimeout(() => {
-                    updateKeyDisplay();
-                }, 20);
-            }
+function handleKeyUp(e) {
+    // Tallennetaan yhdistelmä ennen kuin poistetaan näppäin
+    if (pressedKeys.size > 0) {
+        currentPressedCombo = Array.from(pressedKeys).sort().join(' + ');
+    }
+
+    pressedKeys.delete(e.key);
+    
+    if (pressedKeys.size === 0 && !allKeysReleased) {
+        allKeysReleased = true;
+        lastPressedCombo = currentPressedCombo;
+        console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo);
+    }
+
+    if (keyNames[e.key]) {
+        if (e.key === ' ') {
+            player.canShoot = true;
         }
+
+        setTimeout(() => {
+            updateKeyDisplay();
+        }, 20);
+    }
+}
+
 
         // Uusi funktio näppäinkomennon päivittämiseen
         function updateKeyDisplay() {
