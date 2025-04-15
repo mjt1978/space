@@ -401,6 +401,7 @@ let lastPressedCombo = '';
 let allKeysReleased = true;
 let releaseTimeout = null;
 let previousPressedKeys = new Set(); // Kopio painetuista näppäimistä
+let recentDirectionKeys = [];
 
         // Kuvat
         const playerImage = new Image();
@@ -634,16 +635,15 @@ move() {
         desiredRotation = Math.atan2(this.velocityY, this.velocityX);
         this.lastRotation = desiredRotation;
     } else {
-        // Ei liikettä → arvioi viimeisistä näppäimistä
-        const dir = getDirectionFromKeySet(previousPressedKeys);
-        if (dir.x !== 0 || dir.y !== 0) {
-            desiredRotation = Math.atan2(dir.y, dir.x);
-            this.lastRotation = desiredRotation;
-        } else {
-            // Ei suuntaa, käytetään viimeisintä tunnettua
-            desiredRotation = this.lastRotation ?? this.rotation;
-        }
+    // Käytetään kahden viimeisimmän näppäimen yhdistelmää
+    const dir = getDirectionFromKeySet(new Set(recentDirectionKeys));
+    if (dir.x !== 0 || dir.y !== 0) {
+        desiredRotation = Math.atan2(dir.y, dir.x);
+        this.lastRotation = desiredRotation;
+    } else {
+        desiredRotation = this.lastRotation ?? this.rotation;
     }
+}
 
     // Kulmaero + pyörähdys
     let angleDiff = desiredRotation - this.rotation;
@@ -1392,15 +1392,18 @@ function handleKeyDown(e) {
     if (keyNames[e.key]) {
         const beforeSize = pressedKeys.size;
         pressedKeys.add(e.key);
+        updateCurrentCombo();
         allKeysReleased = false;
 
-        // Tallenna kopio nykyisestä näppäintilasta
-        previousPressedKeys = new Set(pressedKeys);
-
-        // Peru viive jos painetaan lisää
-        if (releaseTimeout) {
-            clearTimeout(releaseTimeout);
-            releaseTimeout = null;
+        // Tallenna viimeisimmät suunnanäppäimet (vain Arrow-näppäimet)
+        if (e.key.startsWith('Arrow')) {
+            // Poista jos jo olemassa, jotta ei tule duplikaatteja
+            recentDirectionKeys = recentDirectionKeys.filter(k => k !== e.key);
+            recentDirectionKeys.push(e.key);
+            // Säilytetään vain kaksi viimeisintä
+            if (recentDirectionKeys.length > 2) {
+                recentDirectionKeys.shift();
+            }
         }
 
         if (pressedKeys.size !== beforeSize && gameRunning) {
@@ -1411,6 +1414,7 @@ function handleKeyDown(e) {
         }
     }
 }
+
 
 function handleKeyUp(e) {
     pressedKeys.delete(e.key);
