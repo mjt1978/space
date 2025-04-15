@@ -397,6 +397,10 @@
         const waveInfo = document.getElementById('waveInfo');
         const livesContainer = document.getElementById('livesContainer');
 
+        let lastPressedCombo = '';       // Viimeinen näppäinyhdistelmä ennen vapautusta
+        let currentPressedCombo = '';    // Nykyinen yhdistelmä
+        let allKeysReleased = true;      // Aiempi tila: kaikki näppäimet ylhäällä
+
         // Kuvat
         const playerImage = new Image();
         playerImage.src = 'alus.png';
@@ -1370,11 +1374,17 @@
             });
         }
 
+        function updateCurrentCombo() {
+            currentPressedCombo = Array.from(pressedKeys).sort().join(' + ');
+        }
+
         // Nuolinäppäinten käsittely
         function handleKeyDown(e) {
             if (keyNames[e.key]) {
                 const beforeSize = pressedKeys.size;
                 pressedKeys.add(e.key);
+                updateCurrentCombo();
+                allKeysReleased = false; // joku painettuna
                 if (pressedKeys.size !== beforeSize && gameRunning) {
                     if (e.key === ' ') {
                         player.shoot();
@@ -1399,6 +1409,13 @@
 
         // Uusi funktio näppäinkomennon päivittämiseen
         function updateKeyDisplay() {
+                pressedKeys.delete(e.key);
+                updateCurrentCombo();
+            if (pressedKeys.size === 0 && !allKeysReleased) {
+                allKeysReleased = true;
+                lastPressedCombo = currentPressedCombo;
+                console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo);
+            }
             const currentCombo = Array.from(pressedKeys)
                 .filter(key => key in keyNames)
                 .map(key => keyNames[key])
