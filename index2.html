@@ -1388,6 +1388,7 @@ function updateComboFromSet(keySet) {
 }
 
 let keyOrder = [];
+let lastPressedCombo = "";
 
 function handleKeyDown(e) {
     if (keyNames[e.key]) {
@@ -1413,7 +1414,6 @@ function handleKeyDown(e) {
 
 function handleKeyUp(e) {
     pressedKeys.delete(e.key);
-    keyOrder = keyOrder.filter(k => k !== e.key);
 
     if (keyNames[e.key]) {
         if (e.key === ' ') {
@@ -1427,11 +1427,18 @@ function handleKeyUp(e) {
 
     if (pressedKeys.size === 0 && !allKeysReleased) {
         allKeysReleased = true;
+
+        // Tee kopio ennen kuin keyOrder tyhjennetään
+        const lastComboBeforeClearing = [...keyOrder];
+
         releaseTimeout = setTimeout(() => {
-            const lastCombo = keyOrder.join(' + ');
-            console.log("Viimeinen näppäinyhdistelmä vapautusjärjestyksessä:", lastCombo || "(ei ehtinyt tallentua)");
+            lastPressedCombo = lastComboBeforeClearing.join(' + ');
+            console.log("Viimeinen näppäinyhdistelmä vapautusjärjestyksessä:", lastPressedCombo || "(ei ehtinyt tallentua)");
         }, 20);
     }
+
+    // Tässä poistetaan näppäin listasta vasta viiveen asettamisen jälkeen
+    keyOrder = keyOrder.filter(k => k !== e.key);
 }
 
 
