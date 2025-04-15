@@ -398,8 +398,9 @@
         const livesContainer = document.getElementById('livesContainer');
 
         let lastPressedCombo = '';       // Viimeinen näppäinyhdistelmä ennen vapautusta
-        let currentPressedCombo = '';    // Nykyinen yhdistelmä
+        //let currentPressedCombo = '';    // Nykyinen yhdistelmä
         let allKeysReleased = true;      // Aiempi tila: kaikki näppäimet ylhäällä
+        let releaseTimeout = null;
 
         // Kuvat
         const playerImage = new Image();
@@ -1375,38 +1376,33 @@
         }
 
         function updateCurrentCombo() {
-            currentPressedCombo = Array.from(pressedKeys).sort().join(' + ');
+            return Array.from(pressedKeys).sort().join(' + ');
         }
 
         // Nuolinäppäinten käsittely
-        function handleKeyDown(e) {
-            if (keyNames[e.key]) {
-                const beforeSize = pressedKeys.size;
-                pressedKeys.add(e.key);
-                updateCurrentCombo();
-                allKeysReleased = false; // joku painettuna
-                if (pressedKeys.size !== beforeSize && gameRunning) {
-                    if (e.key === ' ') {
-                        player.shoot();
-                    }
-                    updateKeyDisplay();
-                }
-            }
+function handleKeyDown(e) {
+    if (keyNames[e.key]) {
+        const beforeSize = pressedKeys.size;
+        pressedKeys.add(e.key);
+        allKeysReleased = false;
+
+        // Jos jokin näppäin painetaan, perutaan mahdollinen vapautuksen viive
+        if (releaseTimeout) {
+            clearTimeout(releaseTimeout);
+            releaseTimeout = null;
         }
 
-function handleKeyUp(e) {
-    // Tallennetaan yhdistelmä ennen kuin poistetaan näppäin
-    if (pressedKeys.size > 0) {
-        currentPressedCombo = Array.from(pressedKeys).sort().join(' + ');
+        if (pressedKeys.size !== beforeSize && gameRunning) {
+            if (e.key === ' ') {
+                player.shoot();
+            }
+            updateKeyDisplay();
+        }
     }
+}
 
+function handleKeyUp(e) {
     pressedKeys.delete(e.key);
-    
-    if (pressedKeys.size === 0 && !allKeysReleased) {
-        allKeysReleased = true;
-        lastPressedCombo = currentPressedCombo;
-        console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo);
-    }
 
     if (keyNames[e.key]) {
         if (e.key === ' ') {
@@ -1416,6 +1412,18 @@ function handleKeyUp(e) {
         setTimeout(() => {
             updateKeyDisplay();
         }, 20);
+    }
+
+    // Jos näppäimiä ei enää paineta, käynnistetään viiveellinen tarkistus
+    if (pressedKeys.size === 0 && !allKeysReleased) {
+        allKeysReleased = true;
+
+        // Viivästetty tarkistus, jos viimeiset näppäimet nousivat eri aikaan
+        releaseTimeout = setTimeout(() => {
+            // Tallennetaan viimeinen yhdistelmä ennen kuin kaikki nousi
+            lastPressedCombo = updateCurrentCombo(); // palauttaa tyhjän, mutta...
+            console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(vain yksi näppäin tai liian nopea vapautus)");
+        }, 50); // 50ms viive
     }
 }
 
