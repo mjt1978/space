@@ -398,7 +398,6 @@
         const livesContainer = document.getElementById('livesContainer');
 
 let lastPressedCombo = '';
-let keyOrder = [];
 let allKeysReleased = true;
 let releaseTimeout = null;
 let previousPressedKeys = new Set(); // Kopio painetuista näppäimistä
@@ -1388,22 +1387,23 @@ function updateComboFromSet(keySet) {
     return Array.from(keySet).sort().join(' + ');
 }
 
-
-
+        // Nuolinäppäinten käsittely
 function handleKeyDown(e) {
     if (keyNames[e.key]) {
-        if (!keyOrder.includes(e.key)) {
-            keyOrder.push(e.key);
-        }
+        const beforeSize = pressedKeys.size;
         pressedKeys.add(e.key);
         allKeysReleased = false;
 
+        // Tallenna kopio nykyisestä näppäintilasta
+        previousPressedKeys = new Set(pressedKeys);
+
+        // Peru viive jos painetaan lisää
         if (releaseTimeout) {
             clearTimeout(releaseTimeout);
             releaseTimeout = null;
         }
 
-        if (gameRunning) {
+        if (pressedKeys.size !== beforeSize && gameRunning) {
             if (e.key === ' ') {
                 player.shoot();
             }
@@ -1428,17 +1428,12 @@ function handleKeyUp(e) {
     if (pressedKeys.size === 0 && !allKeysReleased) {
         allKeysReleased = true;
 
-        // Tee kopio ennen kuin keyOrder tyhjennetään
-        const lastComboBeforeClearing = [...keyOrder];
-
+        // Käytetään tallennettua kopiota viiveen jälkeen
         releaseTimeout = setTimeout(() => {
-            lastPressedCombo = lastComboBeforeClearing.join(' + ');
-            console.log("Viimeinen näppäinyhdistelmä vapautusjärjestyksessä:", lastPressedCombo || "(ei ehtinyt tallentua)");
+            lastPressedCombo = updateComboFromSet(previousPressedKeys);
+            console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(ei ehtinyt tallentua)");
         }, 20);
     }
-
-    // Tässä poistetaan näppäin listasta vasta viiveen asettamisen jälkeen
-    keyOrder = keyOrder.filter(k => k !== e.key);
 }
 
 
