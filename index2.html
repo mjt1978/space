@@ -398,6 +398,7 @@
         const livesContainer = document.getElementById('livesContainer');
 
 let lastPressedCombo = '';
+let keyOrder = [];
 let allKeysReleased = true;
 let releaseTimeout = null;
 let previousPressedKeys = new Set(); // Kopio painetuista näppäimistä
@@ -1387,8 +1388,7 @@ function updateComboFromSet(keySet) {
     return Array.from(keySet).sort().join(' + ');
 }
 
-let keyOrder = [];
-let lastPressedCombo = "";
+
 
 function handleKeyDown(e) {
     if (keyNames[e.key]) {
