@@ -437,6 +437,14 @@
             " ": " " // Lisätty välilyönti
         };
 
+        window.addEventListener('keydown', (e) => {
+    pressedKeys.add(e.key);
+});
+
+window.addEventListener('keyup', (e) => {
+    pressedKeys.delete(e.key);
+});
+
         // Canvasin koon asetus
         function resizeCanvas() {
             canvas.width = window.innerWidth;
