@@ -1426,7 +1426,7 @@ function handleKeyUp(e) {
 
         setTimeout(() => {
             updateKeyDisplay();
-        }, 2);
+        }, 50);
     }
 
     if (pressedKeys.size === 0 && !allKeysReleased) {
@@ -1436,7 +1436,7 @@ function handleKeyUp(e) {
         releaseTimeout = setTimeout(() => {
             lastPressedCombo = updateComboFromSet(previousPressedKeys);
             console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(ei ehtinyt tallentua)");
-        }, 2);
+        }, 50);
     }
 }
 
