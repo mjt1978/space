@@ -396,6 +396,7 @@
         const energyFill = document.getElementById('energyFill');
         const waveInfo = document.getElementById('waveInfo');
         const livesContainer = document.getElementById('livesContainer');
+        const releasedTimestamps = [];
 
 let lastPressedCombo = '';
 let allKeysReleased = true;
@@ -1428,10 +1429,25 @@ function handleKeyUp(e) {
     if (pressedKeys.size === 0 && !allKeysReleased) {
         allKeysReleased = true;
 
+        // Tallenna aikaleima
+        const timestamp = new Date().toISOString();
+        releasedTimestamps.push(timestamp);
+        if (releasedTimestamps.length > 3) {
+            releasedTimestamps.shift();
+        }
+
         // Käytetään tallennettua kopiota viiveen jälkeen
         releaseTimeout = setTimeout(() => {
             lastPressedCombo = updateComboFromSet(previousPressedKeys);
             console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(ei ehtinyt tallentua)");
+
+            // Tulosta kolme viimeisintä vapautusta
+            if (releasedTimestamps.length >= 3) {
+                console.log("Kolme viimeisintä näppäimen vapautusta:");
+                releasedTimestamps.forEach((time, i) => {
+                    console.log(`${i + 1}: ${time}`);
+                });
+            }
         }, 20);
     }
 }
