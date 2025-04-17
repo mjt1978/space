@@ -1416,7 +1416,7 @@ function handleKeyDown(e) {
 function handleKeyUp(e) {
     pressedKeys.delete(e.key);
 
-    const releasedKey = e.key; // Tallenna näppäimen nimi heti
+    const releasedKey = e.key; // Tallenna näppäin heti
     const timestamp = new Date().toISOString();
     releasedTimestamps.push({ key: releasedKey, time: timestamp });
 
@@ -1446,6 +1446,16 @@ function handleKeyUp(e) {
                 releasedTimestamps.forEach((entry, i) => {
                     console.log(`${i + 1}: ${entry.key} - ${entry.time}`);
                 });
+
+                // Erot millisekunteina
+                const t1 = new Date(releasedTimestamps[0].time).getTime();
+                const t2 = new Date(releasedTimestamps[1].time).getTime();
+                const t3 = new Date(releasedTimestamps[2].time).getTime();
+
+                console.log("Aikaerot näppäinten välillä:");
+                console.log(`2 - 1 (${releasedTimestamps[1].key} – ${releasedTimestamps[0].key}): ${t2 - t1} ms`);
+                console.log(`3 - 2 (${releasedTimestamps[2].key} – ${releasedTimestamps[1].key}): ${t3 - t2} ms`);
+                console.log(`3 - 1 (${releasedTimestamps[2].key} – ${releasedTimestamps[0].key}): ${t3 - t1} ms`);
             }
         }, 20);
     }
