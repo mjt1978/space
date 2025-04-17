@@ -441,8 +441,6 @@ let previousPressedKeys = new Set(); // Kopio painetuista näppäimistä
             ArrowRight: "→",
             " ": " " // Lisätty välilyönti
         };
-        const keyTimestamps = new Map(); // Tallentaa painallusten aikaleimat
-        const keyReleaseTimes = []; // Tallennetaan viimeisimmät vapautukset (aikaleimoineen)
 
         // Canvasin koon asetus
         function resizeCanvas() {
@@ -600,37 +598,17 @@ move() {
     this.targetVelocityX = 0;
     this.targetVelocityY = 0;
 
-    let directionKeys = new Set(pressedKeys);
-
-    // Jos ei painettuja näppäimiä, tarkista onko vapautettu 3 lähes yhtä aikaa
-    if (pressedKeys.size === 0) {
-        const now = Date.now();
-        if (keyReleaseTimes.length === 3 &&
-            keyReleaseTimes[2].time - keyReleaseTimes[0].time < 100) {
-
-            // Haetaan kahden viimeisimmän painetun ajankohdat
-            const sortedKeys = Array.from(keyTimestamps.entries())
-                .sort((a, b) => b[1] - a[1]) // uusin ensin
-                .filter(entry => ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(entry[0]));
-
-            const lastTwoKeys = sortedKeys.slice(0, 2).map(entry => entry[0]);
-            directionKeys = new Set(lastTwoKeys);
-        } else {
-            directionKeys = new Set(previousPressedKeys);
-        }
-    }
-
     // Liike nuolinäppäimillä
-    if (directionKeys.has('ArrowUp') && this.y > 0) {
+    if (pressedKeys.has('ArrowUp') && this.y > 0) {
         this.targetVelocityY = -this.maxSpeed;
     }
-    if (directionKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
+    if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
         this.targetVelocityY = this.maxSpeed;
     }
-    if (directionKeys.has('ArrowLeft') && this.x > 0) {
+    if (pressedKeys.has('ArrowLeft') && this.x > 0) {
         this.targetVelocityX = -this.maxSpeed;
     }
-    if (directionKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
+    if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
         this.targetVelocityX = this.maxSpeed;
     }
 
@@ -652,14 +630,17 @@ move() {
     let desiredRotation = this.rotation;
 
     if (moving) {
+        // Liikkeen perusteella
         desiredRotation = Math.atan2(this.velocityY, this.velocityX);
         this.lastRotation = desiredRotation;
     } else {
-        const dir = getDirectionFromKeySet(directionKeys);
+        // Ei liikettä → arvioi viimeisistä näppäimistä
+        const dir = getDirectionFromKeySet(previousPressedKeys);
         if (dir.x !== 0 || dir.y !== 0) {
             desiredRotation = Math.atan2(dir.y, dir.x);
             this.lastRotation = desiredRotation;
         } else {
+            // Ei suuntaa, käytetään viimeisintä tunnettua
             desiredRotation = this.lastRotation ?? this.rotation;
         }
     }
@@ -681,6 +662,7 @@ move() {
         y: Math.sin(this.rotation)
     };
 }
+
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
                     const bulletSize = calculateSize({width: 20, height: 10});
@@ -1412,9 +1394,6 @@ function handleKeyDown(e) {
         pressedKeys.add(e.key);
         allKeysReleased = false;
 
-        // Tallenna painalluksen aikaleima
-        keyTimestamps.set(e.key, Date.now());
-
         // Tallenna kopio nykyisestä näppäintilasta
         previousPressedKeys = new Set(pressedKeys);
 
@@ -1434,35 +1413,11 @@ function handleKeyDown(e) {
 }
 
 function handleKeyUp(e) {
-    const now = Date.now();
     pressedKeys.delete(e.key);
-    
+
     if (keyNames[e.key]) {
         if (e.key === ' ') {
             player.canShoot = true;
-        }
-
-        // Tallenna vapautusaika
-        keyReleaseTimes.push({ key: e.key, time: now });
-
-        // Säilytä vain viimeiset 3 vapautusta
-        if (keyReleaseTimes.length > 3) {
-            keyReleaseTimes.shift();
-        }
-
-        // Jos 3 vapautusta tapahtuu 100 ms sisällä, päivitetään suunta
-        if (keyReleaseTimes.length === 3 &&
-            keyReleaseTimes[2].time - keyReleaseTimes[0].time < 100) {
-
-            // Haetaan kahden viimeisimmän painetun ajankohdat
-            const sortedKeys = Array.from(keyTimestamps.entries())
-                .sort((a, b) => b[1] - a[1]) // uusin ensin
-                .filter(entry => ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(entry[0]));
-
-            const lastTwoKeys = sortedKeys.slice(0, 2).map(entry => entry[0]);
-            lastPressedCombo = updateComboFromSet(new Set(lastTwoKeys));
-
-            console.log("Käytetään suunnaksi kahden viimeisimmän painetun yhdistelmää:", lastPressedCombo);
         }
 
         setTimeout(() => {
@@ -1470,10 +1425,10 @@ function handleKeyUp(e) {
         }, 20);
     }
 
-    // Normaalin nollauksen viive
     if (pressedKeys.size === 0 && !allKeysReleased) {
         allKeysReleased = true;
 
+        // Käytetään tallennettua kopiota viiveen jälkeen
         releaseTimeout = setTimeout(() => {
             lastPressedCombo = updateComboFromSet(previousPressedKeys);
             console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(ei ehtinyt tallentua)");
