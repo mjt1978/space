@@ -396,7 +396,6 @@
         const energyFill = document.getElementById('energyFill');
         const waveInfo = document.getElementById('waveInfo');
         const livesContainer = document.getElementById('livesContainer');
-        const releasedTimestamps = [];
 
 let lastPressedCombo = '';
 let allKeysReleased = true;
@@ -1416,16 +1415,8 @@ function handleKeyDown(e) {
 function handleKeyUp(e) {
     pressedKeys.delete(e.key);
 
-    const releasedKey = e.key; // Tallenna näppäin heti
-    const timestamp = new Date().toISOString();
-    releasedTimestamps.push({ key: releasedKey, time: timestamp });
-
-    if (releasedTimestamps.length > 3) {
-        releasedTimestamps.shift();
-    }
-
-    if (keyNames[releasedKey]) {
-        if (releasedKey === ' ') {
+    if (keyNames[e.key]) {
+        if (e.key === ' ') {
             player.canShoot = true;
         }
 
@@ -1437,26 +1428,10 @@ function handleKeyUp(e) {
     if (pressedKeys.size === 0 && !allKeysReleased) {
         allKeysReleased = true;
 
+        // Käytetään tallennettua kopiota viiveen jälkeen
         releaseTimeout = setTimeout(() => {
             lastPressedCombo = updateComboFromSet(previousPressedKeys);
             console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(ei ehtinyt tallentua)");
-
-            if (releasedTimestamps.length >= 3) {
-                console.log("Kolme viimeisintä näppäimen vapautusta:");
-                releasedTimestamps.forEach((entry, i) => {
-                    console.log(`${i + 1}: ${entry.key} - ${entry.time}`);
-                });
-
-                // Erot millisekunteina
-                const t1 = new Date(releasedTimestamps[0].time).getTime();
-                const t2 = new Date(releasedTimestamps[1].time).getTime();
-                const t3 = new Date(releasedTimestamps[2].time).getTime();
-
-                console.log("Aikaerot näppäinten välillä:");
-                console.log(`2 - 1 (${releasedTimestamps[1].key} – ${releasedTimestamps[0].key}): ${t2 - t1} ms`);
-                console.log(`3 - 2 (${releasedTimestamps[2].key} – ${releasedTimestamps[1].key}): ${t3 - t2} ms`);
-                console.log(`3 - 1 (${releasedTimestamps[2].key} – ${releasedTimestamps[0].key}): ${t3 - t1} ms`);
-            }
         }, 20);
     }
 }
