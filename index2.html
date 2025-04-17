@@ -1416,8 +1416,16 @@ function handleKeyDown(e) {
 function handleKeyUp(e) {
     pressedKeys.delete(e.key);
 
-    if (keyNames[e.key]) {
-        if (e.key === ' ') {
+    const releasedKey = e.key; // Tallenna näppäimen nimi heti
+    const timestamp = new Date().toISOString();
+    releasedTimestamps.push({ key: releasedKey, time: timestamp });
+
+    if (releasedTimestamps.length > 3) {
+        releasedTimestamps.shift();
+    }
+
+    if (keyNames[releasedKey]) {
+        if (releasedKey === ' ') {
             player.canShoot = true;
         }
 
@@ -1429,20 +1437,10 @@ function handleKeyUp(e) {
     if (pressedKeys.size === 0 && !allKeysReleased) {
         allKeysReleased = true;
 
-        // Tallenna näppäin ja aikaleima
-        const timestamp = new Date().toISOString();
-        releasedTimestamps.push({ key: e.key, time: timestamp });
-
-        if (releasedTimestamps.length > 3) {
-            releasedTimestamps.shift();
-        }
-
-        // Käytetään tallennettua kopiota viiveen jälkeen
         releaseTimeout = setTimeout(() => {
             lastPressedCombo = updateComboFromSet(previousPressedKeys);
             console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(ei ehtinyt tallentua)");
 
-            // Tulosta kolme viimeisintä näppäimen vapautusta
             if (releasedTimestamps.length >= 3) {
                 console.log("Kolme viimeisintä näppäimen vapautusta:");
                 releasedTimestamps.forEach((entry, i) => {
