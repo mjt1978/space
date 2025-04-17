@@ -1429,9 +1429,10 @@ function handleKeyUp(e) {
     if (pressedKeys.size === 0 && !allKeysReleased) {
         allKeysReleased = true;
 
-        // Tallenna aikaleima
+        // Tallenna näppäin ja aikaleima
         const timestamp = new Date().toISOString();
-        releasedTimestamps.push(timestamp);
+        releasedTimestamps.push({ key: e.key, time: timestamp });
+
         if (releasedTimestamps.length > 3) {
             releasedTimestamps.shift();
         }
@@ -1441,11 +1442,11 @@ function handleKeyUp(e) {
             lastPressedCombo = updateComboFromSet(previousPressedKeys);
             console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(ei ehtinyt tallentua)");
 
-            // Tulosta kolme viimeisintä vapautusta
+            // Tulosta kolme viimeisintä näppäimen vapautusta
             if (releasedTimestamps.length >= 3) {
                 console.log("Kolme viimeisintä näppäimen vapautusta:");
-                releasedTimestamps.forEach((time, i) => {
-                    console.log(`${i + 1}: ${time}`);
+                releasedTimestamps.forEach((entry, i) => {
+                    console.log(`${i + 1}: ${entry.key} - ${entry.time}`);
                 });
             }
         }, 20);
