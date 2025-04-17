@@ -397,10 +397,12 @@
         const waveInfo = document.getElementById('waveInfo');
         const livesContainer = document.getElementById('livesContainer');
 
-let lastPressedCombo = '';
-let allKeysReleased = true;
-let releaseTimeout = null;
-let previousPressedKeys = new Set(); // Kopio painetuista näppäimistä
+        let lastPressedCombo = '';
+        let allKeysReleased = true;
+        let releaseTimeout = null;
+        let previousPressedKeys = new Set(); // Kopio painetuista näppäimistä
+        let releasedKeysLog = []; // Vapautettujen näppäinten loki
+        let lastKeyReleaseTime = 0; // Viimeisin vapautusaika
 
         // Kuvat
         const playerImage = new Image();
@@ -441,7 +443,6 @@ let previousPressedKeys = new Set(); // Kopio painetuista näppäimistä
             ArrowRight: "→",
             " ": " " // Lisätty välilyönti
         };
-        const releasedKeysLog = [];
 
         // Canvasin koon asetus
         function resizeCanvas() {
@@ -491,15 +492,14 @@ let previousPressedKeys = new Set(); // Kopio painetuista näppäimistä
         }
 
         function getDirectionFromKeySet(keySet) {
-    let dx = 0;
-    let dy = 0;
-    if (keySet.has('ArrowUp')) dy -= 1;
-    if (keySet.has('ArrowDown')) dy += 1;
-    if (keySet.has('ArrowLeft')) dx -= 1;
-    if (keySet.has('ArrowRight')) dx += 1;
-    return { x: dx, y: dy };
-}
-
+            let dx = 0;
+            let dy = 0;
+            if (keySet.has('ArrowUp')) dy -= 1;
+            if (keySet.has('ArrowDown')) dy += 1;
+            if (keySet.has('ArrowLeft')) dx -= 1;
+            if (keySet.has('ArrowRight')) dx += 1;
+            return { x: dx, y: dy };
+        }
 
         // Pelioliot
         class GameObject {
@@ -585,84 +585,99 @@ let previousPressedKeys = new Set(); // Kopio painetuista näppäimistä
                 this.rotation = 0; // Aluksen rotaatio
                 this.targetRotation = 0; // Kohderotaatio
                 this.rotationSpeed = 0.2; // Rotaation nopeus
+                this.lastRotation = 0; // Viimeisin tunnettu rotaatio
             }
 
-move() {
-    if (isAnimating || this.isRespawning) return;
+            move() {
+                if (isAnimating || this.isRespawning) return;
 
-    if (this.handleRepulsion()) return;
+                if (this.handleRepulsion()) return;
 
-    if (this.collisionCooldown > 0) {
-        this.collisionCooldown--;
-    }
+                if (this.collisionCooldown > 0) {
+                    this.collisionCooldown--;
+                }
 
-    this.targetVelocityX = 0;
-    this.targetVelocityY = 0;
+                this.targetVelocityX = 0;
+                this.targetVelocityY = 0;
 
-    // Liike nuolinäppäimillä
-    if (pressedKeys.has('ArrowUp') && this.y > 0) {
-        this.targetVelocityY = -this.maxSpeed;
-    }
-    if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
-        this.targetVelocityY = this.maxSpeed;
-    }
-    if (pressedKeys.has('ArrowLeft') && this.x > 0) {
-        this.targetVelocityX = -this.maxSpeed;
-    }
-    if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
-        this.targetVelocityX = this.maxSpeed;
-    }
+                // Liike nuolinäppäimillä
+                if (pressedKeys.has('ArrowUp') && this.y > 0) {
+                    this.targetVelocityY = -this.maxSpeed;
+                }
+                if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
+                    this.targetVelocityY = this.maxSpeed;
+                }
+                if (pressedKeys.has('ArrowLeft') && this.x > 0) {
+                    this.targetVelocityX = -this.maxSpeed;
+                }
+                if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
+                    this.targetVelocityX = this.maxSpeed;
+                }
 
-    // Kiihdytys/hidastus
-    this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
-    this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
+                // Kiihdytys/hidastus
+                this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
+                this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
-    // Kitka
-    if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) this.velocityX = 0;
-    if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) this.velocityY = 0;
+                // Kitka
+                if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) this.velocityX = 0;
+                if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) this.velocityY = 0;
 
-    this.x += this.velocityX;
-    this.y += this.velocityY;
+                this.x += this.velocityX;
+                this.y += this.velocityY;
 
-    this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-    this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+                this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+                this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-    const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
-    let desiredRotation = this.rotation;
+                const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+                let desiredRotation = this.rotation;
 
-    if (moving) {
-        // Liikkeen perusteella
-        desiredRotation = Math.atan2(this.velocityY, this.velocityX);
-        this.lastRotation = desiredRotation;
-    } else {
-        // Ei liikettä → arvioi viimeisistä näppäimistä
-        const dir = getDirectionFromKeySet(previousPressedKeys);
-        if (dir.x !== 0 || dir.y !== 0) {
-            desiredRotation = Math.atan2(dir.y, dir.x);
-            this.lastRotation = desiredRotation;
-        } else {
-            // Ei suuntaa, käytetään viimeisintä tunnettua
-            desiredRotation = this.lastRotation ?? this.rotation;
-        }
-    }
+                if (moving) {
+                    // Liikkeen perusteella
+                    desiredRotation = Math.atan2(this.velocityY, this.velocityX);
+                    this.lastRotation = desiredRotation;
+                } else {
+                    // Ei liikettä → tarkista vapautetut näppäimet
+                    const now = performance.now();
+                    
+                    // Jos on kaksi viimeisintä vapautettua näppäintä ja ne vapautettiin 50ms sisällä
+                    if (releasedKeysLog.length >= 2 && 
+                        Math.abs(releasedKeysLog[releasedKeysLog.length - 1].time - releasedKeysLog[releasedKeysLog.length - 2].time) <= 50) {
+                        
+                        // Käytä näitä kahta viimeisintä näppäintä suunnan määrittämiseen
+                        const lastTwoKeys = releasedKeysLog.slice(-2).map(entry => entry.key);
+                        const keySet = new Set(lastTwoKeys);
+                        const dir = getDirectionFromKeySet(keySet);
+                        
+                        if (dir.x !== 0 || dir.y !== 0) {
+                            desiredRotation = Math.atan2(dir.y, dir.x);
+                            this.lastRotation = desiredRotation;
+                        } else {
+                            // Käytä viimeisintä tunnettua rotaatiota
+                            desiredRotation = this.lastRotation ?? this.rotation;
+                        }
+                    } else {
+                        // Käytä viimeisintä tunnettua rotaatiota
+                        desiredRotation = this.lastRotation ?? this.rotation;
+                    }
+                }
 
-    // Kulmaero + pyörähdys
-    let angleDiff = desiredRotation - this.rotation;
-    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                // Kulmaero + pyörähdys
+                let angleDiff = desiredRotation - this.rotation;
+                if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    if (Math.abs(angleDiff) < 0.01) {
-        this.rotation = desiredRotation;
-    } else {
-        this.rotation += angleDiff * this.rotationSpeed;
-    }
+                if (Math.abs(angleDiff) < 0.01) {
+                    this.rotation = desiredRotation;
+                } else {
+                    this.rotation += angleDiff * this.rotationSpeed;
+                }
 
-    // Lopullinen ampumasuunta
-    this.direction = {
-        x: Math.cos(this.rotation),
-        y: Math.sin(this.rotation)
-    };
-}
+                // Lopullinen ampumasuunta
+                this.direction = {
+                    x: Math.cos(this.rotation),
+                    y: Math.sin(this.rotation)
+                };
+            }
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
@@ -1384,76 +1399,65 @@ move() {
             });
         }
 
-function updateComboFromSet(keySet) {
-    return Array.from(keySet).sort().join(' + ');
-}
+        function updateComboFromSet(keySet) {
+            return Array.from(keySet).sort().join(' + ');
+        }
 
         // Nuolinäppäinten käsittely
-function handleKeyDown(e) {
-    if (keyNames[e.key]) {
-        const beforeSize = pressedKeys.size;
-        pressedKeys.add(e.key);
-        allKeysReleased = false;
+        function handleKeyDown(e) {
+            if (keyNames[e.key]) {
+                const beforeSize = pressedKeys.size;
+                pressedKeys.add(e.key);
+                allKeysReleased = false;
 
-        // Tallenna kopio nykyisestä näppäintilasta
-        previousPressedKeys = new Set(pressedKeys);
+                // Tallenna kopio nykyisestä näppäintilasta
+                previousPressedKeys = new Set(pressedKeys);
 
-        // Peru viive jos painetaan lisää
-        if (releaseTimeout) {
-            clearTimeout(releaseTimeout);
-            releaseTimeout = null;
-        }
+                // Peru viive jos painetaan lisää
+                if (releaseTimeout) {
+                    clearTimeout(releaseTimeout);
+                    releaseTimeout = null;
+                }
 
-        if (pressedKeys.size !== beforeSize && gameRunning) {
-            if (e.key === ' ') {
-                player.shoot();
+                if (pressedKeys.size !== beforeSize && gameRunning) {
+                    if (e.key === ' ') {
+                        player.shoot();
+                    }
+                    updateKeyDisplay();
+                }
             }
-            updateKeyDisplay();
-        }
-    }
-}
-
-function handleKeyUp(e) {
-    pressedKeys.delete(e.key);
-
-    if (keyNames[e.key]) {
-        if (e.key === ' ') {
-            player.canShoot = true;
         }
 
-        // Tallenna vapautettu nuolinäppäin ja aikaleima
-        const now = performance.now();
-        releasedKeysLog.push({ key: e.key, time: now });
+        function handleKeyUp(e) {
+            if (keyNames[e.key]) {
+                pressedKeys.delete(e.key);
 
-        // Pidä vain kaksi viimeisintä
-        if (releasedKeysLog.length > 2) {
-            releasedKeysLog.shift();
+                if (e.key === ' ') {
+                    player.canShoot = true;
+                }
+
+                // Tallenna vapautettu näppäin ja aikaleima
+                const now = performance.now();
+                releasedKeysLog.push({ key: e.key, time: now });
+                lastKeyReleaseTime = now;
+
+                // Pidä vain kaksi viimeisintä vapautusta
+                if (releasedKeysLog.length > 2) {
+                    releasedKeysLog.shift();
+                }
+
+                if (pressedKeys.size === 0 && !allKeysReleased) {
+                    allKeysReleased = true;
+
+                    releaseTimeout = setTimeout(() => {
+                        lastPressedCombo = updateComboFromSet(previousPressedKeys);
+                        console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(ei ehtinyt tallentua)");
+                    }, 50);
+                }
+
+                updateKeyDisplay();
+            }
         }
-
-        // Jos kaksi vapautusta tallessa, näytä ne ja aikaero
-        if (releasedKeysLog.length === 2) {
-            const key1 = releasedKeysLog[0];
-            const key2 = releasedKeysLog[1];
-            const timeDiff = Math.abs(key2.time - key1.time).toFixed(2);
-            console.log(`Kaksi viimeisintä vapautettua näppäintä: ${key1.key} ja ${key2.key}`);
-            console.log(`Aikaero niiden välillä: ${timeDiff} ms`);
-        }
-
-        setTimeout(() => {
-            updateKeyDisplay();
-        }, 50);
-    }
-
-    if (pressedKeys.size === 0 && !allKeysReleased) {
-        allKeysReleased = true;
-
-        releaseTimeout = setTimeout(() => {
-            lastPressedCombo = updateComboFromSet(previousPressedKeys);
-            console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(ei ehtinyt tallentua)");
-        }, 50);
-    }
-}
-
 
         // Uusi funktio näppäinkomennon päivittämiseen
         function updateKeyDisplay() {
