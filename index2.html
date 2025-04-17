@@ -441,6 +441,7 @@ let previousPressedKeys = new Set(); // Kopio painetuista näppäimistä
             ArrowRight: "→",
             " ": " " // Lisätty välilyönti
         };
+        const releasedKeysLog = [];
 
         // Canvasin koon asetus
         function resizeCanvas() {
@@ -1420,6 +1421,24 @@ function handleKeyUp(e) {
             player.canShoot = true;
         }
 
+        // Tallenna vapautettu nuolinäppäin ja aikaleima
+        const now = performance.now();
+        releasedKeysLog.push({ key: e.key, time: now });
+
+        // Pidä vain kaksi viimeisintä
+        if (releasedKeysLog.length > 2) {
+            releasedKeysLog.shift();
+        }
+
+        // Jos kaksi vapautusta tallessa, näytä ne ja aikaero
+        if (releasedKeysLog.length === 2) {
+            const key1 = releasedKeysLog[0];
+            const key2 = releasedKeysLog[1];
+            const timeDiff = Math.abs(key2.time - key1.time).toFixed(2);
+            console.log(`Kaksi viimeisintä vapautettua näppäintä: ${key1.key} ja ${key2.key}`);
+            console.log(`Aikaero niiden välillä: ${timeDiff} ms`);
+        }
+
         setTimeout(() => {
             updateKeyDisplay();
         }, 20);
@@ -1428,7 +1447,6 @@ function handleKeyUp(e) {
     if (pressedKeys.size === 0 && !allKeysReleased) {
         allKeysReleased = true;
 
-        // Käytetään tallennettua kopiota viiveen jälkeen
         releaseTimeout = setTimeout(() => {
             lastPressedCombo = updateComboFromSet(previousPressedKeys);
             console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(ei ehtinyt tallentua)");
