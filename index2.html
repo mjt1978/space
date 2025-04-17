@@ -12,20 +12,6 @@
             background-color: black;
         }
 
-        #keyDisplay {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            font-size: 24px;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 100;
-            text-shadow: 0 0 5px black;
-        }
-
         #startScreen {
             position: fixed;
             top: 0;
@@ -240,8 +226,6 @@
         </div>
     </div>
 
-    <div id="keyDisplay"></div>
-
     <script>
         // Ääniefektit
         const soundEffects = {
@@ -400,9 +384,9 @@
         let lastPressedCombo = '';
         let allKeysReleased = true;
         let releaseTimeout = null;
-        let previousPressedKeys = new Set(); // Kopio painetuista näppäimistä
-        let releasedKeysLog = []; // Vapautettujen näppäinten loki
-        let lastKeyReleaseTime = 0; // Viimeisin vapautusaika
+        let previousPressedKeys = new Set();
+        let releasedKeysLog = [];
+        let lastKeyReleaseTime = 0;
 
         // Kuvat
         const playerImage = new Image();
@@ -431,8 +415,6 @@
         let animationFrameId = null;
         let meteorSpawnCounter = 0;
         let nextMeteorSpawn = 0;
-        let lastKeyCombo = "";
-        const keyDisplay = document.getElementById('keyDisplay');
         
         // Nuolinäppäinten seuranta
         const pressedKeys = new Set();
@@ -441,7 +423,7 @@
             ArrowDown: "↓",
             ArrowLeft: "←",
             ArrowRight: "→",
-            " ": " " // Lisätty välilyönti
+            " ": " "
         };
 
         // Canvasin koon asetus
@@ -581,11 +563,11 @@
                 this.collisionCooldown = 0;
                 this.respawnCooldown = 0;
                 this.isRespawning = false;
-                this.direction = { x: 1, y: 0 }; // Ammuksen suunta
-                this.rotation = 0; // Aluksen rotaatio
-                this.targetRotation = 0; // Kohderotaatio
-                this.rotationSpeed = 0.2; // Rotaation nopeus
-                this.lastRotation = 0; // Viimeisin tunnettu rotaatio
+                this.direction = { x: 1, y: 0 };
+                this.rotation = 0;
+                this.targetRotation = 0;
+                this.rotationSpeed = 0.2;
+                this.lastRotation = 0;
             }
 
             move() {
@@ -1399,14 +1381,9 @@
             });
         }
 
-        function updateComboFromSet(keySet) {
-            return Array.from(keySet).sort().join(' + ');
-        }
-
         // Nuolinäppäinten käsittely
         function handleKeyDown(e) {
             if (keyNames[e.key]) {
-                const beforeSize = pressedKeys.size;
                 pressedKeys.add(e.key);
                 allKeysReleased = false;
 
@@ -1419,11 +1396,8 @@
                     releaseTimeout = null;
                 }
 
-                if (pressedKeys.size !== beforeSize && gameRunning) {
-                    if (e.key === ' ') {
-                        player.shoot();
-                    }
-                    updateKeyDisplay();
+                if (e.key === ' ' && gameRunning) {
+                    player.shoot();
                 }
             }
         }
@@ -1450,27 +1424,9 @@
                     allKeysReleased = true;
 
                     releaseTimeout = setTimeout(() => {
-                        lastPressedCombo = updateComboFromSet(previousPressedKeys);
-                        console.log("Viimeinen näppäinyhdistelmä ennen vapautusta:", lastPressedCombo || "(ei ehtinyt tallentua)");
+                        lastPressedCombo = Array.from(previousPressedKeys).sort().join(' + ');
                     }, 50);
                 }
-
-                updateKeyDisplay();
-            }
-        }
-
-        // Uusi funktio näppäinkomennon päivittämiseen
-        function updateKeyDisplay() {
-            const currentCombo = Array.from(pressedKeys)
-                .filter(key => key in keyNames)
-                .map(key => keyNames[key])
-                .join(" + ");
-            
-            if (currentCombo) {
-                lastKeyCombo = currentCombo;
-                keyDisplay.textContent = lastKeyCombo;
-            } else {
-                keyDisplay.textContent = lastKeyCombo || "";
             }
         }
 
