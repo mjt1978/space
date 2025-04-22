@@ -451,31 +451,20 @@ const soundEffects = initSoundEffects(soundConfig);
         ];
 
 let pos1 = 0, pos2 = 0, pos3 = 0;
-let offset2 = 0, offset3 = 0;
-
-// Satunnainen pystysuuntainen vaihtelu
-function getRandomOffset(range = 30) {
-    return Math.random() * range - range / 2; // esim. -15px ... +15px
-}
 
 function animateParallax() {
-    pos1 -= 0.05;
-    pos2 -= 0.15;
-    pos3 -= 0.4;
+    pos1 -= 0.05; // kaukaisin (hitaasti)
+    pos2 -= 0.15; // keskitason
+    pos3 -= 0.3;  // lähin (nopein)
 
-    // Satunnainen korkeus vaihtuu hitaasti (voit hienosäätää)
-    if (Math.random() < 0.01) offset2 = getRandomOffset(40); // keskitaso vaihtelee enemmän
-    if (Math.random() < 0.01) offset3 = getRandomOffset(15); // lähin kerros kevyemmin
-
-    document.getElementById('backgroundLayer1').style.backgroundPosition = ${pos1}px 0;
-    document.getElementById('backgroundLayer2').style.backgroundPosition = ${pos2}px ${offset2}px;
-    document.getElementById('backgroundLayer3').style.backgroundPosition = ${pos3}px ${offset3}px;
+    document.getElementById('backgroundLayer1').style.backgroundPosition = `${pos1}px 0`;
+    document.getElementById('backgroundLayer2').style.backgroundPosition = `${pos2}px 0`;
+    document.getElementById('backgroundLayer3').style.backgroundPosition = `${pos3}px 0`;
 
     requestAnimationFrame(animateParallax);
 }
 
 animateParallax();
-
 
         // DOM-elementit
         const startScreen = document.getElementById('startScreen');
