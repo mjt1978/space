@@ -259,13 +259,18 @@
             backgroundMusic: new Audio('music.mp3') // taustamusiikkia ei tarvitse poolittaa
         };
 
-        // Aseta äänien äänenvoimakkuus
-        Object.values(soundEffects).forEach(sound => {
-            sound.volume = 0.3;
-            if (sound !== soundEffects.backgroundMusic) {
-                sound.load();
-            }
+// Aseta äänenvoimakkuus ja lataa kaikki äänet (SoundPool ja taustamusiikki)
+Object.entries(soundEffects).forEach(([key, sound]) => {
+    if (sound instanceof SoundPool) {
+        sound.pool.forEach(audio => {
+            audio.volume = 0.3;
+            audio.load();
         });
+    } else if (sound instanceof Audio) {
+        if (key !== 'backgroundMusic') sound.load();
+        sound.volume = 0.3;
+    }
+});
         soundEffects.backgroundMusic.loop = true;
 
         // Pelin asetukset
