@@ -228,50 +228,71 @@
 
     <script>
     
-    class SoundPool {
-        constructor(src, poolSize = 20, volume = 1.0) {
-            this.pool = [];
-            this.index = 0;
-            for (let i = 0; i < poolSize; i++) {
-                const audio = new Audio(src);
-                audio.volume = volume;
-                this.pool.push(audio);
-            }
+class SoundPool {
+    constructor(src, poolSize = 5, volume = 1.0) {
+        this.pool = [];
+        this.index = 0;
+        this.volume = volume;
+
+        for (let i = 0; i < poolSize; i++) {
+            const audio = new Audio(src);
+            audio.volume = volume;
+            this.pool.push(audio);
         }
-
-        play() {
-            const sound = this.pool[this.index];
-            sound.currentTime = 0;
-            sound.play();
-            this.index = (this.index + 1) % this.pool.length;
-        }    
     }
-        
-        // Ääniefektit
-        const soundEffects = {
-            playerShoot: new SoundPool('blast_ship.mp3'),
-            enemyShoot: new SoundPool('blast_ufo.mp3'),
-            playerExplosion: new SoundPool('explosion_ship.mp3'),
-            enemyExplosion: new SoundPool('explosion_ufo.mp3'),
-            ufoSplit: new SoundPool('split.mp3'),
-            collision: new SoundPool('collision.mp3'),
-            meteorSound: new SoundPool('meteor.mp3'),
-            backgroundMusic: new Audio('music.mp3') // taustamusiikkia ei tarvitse poolittaa
-        };
 
-// Aseta äänenvoimakkuus ja lataa kaikki äänet (SoundPool ja taustamusiikki)
-Object.entries(soundEffects).forEach(([key, sound]) => {
-    if (sound instanceof SoundPool) {
-        sound.pool.forEach(audio => {
-            audio.volume = 0.3;
-            audio.load();
-        });
-    } else if (sound instanceof Audio) {
-        if (key !== 'backgroundMusic') sound.load();
-        sound.volume = 0.3;
+    play() {
+        const sound = this.pool[this.index];
+        sound.currentTime = 0;
+        sound.play();
+        this.index = (this.index + 1) % this.pool.length;
     }
-});
-        soundEffects.backgroundMusic.loop = true;
+
+    setVolume(volume) {
+        this.volume = volume;
+        this.pool.forEach(audio => audio.volume = volume);
+    }
+
+    load() {
+        this.pool.forEach(audio => audio.load());
+    }
+}
+
+// 🎛️ Konfiguraatio kaikille äänille
+const soundConfig = {
+    playerShoot: { src: 'blast_ship.mp3', volume: 0.4 },
+    enemyShoot: { src: 'blast_ufo.mp3', volume: 0.3 },
+    playerExplosion: { src: 'explosion_ship.mp3', volume: 0.5 },
+    enemyExplosion: { src: 'explosion_ufo.mp3', volume: 0.5 },
+    ufoSplit: { src: 'split.mp3', volume: 0.35 },
+    collision: { src: 'collision.mp3', volume: 0.3 },
+    meteorSound: { src: 'meteor.mp3', volume: 0.3 },
+    // Lisää tarvittaessa
+};
+
+// 🎶 Alustetaan kaikki äänet yhdellä funktiolla
+function initSoundEffects(config) {
+    const sounds = {};
+
+    for (const [key, { src, volume }] of Object.entries(config)) {
+        const pool = new SoundPool(src, 5, volume);
+        pool.load();
+        sounds[key] = pool;
+    }
+
+    // Taustamusiikki erikseen
+    const bgMusic = new Audio('music.mp3');
+    bgMusic.volume = 0.2;
+    bgMusic.loop = true;
+    bgMusic.load();
+
+    sounds.backgroundMusic = bgMusic;
+    return sounds;
+}
+
+// 📦 Luo kaikki äänet
+const soundEffects = initSoundEffects(soundConfig);
+
 
         // Pelin asetukset
         const GAME_CONFIG = {
