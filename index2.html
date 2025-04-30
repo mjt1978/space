@@ -518,9 +518,10 @@ animateParallax();
         let animationFrameId = null;
         let meteorSpawnCounter = 0;
         let nextMeteorSpawn = 0;
-        let powerupSpawnCounter = 0;  // Add counter for powerup spawn timing
+        let powerupSpawnCounter = 0;
         let bulletDamageMultiplier = 1;
         let bulletSizeMultiplier = 1;
+        let powerupCollected = false;
         
         // Nuolinäppäinten seuranta
         const pressedKeys = new Set();
@@ -1173,6 +1174,8 @@ animateParallax();
 
         // Luo uusi power-up
         function spawnPowerUp() {
+            if (powerupCollected) return; // Don't spawn if already collected
+            
             const size = calculateSize(GAME_CONFIG.powerup.size);
             const y = Math.random() * (canvas.height - size.height);
             const powerup = new PowerUp(
@@ -1200,9 +1203,10 @@ animateParallax();
             powerups = [];
             meteorSpawnCounter = 0;
             nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
-            powerupSpawnCounter = 0;  // Reset spawn counter
+            powerupSpawnCounter = 0;
             bulletDamageMultiplier = 1;
             bulletSizeMultiplier = 1;
+            powerupCollected = false; // Reset collected flag for new level
 
             const playerSize = calculateSize(GAME_CONFIG.playerSize);
             player = new Player(
@@ -1317,13 +1321,15 @@ animateParallax();
                 nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
             }
 
-            // Päivitä power-up spawnaus
-            powerupSpawnCounter++;
-            if (powerupSpawnCounter >= GAME_CONFIG.powerup.spawnInterval && 
-                powerups.length === 0 && 
-                Math.random() < GAME_CONFIG.powerup.spawnChance) {
-                spawnPowerUp();
-                powerupSpawnCounter = 0;
+            // Päivitä power-up spawnaus vain jos ei ole vielä kerätty
+            if (!powerupCollected) {
+                powerupSpawnCounter++;
+                if (powerupSpawnCounter >= GAME_CONFIG.powerup.spawnInterval && 
+                    powerups.length === 0 && 
+                    Math.random() < GAME_CONFIG.powerup.spawnChance) {
+                    spawnPowerUp();
+                    powerupSpawnCounter = 0;
+                }
             }
 
             // Päivitä pelaaja
@@ -1417,6 +1423,7 @@ animateParallax();
                     bulletDamageMultiplier = 1.5;
                     bulletSizeMultiplier = 1.5;
                     powerup.isDestroyed = true;
+                    powerupCollected = true; // Mark as collected
                 }
             });
 
