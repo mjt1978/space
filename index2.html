@@ -94,9 +94,7 @@
             color: black;
         }
 
-
-
-        canvas {
+                canvas {
             display: block;
             width: 100%;
             height: 100%;
@@ -299,6 +297,7 @@ const soundConfig = {
     ufoSplit: { src: 'split.mp3', volume: 0.8 },
     collision: { src: 'collision.mp3', volume: 0.7 },
     meteorSound: { src: 'meteor.mp3', volume: 0.8 },
+    powerup: { src: 'powerup.mp3', volume: 0.8 },
     // Lisää tarvittaessa
 };
 
@@ -350,6 +349,11 @@ const soundEffects = initSoundEffects(soundConfig);
                 spawnInterval: { min: 300, max: 1000 },
                 minSize: 60,
                 maxSize: 200
+            },
+            powerup: {
+                speed: 5,
+                spawnChance: 0.01,
+                size: { width: 50, height: 50 }
             }
         };
 
@@ -495,12 +499,16 @@ animateParallax();
         const meteorImage = new Image();
         meteorImage.src = 'meteor.png';
 
+        const powerupImage = new Image();
+        powerupImage.src = 'ammus_50.png';
+
         // Pelitilamuuttujat
         let player;
         let enemies = [];
         let bullets = [];
         let enemyBullets = [];
         let meteors = [];
+        let powerups = [];
         let gameRunning = true;
         let currentLevel = 1;
         let currentWave = 0;
@@ -509,6 +517,9 @@ animateParallax();
         let animationFrameId = null;
         let meteorSpawnCounter = 0;
         let nextMeteorSpawn = 0;
+        let powerupSpawned = false;
+        let bulletDamageMultiplier = 1;
+        let bulletSizeMultiplier = 1;
         
         // Nuolinäppäinten seuranta
         const pressedKeys = new Set();
@@ -641,6 +652,21 @@ animateParallax();
             }
         }
 
+        class PowerUp extends GameObject {
+            constructor(image, x, y, width, height, speed) {
+                super(image, x, y, width, height);
+                this.speed = speed * (window.innerWidth / 1920);
+            }
+
+            move() {
+                if (isAnimating) return;
+                this.x -= this.speed;
+                if (this.x + this.width < 0) {
+                    this.isDestroyed = true;
+                }
+            }
+        }
+
         class Player extends GameObject {
             constructor(image, x, y, width, height) {
                 super(image, x, y, width, height);
@@ -665,7 +691,7 @@ animateParallax();
             }
 
             move() {
-                if (isAnimating || this.isRespawning) return;
+                if (isAnimating) return;
 
                 if (this.handleRepulsion()) return;
 
@@ -757,7 +783,7 @@ animateParallax();
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
-                    const bulletSize = calculateSize({width: 20, height: 10});
+                    const bulletSize = calculateSize({width: 20 * bulletSizeMultiplier, height: 10 * bulletSizeMultiplier});
                     const centerX = this.x + this.width / 2;
                     const centerY = this.y + this.height / 2;
                     
@@ -775,7 +801,8 @@ animateParallax();
                         bulletSize.height,
                         bulletVelocityX,
                         bulletVelocityY,
-                        this.rotation
+                        this.rotation,
+                        bulletDamageMultiplier
                     ));
                     soundEffects.playerShoot.play();
                     this.canShoot = false;
@@ -1006,7 +1033,7 @@ animateParallax();
                     this.bulletSpeed,
                     this.bulletDamage,
                     Math.max(1, Math.floor(this.collisionDamage / 2))
-                ));
+                );
                 
                 enemies.push(new Enemy(
                     this.image, 
@@ -1021,7 +1048,7 @@ animateParallax();
                     this.bulletSpeed,
                     this.bulletDamage,
                     Math.max(1, Math.floor(this.collisionDamage / 2))
-                ));
+                );
             }
 
             fire(player) {
@@ -1050,11 +1077,12 @@ animateParallax();
         }
 
         class Bullet extends GameObject {
-            constructor(image, x, y, width, height, velocityX, velocityY, angle) {
+            constructor(image, x, y, width, height, velocityX, velocityY, angle, damageMultiplier = 1) {
                 super(image, x, y, width, height);
                 this.velocityX = velocityX;
                 this.velocityY = velocityY;
                 this.angle = angle || 0;
+                this.damageMultiplier = damageMultiplier;
             }
 
             move() {
@@ -1142,6 +1170,24 @@ animateParallax();
             soundEffects.meteorSound.play();
         }
 
+        // Luo uusi power-up
+        function spawnPowerUp() {
+            if (powerupSpawned) return;
+            
+            const size = calculateSize(GAME_CONFIG.powerup.size);
+            const y = Math.random() * (canvas.height - size.height);
+            const powerup = new PowerUp(
+                powerupImage,
+                canvas.width,
+                y,
+                size.width,
+                size.height,
+                GAME_CONFIG.powerup.speed
+            );
+            powerups.push(powerup);
+            powerupSpawned = true;
+        }
+
         // Tason alustus
         function initializeLevel(levelId) {
             const level = LEVELS.find(l => l.id === levelId);
@@ -1152,8 +1198,12 @@ animateParallax();
             levelCompleted = false;
             isAnimating = false;
             meteors = [];
+            powerups = [];
             meteorSpawnCounter = 0;
             nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
+            powerupSpawned = false;
+            bulletDamageMultiplier = 1;
+            bulletSizeMultiplier = 1;
 
             const playerSize = calculateSize(GAME_CONFIG.playerSize);
             player = new Player(
@@ -1274,6 +1324,11 @@ animateParallax();
                 nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
             }
 
+            // Päivitä power-up spawnaus
+            if (!powerupSpawned && Math.random() < GAME_CONFIG.powerup.spawnChance) {
+                spawnPowerUp();
+            }
+
             // Päivitä pelaaja
             player.move();
             
@@ -1288,6 +1343,9 @@ animateParallax();
             
             // Päivitä meteoriitit
             updateMeteors();
+            
+            // Päivitä power-upit
+            updatePowerups();
         }
 
         function updateBullets() {
@@ -1302,7 +1360,7 @@ animateParallax();
                 enemies.forEach(enemy => {
                     if (!enemy.isDestroyed && checkEllipseCollision(bullet, enemy)) {
                         bullet.isDestroyed = true;
-                        enemy.takeDamage();
+                        enemy.takeDamage(bullet.damageMultiplier);
                         hit = true;
                     }
                 });
@@ -1351,9 +1409,28 @@ animateParallax();
             meteors = meteors.filter(meteor => !meteor.isDestroyed);
         }
 
+        function updatePowerups() {
+            powerups.forEach(powerup => {
+                if (powerup.isDestroyed) return;
+                
+                powerup.move();
+                
+                if (checkEllipseCollision(player, powerup)) {
+                    soundEffects.powerup.play();
+                    bulletDamageMultiplier = 1.5;
+                    bulletSizeMultiplier = 1.5;
+                    powerup.isDestroyed = true;
+                    powerups = powerups.filter(p => !p.isDestroyed);
+                }
+            });
+
+            powerups = powerups.filter(powerup => !powerup.isDestroyed);
+        }
+
         function drawAllObjects() {
             // Piirrä taustaelementit ensin
             meteors.forEach(meteor => meteor.draw());
+            powerups.forEach(powerup => powerup.draw());
             bullets.forEach(bullet => bullet.draw());
             enemyBullets.forEach(bullet => bullet.draw());
             
