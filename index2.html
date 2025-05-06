@@ -359,100 +359,205 @@ const soundEffects = initSoundEffects(soundConfig);
         };
 
         // Tasot
-        const LEVELS = [
+const LEVELS = [
+    {
+        id: 1,
+        name: "Helppo",
+        description: "Tuhotaan UFOja aaltoina!",
+        waves: [
             {
-                id: 1,
-                name: "Helppo",
-                description: "Tuhotaan UFOja aaltoina!",
-                waves: [
+                enemies: [
                     {
-                        enemies: [
-                            {
-                                type: "medium",
-                                count: 2,
-                                health: 6,
-                                speed: 3,
-                                fireCooldown: 90,
-                                bulletSpeed: 4,
-                                bulletDamage: 1,
-                                image: 'ufo4.png',
-                                isSplitting: false,
-                                requiredKills: 2,
-                                collisionDamage: 2
-                            }
-                        ]
-                    },
+                        type: "medium",
+                        count: 2,
+                        health: 6,
+                        speed: 3,
+                        fireCooldown: 90,
+                        bulletSpeed: 4,
+                        bulletDamage: 1,
+                        image: 'ufo4.png',
+                        isSplitting: false,
+                        requiredKills: 2,
+                        collisionDamage: 2
+                    }
+                ]
+            },
+            {
+                enemies: [
                     {
-                        enemies: [
-                            {
-                                type: "medium",
-                                count: 3,
-                                health: 6,
-                                speed: 3,
-                                fireCooldown: 90,
-                                bulletSpeed: 4,
-                                bulletDamage: 1,
-                                image: 'ufo2.png',
-                                isSplitting: false,
-                                requiredKills: 3,
-                                collisionDamage: 2
-                            }
-                        ]
-                    },
+                        type: "medium",
+                        count: 3,
+                        health: 6,
+                        speed: 3,
+                        fireCooldown: 90,
+                        bulletSpeed: 4,
+                        bulletDamage: 1,
+                        image: 'ufo2.png',
+                        isSplitting: false,
+                        requiredKills: 3,
+                        collisionDamage: 2
+                    }
+                ]
+            },
+            {
+                enemies: [
                     {
-                        enemies: [
-                            {
-                                type: "xlarge",
-                                count: 1,
-                                health: 12,
-                                speed: 2,
-                                fireCooldown: 120,
-                                bulletSpeed: 10,
-                                bulletDamage: 1,
-                                image: 'ufo5.png',
-                                isSplitting: true,
-                                requiredKills: 2,
-                                collisionDamage: 3
-                            }
-                        ]
-                    },
+                        type: "xlarge",
+                        count: 1,
+                        health: 12,
+                        speed: 2,
+                        fireCooldown: 120,
+                        bulletSpeed: 10,
+                        bulletDamage: 1,
+                        image: 'ufo5.png',
+                        isSplitting: true,
+                        requiredKills: 2,
+                        collisionDamage: 3
+                    }
+                ]
+            },
+            {
+                enemies: [
                     {
-                        enemies: [
-                            {
-                                type: "small",
-                                count: 5,
-                                health: 3,
-                                speed: 4,
-                                fireCooldown: 60,
-                                bulletSpeed: 6,
-                                bulletDamage: 1,
-                                image: 'ufo1.png',
-                                isSplitting: false,
-                                requiredKills: 5,
-                                collisionDamage: 1
-                            }
-                        ]
-                    },
+                        type: "small",
+                        count: 5,
+                        health: 3,
+                        speed: 4,
+                        fireCooldown: 60,
+                        bulletSpeed: 6,
+                        bulletDamage: 1,
+                        image: 'ufo1.png',
+                        isSplitting: false,
+                        requiredKills: 5,
+                        collisionDamage: 1
+                    }
+                ]
+            },
+            {
+                enemies: [
                     {
-                        enemies: [
-                            {
-                                type: "large",
-                                count: 2,
-                                health: 24,
-                                speed: 4,
-                                fireCooldown: 30,
-                                bulletSpeed: 8,
-                                bulletDamage: 2,
-                                image: 'ufo3.png',
-                                isSplitting: false,
-                                requiredKills: 2,
-                                collisionDamage: 4
-                            }
-                        ]
+                        type: "large",
+                        count: 2,
+                        health: 24,
+                        speed: 4,
+                        fireCooldown: 30,
+                        bulletSpeed: 8,
+                        bulletDamage: 2,
+                        image: 'ufo3.png',
+                        isSplitting: false,
+                        requiredKills: 2,
+                        collisionDamage: 4
                     }
                 ]
             }
-        ];
+        ]
+    },
+    {
+        id: 2,
+        name: "Keskitaso",
+        description: "Haastavampaa toimintaa!",
+        waves: [
+            {
+                enemies: [
+                    {
+                        type: "medium",
+                        count: 3,
+                        health: 8,
+                        speed: 4,
+                        fireCooldown: 80,
+                        bulletSpeed: 5,
+                        bulletDamage: 1,
+                        image: 'ufo2.png',
+                        isSplitting: false,
+                        requiredKills: 3,
+                        collisionDamage: 2
+                    }
+                ]
+            },
+            {
+                enemies: [
+                    {
+                        type: "large",
+                        count: 2,
+                        health: 20,
+                        speed: 3,
+                        fireCooldown: 60,
+                        bulletSpeed: 6,
+                        bulletDamage: 1,
+                        image: 'ufo3.png',
+                        isSplitting: false,
+                        requiredKills: 2,
+                        collisionDamage: 3
+                    }
+                ]
+            },
+            {
+                enemies: [
+                    {
+                        type: "xlarge",
+                        count: 1,
+                        health: 15,
+                        speed: 2,
+                        fireCooldown: 100,
+                        bulletSpeed: 8,
+                        bulletDamage: 2,
+                        image: 'ufo5.png',
+                        isSplitting: true,
+                        requiredKills: 2,
+                        collisionDamage: 3
+                    },
+                    {
+                        type: "small",
+                        count: 3,
+                        health: 4,
+                        speed: 5,
+                        fireCooldown: 50,
+                        bulletSpeed: 7,
+                        bulletDamage: 1,
+                        image: 'ufo1.png',
+                        isSplitting: false,
+                        requiredKills: 3,
+                        collisionDamage: 1
+                    }
+                ]
+            },
+            {
+                enemies: [
+                    {
+                        type: "medium",
+                        count: 4,
+                        health: 10,
+                        speed: 4,
+                        fireCooldown: 70,
+                        bulletSpeed: 6,
+                        bulletDamage: 1,
+                        image: 'ufo4.png',
+                        isSplitting: false,
+                        requiredKills: 4,
+                        collisionDamage: 2
+                    }
+                ]
+            },
+            {
+                enemies: [
+                    {
+                        type: "large",
+                        count: 3,
+                        health: 25,
+                        speed: 4,
+                        fireCooldown: 40,
+                        bulletSpeed: 7,
+                        bulletDamage: 2,
+                        image: 'ufo3.png',
+                        isSplitting: false,
+                        requiredKills: 3,
+                        collisionDamage: 4
+                    }
+                ]
+            }
+        ]
+    }
+];
 
 let pos1 = 0, pos2 = 0, pos3 = 0;
 
