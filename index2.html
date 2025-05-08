@@ -741,15 +741,6 @@ animateParallax();
                 }
             }
 
-            getEllipse() {
-                return {
-                    x: this.x + this.width / 2,
-                    y: this.y + this.height / 2,
-                    radiusX: this.width * GAME_CONFIG.collisionEllipse.widthRatio / 2,
-                    radiusY: this.height * GAME_CONFIG.collisionEllipse.heightRatio / 2
-                };
-            }
-
             handleRepulsion() {
                 if (this.isRepelling) {
                     this.x += this.repulsionForce * Math.cos(this.repulsionAngle);
@@ -1028,22 +1019,47 @@ move() {
                 this.rotationSpeed = rotationSpeed || (Math.random() - 0.5) * 0.02;
             }
 
-                draw() {
-        if (!this.isDestroyed) {
-            ctx.save();
-            ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-            ctx.rotate(this.rotation);
+                getEllipse() {
+        // Käytä pyörimättömän bounding boxin kokoa törmäystarkistukseen
+        return {
+            x: this.x + this.width / 2,
+            y: this.y + this.height / 2,
+            radiusX: this.width * GAME_CONFIG.collisionEllipse.widthRatio / 2,
+            radiusY: this.height * GAME_CONFIG.collisionEllipse.heightRatio / 2
+        };
+    }
+
+    draw() {
+        if (this.isDestroyed) return;
+        
+        ctx.save();
+        ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+        ctx.rotate(this.ufoRotation);
+        
+        if (this.exploding) {
+            // Räjähdysefekti
+            ctx.globalAlpha = 0.7 + 0.3 * Math.sin(this.explosionFrame * 0.5);
+            ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
             
-            if (this.exploding) {
-                ctx.globalAlpha = (this.explosionFrame % 2 === 0) ? 1 : 0.5;
-                ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
-                ctx.globalAlpha = 1;
-            } else {
-                ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+            // Lisää räjähdysefektejä
+            if (this.explosionFrame < 10) {
+                ctx.fillStyle = `rgba(255, ${100 + this.explosionFrame * 15}, 0, 0.5)`;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.width * (0.5 + this.explosionFrame * 0.1), 0, Math.PI * 2);
+                ctx.fill();
             }
             
-            ctx.restore();
+            this.explosionFrame++;
+            if (this.explosionFrame > 15) {
+                this.isDestroyed = true;
+            }
+        } else {
+            // Normaali piirto
+            ctx.globalAlpha = 1;
+            ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
         }
+        
+        ctx.restore();
     }
 
             follow(player) {
@@ -1126,24 +1142,34 @@ move() {
                 }
             }
 
-            takeDamage() {
-                if (this.exploding) return;
-                this.health -= 1;
-                if (this.health <= 0) {
-                    this.destroyEnemy();
-                }
-            }
+    takeDamage(damage) {
+        if (this.exploding) return; // Estä vahinko jos jo räjähtämässä
+        
+        this.health -= damage;
+        if (this.health <= 0) {
+            this.destroyEnemy();
+        }
+    }
 
-            destroyEnemy() {
-                if (this.isSplitting) {
-                    soundEffects.ufoSplit.play();
-                    this.split();
-                } else {
-                    soundEffects.enemyExplosion.play();
-                    this.exploding = true;
-                    checkWaveCompletion();
-                }
-            }
+    destroyEnemy() {
+        if (this.exploding) return; // Estä useat räjähdykset
+        
+        this.exploding = true;
+        this.explosionFrame = 0;
+        
+        if (this.isSplitting) {
+            soundEffects.ufoSplit.play();
+            this.split();
+        } else {
+            soundEffects.enemyExplosion.play();
+        }
+        
+        // Lisätty viive ennen kuin vihollinen merkitään tuhoutuneeksi
+        setTimeout(() => {
+            this.isDestroyed = true;
+            checkWaveCompletion();
+        }, 300); // 300ms viive antaa räjähdykselle aikaa näkyä
+    }
 
             split() {
                 this.isDestroyed = true;
