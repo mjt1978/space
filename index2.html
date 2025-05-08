@@ -797,96 +797,97 @@ animateParallax();
                 this.lastRotation = 0;
             }
 
-            move() {
-                if (isAnimating) return;
+move() {
+    if (isAnimating) return;
 
-                if (this.handleRepulsion()) return;
+    if (this.handleRepulsion()) return;
 
-                if (this.collisionCooldown > 0) {
-                    this.collisionCooldown--;
-                }
+    if (this.collisionCooldown > 0) {
+        this.collisionCooldown--;
+    }
 
-                this.targetVelocityX = 0;
-                this.targetVelocityY = 0;
+    const friction = 0.05; // Pienempi arvo = pidempi liuku
 
-                // Liike nuolinäppäimillä
-                if (pressedKeys.has('ArrowUp') && this.y > 0) {
-                    this.targetVelocityY = -this.maxSpeed;
-                }
-                if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
-                    this.targetVelocityY = this.maxSpeed;
-                }
-                if (pressedKeys.has('ArrowLeft') && this.x > 0) {
-                    this.targetVelocityX = -this.maxSpeed;
-                }
-                if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
-                    this.targetVelocityX = this.maxSpeed;
-                }
+    this.targetVelocityX = 0;
+    this.targetVelocityY = 0;
 
-                // Kiihdytys/hidastus
-                this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
-                this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
+    // Liike nuolinäppäimillä
+    if (pressedKeys.has('ArrowUp') && this.y > 0) {
+        this.targetVelocityY = -this.maxSpeed;
+    }
+    if (pressedKeys.has('ArrowDown') && this.y < canvas.height - this.height) {
+        this.targetVelocityY = this.maxSpeed;
+    }
+    if (pressedKeys.has('ArrowLeft') && this.x > 0) {
+        this.targetVelocityX = -this.maxSpeed;
+    }
+    if (pressedKeys.has('ArrowRight') && this.x < canvas.width - this.width) {
+        this.targetVelocityX = this.maxSpeed;
+    }
 
-                // Kitka
-                if (Math.abs(this.velocityX) < 0.1 && this.targetVelocityX === 0) this.velocityX = 0;
-                if (Math.abs(this.velocityY) < 0.1 && this.targetVelocityY === 0) this.velocityY = 0;
+    // Kiihdytys/hidastus
+    this.velocityX += (this.targetVelocityX - this.velocityX) * this.acceleration;
+    this.velocityY += (this.targetVelocityY - this.velocityY) * this.acceleration;
 
-                this.x += this.velocityX;
-                this.y += this.velocityY;
+    // Kitka: pehmeä pysähtyminen, kun ei paineta mitään suuntaa
+    if (this.targetVelocityX === 0) {
+        this.velocityX *= (1 - friction);
+    }
+    if (this.targetVelocityY === 0) {
+        this.velocityY *= (1 - friction);
+    }
 
-                this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-                this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+    this.x += this.velocityX;
+    this.y += this.velocityY;
 
-                const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
-                let desiredRotation = this.rotation;
+    this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+    this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
 
-                if (moving) {
-                    // Liikkeen perusteella
-                    desiredRotation = Math.atan2(this.velocityY, this.velocityX);
-                    this.lastRotation = desiredRotation;
-                } else {
-                    // Ei liikettä → tarkista vapautetut näppäimet
-                    const now = performance.now();
-                    
-                    // Jos on kaksi viimeisintä vapautettua näppäintä ja ne vapautettiin 50ms sisällä
-                    if (releasedKeysLog.length >= 2 && 
-                        Math.abs(releasedKeysLog[releasedKeysLog.length - 1].time - releasedKeysLog[releasedKeysLog.length - 2].time) <= 50) {
-                        
-                        // Käytä näitä kahta viimeisintä näppäintä suunnan määrittämiseen
-                        const lastTwoKeys = releasedKeysLog.slice(-2).map(entry => entry.key);
-                        const keySet = new Set(lastTwoKeys);
-                        const dir = getDirectionFromKeySet(keySet);
-                        
-                        if (dir.x !== 0 || dir.y !== 0) {
-                            desiredRotation = Math.atan2(dir.y, dir.x);
-                            this.lastRotation = desiredRotation;
-                        } else {
-                            // Käytä viimeisintä tunnettua rotaatiota
-                            desiredRotation = this.lastRotation ?? this.rotation;
-                        }
-                    } else {
-                        // Käytä viimeisintä tunnettua rotaatiota
-                        desiredRotation = this.lastRotation ?? this.rotation;
-                    }
-                }
+    const moving = Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01;
+    let desiredRotation = this.rotation;
 
-                // Kulmaero + pyörähdys
-                let angleDiff = desiredRotation - this.rotation;
-                if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+    if (moving) {
+        desiredRotation = Math.atan2(this.velocityY, this.velocityX);
+        this.lastRotation = desiredRotation;
+    } else {
+        const now = performance.now();
 
-                if (Math.abs(angleDiff) < 0.01) {
-                    this.rotation = desiredRotation;
-                } else {
-                    this.rotation += angleDiff * this.rotationSpeed;
-                }
+        if (releasedKeysLog.length >= 2 && 
+            Math.abs(releasedKeysLog[releasedKeysLog.length - 1].time - releasedKeysLog[releasedKeysLog.length - 2].time) <= 50) {
 
-                // Lopullinen ampumasuunta
-                this.direction = {
-                    x: Math.cos(this.rotation),
-                    y: Math.sin(this.rotation)
-                };
+            const lastTwoKeys = releasedKeysLog.slice(-2).map(entry => entry.key);
+            const keySet = new Set(lastTwoKeys);
+            const dir = getDirectionFromKeySet(keySet);
+
+            if (dir.x !== 0 || dir.y !== 0) {
+                desiredRotation = Math.atan2(dir.y, dir.x);
+                this.lastRotation = desiredRotation;
+            } else {
+                desiredRotation = this.lastRotation ?? this.rotation;
             }
+        } else {
+            desiredRotation = this.lastRotation ?? this.rotation;
+        }
+    }
+
+    // Kulmaero + pyörähdys
+    let angleDiff = desiredRotation - this.rotation;
+    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+    if (Math.abs(angleDiff) < 0.01) {
+        this.rotation = desiredRotation;
+    } else {
+        this.rotation += angleDiff * this.rotationSpeed;
+    }
+
+    // Lopullinen ampumasuunta
+    this.direction = {
+        x: Math.cos(this.rotation),
+        y: Math.sin(this.rotation)
+    };
+}
+
 
             shoot() {
                 if (this.canShoot && !isAnimating && !this.isRespawning) {
