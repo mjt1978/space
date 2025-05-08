@@ -379,7 +379,7 @@ const LEVELS = [
                         isSplitting: false,
                         requiredKills: 2,
                         collisionDamage: 2
-                        rotationSpeed: 0.02
+                        uforotationSpeed: 0.02
                     }
                 ]
             },
@@ -397,7 +397,7 @@ const LEVELS = [
                         isSplitting: false,
                         requiredKills: 3,
                         collisionDamage: 2
-                        rotationSpeed: 0.02
+                        uforotationSpeed: 0.02
                     }
                 ]
             },
@@ -415,7 +415,7 @@ const LEVELS = [
                         isSplitting: true,
                         requiredKills: 2,
                         collisionDamage: 3
-                        rotationSpeed: 0.01
+                        uforotationSpeed: 0.01
                     }
                 ]
             },
@@ -433,7 +433,7 @@ const LEVELS = [
                         isSplitting: false,
                         requiredKills: 5,
                         collisionDamage: 1
-                        rotationSpeed: 0.05
+                        uforotationSpeed: 0.05
                     }
                 ]
             },
@@ -451,7 +451,7 @@ const LEVELS = [
                         isSplitting: false,
                         requiredKills: 2,
                         collisionDamage: 4
-                        rotationSpeed: 0.02
+                        uforotationSpeed: 0.02
                     }
                 ]
             }
@@ -476,7 +476,7 @@ const LEVELS = [
                         isSplitting: false,
                         requiredKills: 3,
                         collisionDamage: 2
-                        rotationSpeed: 0
+                        uforotationSpeed: 0
                     }
                 ]
             },
@@ -494,7 +494,7 @@ const LEVELS = [
                         isSplitting: false,
                         requiredKills: 2,
                         collisionDamage: 3
-                        rotationSpeed: 0.02
+                        uforotationSpeed: 0.02
                     }
                 ]
             },
@@ -512,7 +512,7 @@ const LEVELS = [
                         isSplitting: true,
                         requiredKills: 2,
                         collisionDamage: 3
-                        rotationSpeed: 0.02
+                        uforotationSpeed: 0.02
                     },
                     {
                         type: "small",
@@ -526,7 +526,7 @@ const LEVELS = [
                         isSplitting: false,
                         requiredKills: 3,
                         collisionDamage: 1
-                        rotationSpeed: 0.09
+                        uforotationSpeed: 0.09
                     }
                 ]
             },
@@ -544,7 +544,7 @@ const LEVELS = [
                         isSplitting: false,
                         requiredKills: 4,
                         collisionDamage: 2
-                        rotationSpeed: 0.05
+                        uforotationSpeed: 0.05
                     }
                 ]
             },
@@ -562,7 +562,7 @@ const LEVELS = [
                         isSplitting: false,
                         requiredKills: 3,
                         collisionDamage: 4
-                        rotationSpeed: 0.02
+                        uforotationSpeed: 0.02
                     }
                 ]
             }
@@ -1004,7 +1004,7 @@ move() {
         }
 
         class Enemy extends GameObject {
-    constructor(image, x, y, width, height, health, speed, isSplitting, fireCooldown, bulletSpeed, bulletDamage, collisionDamage, rotationSpeed) {
+    constructor(image, x, y, width, height, health, speed, isSplitting, fireCooldown, bulletSpeed, bulletDamage, collisionDamage, uforotationSpeed) {
         super(image, x, y, width, height);
         this.health = health;
         this.baseHealth = health;
@@ -1024,8 +1024,8 @@ move() {
         this.wobbleAmount = Math.random() * 0.2 + 0.1;
         this.wobbleSpeed = Math.random() * 0.05 + 0.02;
         this.wobbleCounter = 0;
-        this.rotation = Math.random() * Math.PI * 2;
-        this.rotationSpeed = rotationSpeed || (Math.random() - 0.5) * 0.02;
+        this.uforotation = Math.random() * Math.PI * 2;
+        this.uforotationSpeed = uforotationSpeed || (Math.random() - 0.5) * 0.02;
             }
 
             follow(player) {
@@ -1387,7 +1387,7 @@ move() {
                         enemyConfig.bulletSpeed,
                         enemyConfig.bulletDamage,
                         enemyConfig.collisionDamage
-                        enemyConfig.rotationSpeed
+                        enemyConfig.uforotationSpeed
                     );
                     enemy.type = enemyConfig.type;
                     enemy.image.src = enemyConfig.image;
