@@ -378,8 +378,7 @@ const LEVELS = [
                         image: 'ufo4.png',
                         isSplitting: false,
                         requiredKills: 2,
-                        collisionDamage: 2,
-                        uforotationSpeed: 0.02
+                        collisionDamage: 2
                     }
                 ]
             },
@@ -396,8 +395,7 @@ const LEVELS = [
                         image: 'ufo2.png',
                         isSplitting: false,
                         requiredKills: 3,
-                        collisionDamage: 2,
-                        uforotationSpeed: 0.05
+                        collisionDamage: 2
                     }
                 ]
             },
@@ -414,8 +412,7 @@ const LEVELS = [
                         image: 'ufo5.png',
                         isSplitting: true,
                         requiredKills: 2,
-                        collisionDamage: 3,
-                        uforotationSpeed: 0.01
+                        collisionDamage: 3
                     }
                 ]
             },
@@ -432,8 +429,7 @@ const LEVELS = [
                         image: 'ufo1.png',
                         isSplitting: false,
                         requiredKills: 5,
-                        collisionDamage: 1,
-                        uforotationSpeed: 0.06
+                        collisionDamage: 1
                     }
                 ]
             },
@@ -450,8 +446,7 @@ const LEVELS = [
                         image: 'ufo3.png',
                         isSplitting: false,
                         requiredKills: 2,
-                        collisionDamage: 4,
-                        uforotationSpeed: 0
+                        collisionDamage: 4
                     }
                 ]
             }
@@ -475,8 +470,7 @@ const LEVELS = [
                         image: 'ufo2.png',
                         isSplitting: false,
                         requiredKills: 3,
-                        collisionDamage: 2,
-                        uforotationSpeed: 0.02
+                        collisionDamage: 2
                     }
                 ]
             },
@@ -493,8 +487,7 @@ const LEVELS = [
                         image: 'ufo3.png',
                         isSplitting: false,
                         requiredKills: 2,
-                        collisionDamage: 3,
-                        uforotationSpeed: 0.02
+                        collisionDamage: 3
                     }
                 ]
             },
@@ -511,8 +504,7 @@ const LEVELS = [
                         image: 'ufo5.png',
                         isSplitting: true,
                         requiredKills: 2,
-                        collisionDamage: 3,
-                        uforotationSpeed: 0.02
+                        collisionDamage: 3
                     },
                     {
                         type: "small",
@@ -525,8 +517,7 @@ const LEVELS = [
                         image: 'ufo1.png',
                         isSplitting: false,
                         requiredKills: 3,
-                        collisionDamage: 1,
-                        uforotationSpeed: 0.02
+                        collisionDamage: 1
                     }
                 ]
             },
@@ -543,8 +534,7 @@ const LEVELS = [
                         image: 'ufo4.png',
                         isSplitting: false,
                         requiredKills: 4,
-                        collisionDamage: 2,
-                        uforotationSpeed: 0.02
+                        collisionDamage: 2
                     }
                 ]
             },
@@ -561,8 +551,7 @@ const LEVELS = [
                         image: 'ufo3.png',
                         isSplitting: false,
                         requiredKills: 3,
-                        collisionDamage: 4,
-                        uforotationSpeed: 0.02
+                        collisionDamage: 4
                     }
                 ]
             }
@@ -1004,7 +993,7 @@ move() {
         }
 
         class Enemy extends GameObject {
-            constructor(image, x, y, width, height, health, speed, isSplitting, fireCooldown, bulletSpeed, bulletDamage, collisionDamage, uforotationSpeed) {
+            constructor(image, x, y, width, height, health, speed, isSplitting, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
                 super(image, x, y, width, height);
                 this.health = health;
                 this.baseHealth = health;
@@ -1024,8 +1013,6 @@ move() {
                 this.wobbleAmount = Math.random() * 0.2 + 0.1;
                 this.wobbleSpeed = Math.random() * 0.05 + 0.02;
                 this.wobbleCounter = 0;
-                this.uforotation = Math.random() * Math.PI * 2; // Satunnainen aloituskulma
-                this.uforotationSpeed = uforotationSpeed || (Math.random() - 0.5) * 0.02;
             }
 
             follow(player) {
@@ -1034,8 +1021,6 @@ move() {
                 if (this.handleRepulsion()) {
                     return;
                 }
-
-                this.uforotation += this.uforotationSpeed;
                 
                 if (this.collisionCooldown > 0) {
                     this.collisionCooldown--;
@@ -1222,23 +1207,15 @@ move() {
                 }
             }
             
-    draw() {
-        if (!this.isDestroyed) {
-            ctx.save();
-            ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-            ctx.rotate(this.uforotation);
-            
-            if (this.exploding) {
-                ctx.globalAlpha = (this.explosionFrame % 2 === 0) ? 1 : 0.5;
-                ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
-                ctx.globalAlpha = 1;
-            } else {
-                ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+            draw() {
+                if (!this.isDestroyed) {
+                    ctx.save();
+                    ctx.translate(this.x + this.width/2, this.y + this.height/2);
+                    ctx.rotate(this.angle);
+                    ctx.drawImage(this.image, -this.width/2, -this.height/2, this.width, this.height);
+                    ctx.restore();
+                }
             }
-            
-            ctx.restore();
-        }
-    }
         }
 
         class EnemyBullet extends GameObject {
@@ -1386,8 +1363,7 @@ move() {
                         enemyConfig.fireCooldown,
                         enemyConfig.bulletSpeed,
                         enemyConfig.bulletDamage,
-                        enemyConfig.collisionDamage,
-                        enemyConfig.uforotationSpeed // Lisätty pyörimisnopeus
+                        enemyConfig.collisionDamage
                     );
                     enemy.type = enemyConfig.type;
                     enemy.image.src = enemyConfig.image;
