@@ -1024,6 +1024,19 @@ move() {
                 }
             }
 
+            draw() {
+            if (!this.isDestroyed) {
+            ctx.save();
+            // Siirrä origo aluksen keskelle
+            ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+            // Kierrä alus
+            ctx.rotate(this.rotation);
+            // Piirrä alus keskipisteestä
+            ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+            ctx.restore();
+            }
+            }
+
             follow(player) {
                 if (isAnimating || player.isRespawning) return;
                 
@@ -1035,6 +1048,8 @@ move() {
                     this.collisionCooldown--;
                     return;
                 }
+
+                this.rotation += this.rotationSpeed;
                 
                 this.directionChangeCounter++;
                 if (this.directionChangeCounter >= this.directionChangeInterval) {
