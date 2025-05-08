@@ -824,7 +824,7 @@ move() {
     // --- Liikkeen pehmennys ja kitka ---
     const accelerationFactor = 0.4; // Kiihdytysvoima
     const directionSmoothing = 0.15; // Pehmennys suunnanvaihdoksissa
-    const friction = 0.005; // Kitka
+    const friction = 5; // Kitka
 
     const targetVX = inputX * this.maxSpeed;
     const targetVY = inputY * this.maxSpeed;
