@@ -1013,6 +1013,15 @@ move() {
                 this.wobbleAmount = Math.random() * 0.2 + 0.1;
                 this.wobbleSpeed = Math.random() * 0.05 + 0.02;
                 this.wobbleCounter = 0;
+                this.rotation = Math.random() * Math.PI * 2; // Satunnainen aloituskulma
+                // Määritä pyörimisnopeus UFO-tyypin mukaan
+                if (this.type === 'small') {
+                this.rotationSpeed = (Math.random() - 0.5) * 0.1; // Nopeampi pyöriminen
+                } else if (this.type === 'large') {
+                this.rotationSpeed = (Math.random() - 0.5) * 0.02; // Hitaampi pyöriminen
+                } else {
+                this.rotationSpeed = (Math.random() - 0.5) * 0.05; // Keskimääräinen pyöriminen
+                }
             }
 
             follow(player) {
