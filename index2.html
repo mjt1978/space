@@ -13,42 +13,41 @@
         }
 
         #parallaxContainer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    z-index: -1;
-}
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
 
-.layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 200%; /* tarvitaan toistumiseen */
-    height: 100%;
-    background-repeat: repeat-x;
-    background-size: auto 100%;
-    will-change: background-position;
-    pointer-events: none;
-}
+        .layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%; /* tarvitaan toistumiseen */
+            height: 100%;
+            background-repeat: repeat-x;
+            background-size: auto 100%;
+            will-change: background-position;
+            pointer-events: none;
+        }
 
-#backgroundLayer1 {
-    background-image: url('background4.png'); /* kaukainen tähtitausta */
-    z-index: 1;
-}
+        #backgroundLayer1 {
+            background-image: url('background4.png'); /* kaukainen tähtitausta */
+            z-index: 1;
+        }
 
-#backgroundLayer2 {
-    background-image: url('background5.png'); /* keskitaso, esim. sumu tai planeettoja */
-    z-index: 2;
-}
+        #backgroundLayer2 {
+            background-image: url('background5.png'); /* keskitaso, esim. sumu tai planeettoja */
+            z-index: 2;
+        }
 
-#backgroundLayer3 {
-    background-image: url('background6.png'); /* lähin, esim. maapinta ja räjähdyksiä */
-    z-index: 3;
-}
-
+        #backgroundLayer3 {
+            background-image: url('background6.png'); /* lähin, esim. maapinta ja räjähdyksiä */
+            z-index: 3;
+        }
 
         #startScreen {
             position: fixed;
@@ -94,7 +93,7 @@
             color: black;
         }
 
-                canvas {
+        canvas {
             display: block;
             width: 100%;
             height: 100%;
@@ -378,7 +377,8 @@ const LEVELS = [
                         image: 'ufo4.png',
                         isSplitting: false,
                         requiredKills: 2,
-                        collisionDamage: 2
+                        collisionDamage: 2,
+                        rotationSpeed: 0.02  // Lisätty pyörimisnopeus
                     }
                 ]
             },
@@ -395,7 +395,8 @@ const LEVELS = [
                         image: 'ufo2.png',
                         isSplitting: false,
                         requiredKills: 3,
-                        collisionDamage: 2
+                        collisionDamage: 2,
+                        rotationSpeed: 0.03  // Lisätty pyörimisnopeus
                     }
                 ]
             },
@@ -412,7 +413,8 @@ const LEVELS = [
                         image: 'ufo5.png',
                         isSplitting: true,
                         requiredKills: 2,
-                        collisionDamage: 3
+                        collisionDamage: 3,
+                        rotationSpeed: 0.01  // Lisätty pyörimisnopeus
                     }
                 ]
             },
@@ -429,7 +431,8 @@ const LEVELS = [
                         image: 'ufo1.png',
                         isSplitting: false,
                         requiredKills: 5,
-                        collisionDamage: 1
+                        collisionDamage: 1,
+                        rotationSpeed: 0.05  // Lisätty pyörimisnopeus
                     }
                 ]
             },
@@ -446,7 +449,8 @@ const LEVELS = [
                         image: 'ufo3.png',
                         isSplitting: false,
                         requiredKills: 2,
-                        collisionDamage: 4
+                        collisionDamage: 4,
+                        rotationSpeed: 0.025  // Lisätty pyörimisnopeus
                     }
                 ]
             }
@@ -470,7 +474,8 @@ const LEVELS = [
                         image: 'ufo2.png',
                         isSplitting: false,
                         requiredKills: 3,
-                        collisionDamage: 2
+                        collisionDamage: 2,
+                        rotationSpeed: 0.03  // Lisätty pyörimisnopeus
                     }
                 ]
             },
@@ -487,7 +492,8 @@ const LEVELS = [
                         image: 'ufo3.png',
                         isSplitting: false,
                         requiredKills: 2,
-                        collisionDamage: 3
+                        collisionDamage: 3,
+                        rotationSpeed: 0.025  // Lisätty pyörimisnopeus
                     }
                 ]
             },
@@ -504,7 +510,8 @@ const LEVELS = [
                         image: 'ufo5.png',
                         isSplitting: true,
                         requiredKills: 2,
-                        collisionDamage: 3
+                        collisionDamage: 3,
+                        rotationSpeed: 0.015  // Lisätty pyörimisnopeus
                     },
                     {
                         type: "small",
@@ -517,7 +524,8 @@ const LEVELS = [
                         image: 'ufo1.png',
                         isSplitting: false,
                         requiredKills: 3,
-                        collisionDamage: 1
+                        collisionDamage: 1,
+                        rotationSpeed: 0.06  // Lisätty pyörimisnopeus
                     }
                 ]
             },
@@ -534,7 +542,8 @@ const LEVELS = [
                         image: 'ufo4.png',
                         isSplitting: false,
                         requiredKills: 4,
-                        collisionDamage: 2
+                        collisionDamage: 2,
+                        rotationSpeed: 0.035  // Lisätty pyörimisnopeus
                     }
                 ]
             },
@@ -551,7 +560,8 @@ const LEVELS = [
                         image: 'ufo3.png',
                         isSplitting: false,
                         requiredKills: 3,
-                        collisionDamage: 4
+                        collisionDamage: 4,
+                        rotationSpeed: 0.03  // Lisätty pyörimisnopeus
                     }
                 ]
             }
@@ -890,846 +900,876 @@ move() {
         y: Math.sin(this.rotation)
     };
 }
-
-
-
-
-            shoot() {
-                if (this.canShoot && !isAnimating && !this.isRespawning) {
-                    const bulletSize = calculateSize({width: 20 * bulletSizeMultiplier, height: 10 * bulletSizeMultiplier});
-                    const centerX = this.x + this.width / 2;
-                    const centerY = this.y + this.height / 2;
-                    
-                    const bulletX = centerX + this.direction.x * this.width/2;
-                    const bulletY = centerY + this.direction.y * this.height/2;
-                    
-                    const bulletVelocityX = this.direction.x * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920) + this.velocityX * 0.5;
-                    const bulletVelocityY = this.direction.y * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920) + this.velocityY * 0.5;
-                    
-                    bullets.push(new Bullet(
-                        bulletImage, 
-                        bulletX - bulletSize.width/2, 
-                        bulletY - bulletSize.height/2, 
-                        bulletSize.width, 
-                        bulletSize.height,
-                        bulletVelocityX,
-                        bulletVelocityY,
-                        this.rotation,
-                        bulletDamageMultiplier
-                    ));
-                    soundEffects.playerShoot.play();
-                    this.canShoot = false;
-                }
+        shoot() {
+            if (this.canShoot && !isAnimating && !this.isRespawning) {
+                const bulletSize = calculateSize({width: 20 * bulletSizeMultiplier, height: 10 * bulletSizeMultiplier});
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+                
+                const bulletX = centerX + this.direction.x * this.width/2;
+                const bulletY = centerY + this.direction.y * this.height/2;
+                
+                const bulletVelocityX = this.direction.x * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920) + this.velocityX * 0.5;
+                const bulletVelocityY = this.direction.y * GAME_CONFIG.bulletSpeed * (window.innerWidth / 1920) + this.velocityY * 0.5;
+                
+                bullets.push(new Bullet(
+                    bulletImage, 
+                    bulletX - bulletSize.width/2, 
+                    bulletY - bulletSize.height/2, 
+                    bulletSize.width, 
+                    bulletSize.height,
+                    bulletVelocityX,
+                    bulletVelocityY,
+                    this.rotation,
+                    bulletDamageMultiplier
+                ));
+                soundEffects.playerShoot.play();
+                this.canShoot = false;
             }
+        }
 
-            draw() {
-                if (this.isRespawning) {
-                    this.respawnCooldown--;
-                    if (this.respawnCooldown <= 0) {
-                        this.isRespawning = false;
-                    }
-                    
-                    if (Math.floor(this.respawnCooldown / 10) % 2 === 0) {
-                        ctx.save();
-                        ctx.globalAlpha = 0.5;
-                        this.drawRotated();
-                        ctx.restore();
+        draw() {
+            if (this.isRespawning) {
+                this.respawnCooldown--;
+                if (this.respawnCooldown <= 0) {
+                    this.isRespawning = false;
+                }
+                
+                if (Math.floor(this.respawnCooldown / 10) % 2 === 0) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.5;
+                    this.drawRotated();
+                    ctx.restore();
+                }
+            } else {
+                this.drawRotated();
+            }
+        }
+        
+        drawRotated() {
+            if (this.isDestroyed) return;
+            
+            ctx.save();
+            // Siirrä origo aluksen keskelle
+            ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+            // Kierrä alus
+            ctx.rotate(this.rotation);
+            // Piirrä alus keskipisteestä
+            ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+            ctx.restore();
+        }
+
+        takeDamage(damage) {
+            if (this.isRespawning) return;
+            
+            this.energy -= damage;
+            updateEnergyBar();
+            
+            if (this.energy <= 0) {
+                this.loseLife();
+            }
+        }
+        
+        loseLife() {
+            this.lives--;
+            updateLives();
+            
+            if (this.lives <= 0) {
+                this.energy = 0;
+                this.exploding = true;
+                this.explosionFrame = 0;
+                showGameOver();
+            } else {
+                this.isRespawning = true;
+                this.respawnCooldown = 120;
+                this.energy = GAME_CONFIG.playerEnergy;
+                updateEnergyBar();
+                
+                this.x = canvas.width / 2 - this.width / 2;
+                this.y = canvas.height / 2 - this.height / 2;
+                this.velocityX = 0;
+                this.velocityY = 0;
+                this.targetVelocityX = 0;
+                this.targetVelocityY = 0;
+                this.direction = { x: 1, y: 0 };
+                this.rotation = 0;
+                this.targetRotation = 0;
+            }
+        }
+    }
+
+    class Enemy extends GameObject {
+        constructor(image, x, y, width, height, health, speed, isSplitting, fireCooldown, bulletSpeed, bulletDamage, collisionDamage, rotationSpeed) {
+            super(image, x, y, width, height);
+            this.health = health;
+            this.baseHealth = health;
+            this.baseSpeed = speed * (window.innerWidth / 1920);
+            this.speed = this.baseSpeed;
+            this.fireCooldown = fireCooldown;
+            this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920);
+            this.fireCounter = 0;
+            this.isSplitting = isSplitting;
+            this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2));
+            this.collisionDamage = Math.max(1, Math.min(collisionDamage, 4));
+            this.collisionCooldown = 0;
+            this.directionChangeCounter = 0;
+            this.currentDirection = Math.random() * Math.PI * 2;
+            this.targetDirection = this.currentDirection;
+            this.directionChangeInterval = Math.floor(Math.random() * 60) + 30;
+            this.wobbleAmount = Math.random() * 0.2 + 0.1;
+            this.wobbleSpeed = Math.random() * 0.05 + 0.02;
+            this.wobbleCounter = 0;
+            this.rotation = 0;
+            this.rotationSpeed = rotationSpeed || 0.02; // Oletusarvo jos ei määritelty
+        }
+
+        follow(player) {
+            if (isAnimating || player.isRespawning) return;
+            
+            if (this.handleRepulsion()) {
+                return;
+            }
+            
+            if (this.collisionCooldown > 0) {
+                this.collisionCooldown--;
+                return;
+            }
+            
+            this.directionChangeCounter++;
+            if (this.directionChangeCounter >= this.directionChangeInterval) {
+                this.directionChangeCounter = 0;
+                this.directionChangeInterval = Math.floor(Math.random() * 60) + 30;
+                
+                const playerCenterX = player.x + player.width / 2;
+                const playerCenterY = player.y + player.height / 2;
+                const enemyCenterX = this.x + this.width / 2;
+                const enemyCenterY = this.y + this.height / 2;
+                
+                const deltaX = playerCenterX - enemyCenterX;
+                const deltaY = playerCenterY - enemyCenterY;
+                const targetAngle = Math.atan2(deltaY, deltaX);
+                
+                const angleVariation = (Math.random() - 0.5) * Math.PI / 2;
+                this.targetDirection = targetAngle + angleVariation;
+            }
+            
+            this.wobbleCounter += this.wobbleSpeed;
+            const wobbleOffset = Math.sin(this.wobbleCounter) * this.wobbleAmount;
+            
+            const angleDifference = this.targetDirection - this.currentDirection;
+            this.currentDirection += angleDifference * 0.1;
+            
+            this.x += this.speed * Math.cos(this.currentDirection + wobbleOffset);
+            this.y += this.speed * Math.sin(this.currentDirection + wobbleOffset);
+            
+            this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+            this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+            
+            // Päivitä pyöriminen
+            this.rotation += this.rotationSpeed;
+        }
+
+        draw() {
+            if (!this.isDestroyed) {
+                if (this.exploding) {
+                    ctx.save();
+                    ctx.globalAlpha = (this.explosionFrame % 2 === 0) ? 1 : 0.5;
+                    this.drawRotated();
+                    ctx.globalAlpha = 1;
+                    ctx.restore();
+                    this.explosionFrame++;
+                    if (this.explosionFrame > 10) {
+                        this.isDestroyed = true;
                     }
                 } else {
                     this.drawRotated();
                 }
             }
-            
-            drawRotated() {
-                if (this.isDestroyed) return;
-                
-                ctx.save();
-                // Siirrä origo aluksen keskelle
-                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-                // Kierrä alus
-                ctx.rotate(this.rotation);
-                // Piirrä alus keskipisteestä
-                ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
-                ctx.restore();
-            }
-
-            takeDamage(damage) {
-                if (this.isRespawning) return;
-                
-                this.energy -= damage;
-                updateEnergyBar();
-                
-                if (this.energy <= 0) {
-                    this.loseLife();
-                }
-            }
-            
-            loseLife() {
-                this.lives--;
-                updateLives();
-                
-                if (this.lives <= 0) {
-                    this.energy = 0;
-                    this.exploding = true;
-                    this.explosionFrame = 0;
-                    showGameOver();
-                } else {
-                    this.isRespawning = true;
-                    this.respawnCooldown = 120;
-                    this.energy = GAME_CONFIG.playerEnergy;
-                    updateEnergyBar();
-                    
-                    this.x = canvas.width / 2 - this.width / 2;
-                    this.y = canvas.height / 2 - this.height / 2;
-                    this.velocityX = 0;
-                    this.velocityY = 0;
-                    this.targetVelocityX = 0;
-                    this.targetVelocityY = 0;
-                    this.direction = { x: 1, y: 0 };
-                    this.rotation = 0;
-                    this.targetRotation = 0;
-                }
-            }
+        }
+        
+        drawRotated() {
+            ctx.save();
+            ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+            ctx.rotate(this.rotation);
+            ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+            ctx.restore();
         }
 
-        class Enemy extends GameObject {
-            constructor(image, x, y, width, height, health, speed, isSplitting, fireCooldown, bulletSpeed, bulletDamage, collisionDamage) {
-                super(image, x, y, width, height);
-                this.health = health;
-                this.baseHealth = health;
-                this.baseSpeed = speed * (window.innerWidth / 1920);
-                this.speed = this.baseSpeed;
-                this.fireCooldown = fireCooldown;
-                this.bulletSpeed = bulletSpeed * (window.innerWidth / 1920);
-                this.fireCounter = 0;
-                this.isSplitting = isSplitting;
-                this.bulletDamage = Math.max(1, Math.min(bulletDamage, 2));
-                this.collisionDamage = Math.max(1, Math.min(collisionDamage, 4));
-                this.collisionCooldown = 0;
-                this.directionChangeCounter = 0;
-                this.currentDirection = Math.random() * Math.PI * 2;
-                this.targetDirection = this.currentDirection;
-                this.directionChangeInterval = Math.floor(Math.random() * 60) + 30;
-                this.wobbleAmount = Math.random() * 0.2 + 0.1;
-                this.wobbleSpeed = Math.random() * 0.05 + 0.02;
-                this.wobbleCounter = 0;
-            }
-
-            follow(player) {
-                if (isAnimating || player.isRespawning) return;
-                
-                if (this.handleRepulsion()) {
-                    return;
-                }
-                
-                if (this.collisionCooldown > 0) {
-                    this.collisionCooldown--;
-                    return;
-                }
-                
-                this.directionChangeCounter++;
-                if (this.directionChangeCounter >= this.directionChangeInterval) {
-                    this.directionChangeCounter = 0;
-                    this.directionChangeInterval = Math.floor(Math.random() * 60) + 30;
-                    
-                    const playerCenterX = player.x + player.width / 2;
-                    const playerCenterY = player.y + player.height / 2;
-                    const enemyCenterX = this.x + this.width / 2;
-                    const enemyCenterY = this.y + this.height / 2;
-                    
-                    const deltaX = playerCenterX - enemyCenterX;
-                    const deltaY = playerCenterY - enemyCenterY;
-                    const targetAngle = Math.atan2(deltaY, deltaX);
-                    
-                    const angleVariation = (Math.random() - 0.5) * Math.PI / 2;
-                    this.targetDirection = targetAngle + angleVariation;
-                }
-                
-                this.wobbleCounter += this.wobbleSpeed;
-                const wobbleOffset = Math.sin(this.wobbleCounter) * this.wobbleAmount;
-                
-                const angleDifference = this.targetDirection - this.currentDirection;
-                this.currentDirection += angleDifference * 0.1;
-                
-                this.x += this.speed * Math.cos(this.currentDirection + wobbleOffset);
-                this.y += this.speed * Math.sin(this.currentDirection + wobbleOffset);
-                
-                this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
-                this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
-            }
-
-            handleCollision(player) {
-                if (this.collisionCooldown > 0 || player.collisionCooldown > 0 || player.isRespawning) {
-                    return;
-                }
-
-                soundEffects.collision.play();
-
-                const dx = (this.x + this.width/2) - (player.x + player.width/2);
-                const dy = (this.y + this.height/2) - (player.y + player.height/2);
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                const nx = dx / distance;
-                const ny = dy / distance;
-
-                player.repulsionForce = this.baseSpeed * 3;
-                player.repulsionAngle = Math.atan2(ny, nx) + Math.PI;
-                player.isRepelling = true;
-                player.collisionCooldown = 10;
-
-                this.repulsionForce = this.baseSpeed * 4;
-                this.repulsionAngle = Math.atan2(ny, nx);
-                this.isRepelling = true;
-                this.collisionCooldown = 10;
-
-                player.takeDamage(this.collisionDamage);
-                
-                if (this.health <= 1) {
-                    if (this.isSplitting) {
-                        this.split();
-                    } else {
-                        this.takeDamage();
-                    }
-                }
-            }
-
-            takeDamage() {
-                if (this.exploding) return;
-                this.health -= 1;
-                if (this.health <= 0) {
-                    this.destroyEnemy();
-                }
-            }
-
-            destroyEnemy() {
-                if (this.isSplitting) {
-                    soundEffects.ufoSplit.play();
-                    this.split();
-                } else {
-                    soundEffects.enemyExplosion.play();
-                    this.exploding = true;
-                    checkWaveCompletion();
-                }
-            }
-
-            split() {
-                this.isDestroyed = true;
-                const originalType = this.type || 'medium';
-                
-                let newSize;
-                if (originalType === 'xlarge') {
-                    newSize = calculateSize(GAME_CONFIG.enemySizes.large);
-                } else if (originalType === 'large') {
-                    newSize = calculateSize(GAME_CONFIG.enemySizes.medium);
-                } else if (originalType === 'medium') {
-                    newSize = calculateSize(GAME_CONFIG.enemySizes.small);
-                } else {
-                    newSize = calculateSize(GAME_CONFIG.enemySizes.small);
-                }
-                
-                const topUfoY = this.y - newSize.height / 2;
-                const bottomUfoY = this.y + this.height - newSize.height / 2;
-
-                const baseHealth = this.baseHealth || this.health;
-                const newHealth = Math.max(1, Math.ceil(baseHealth / 2));
-                
-                enemies.push(new Enemy(
-                    this.image, 
-                    this.x + (this.width - newSize.width) / 2,
-                    topUfoY,
-                    newSize.width, 
-                    newSize.height, 
-                    newHealth,
-                    this.baseSpeed / (window.innerWidth / 1920) + 1,
-                    false,
-                    this.fireCooldown,
-                    this.bulletSpeed,
-                    this.bulletDamage,
-                    Math.max(1, Math.floor(this.collisionDamage / 2))
-                ));
-                
-                enemies.push(new Enemy(
-                    this.image, 
-                    this.x + (this.width - newSize.width) / 2,
-                    bottomUfoY,
-                    newSize.width, 
-                    newSize.height, 
-                    newHealth,
-                    this.baseSpeed / (window.innerWidth / 1920) + 1,
-                    false,
-                    this.fireCooldown,
-                    this.bulletSpeed,
-                    this.bulletDamage,
-                    Math.max(1, Math.floor(this.collisionDamage / 2))
-                ));
-            }
-
-            fire(player) {
-                if (this.fireCounter <= 0 && !isAnimating && !player.isRespawning) {
-                    const bulletSize = calculateSize({width: 15, height: 15});
-                    const bulletX = this.x + this.width / 2;
-                    const bulletY = this.y + this.height / 2;
-                    const angle = Math.atan2(player.y + player.height/2 - bulletY, player.x + player.width/2 - bulletX);
-
-                    enemyBullets.push(new EnemyBullet(
-                        enemyBulletImage, 
-                        bulletX, 
-                        bulletY, 
-                        bulletSize.width, 
-                        bulletSize.height, 
-                        angle, 
-                        this.bulletSpeed,
-                        this.bulletDamage
-                    ));
-                    soundEffects.enemyShoot.play();
-                    this.fireCounter = this.fireCooldown;
-                } else {
-                    this.fireCounter--;
-                }
-            }
-        }
-
-        class Bullet extends GameObject {
-            constructor(image, x, y, width, height, velocityX, velocityY, angle, damageMultiplier = 1) {
-                super(image, x, y, width, height);
-                this.velocityX = velocityX;
-                this.velocityY = velocityY;
-                this.angle = angle || 0;
-                this.damageMultiplier = damageMultiplier;
-            }
-
-            move() {
-                if (isAnimating) return;
-                this.x += this.velocityX;
-                this.y += this.velocityY;
-                if (this.x > canvas.width || this.x < 0 || this.y > canvas.height || this.y < 0) {
-                    this.isDestroyed = true;
-                }
-            }
-            
-            draw() {
-                if (!this.isDestroyed) {
-                    ctx.save();
-                    ctx.translate(this.x + this.width/2, this.y + this.height/2);
-                    ctx.rotate(this.angle);
-                    ctx.drawImage(this.image, -this.width/2, -this.height/2, this.width, this.height);
-                    ctx.restore();
-                }
-            }
-        }
-
-        class EnemyBullet extends GameObject {
-            constructor(image, x, y, width, height, angle, speed, damage) {
-                super(image, x, y, width, height);
-                this.angle = angle;
-                this.speed = speed;
-                this.damage = Math.min(damage, 2);
-            }
-
-            move() {
-                if (isAnimating) return;
-                this.x += this.speed * Math.cos(this.angle);
-                this.y += this.speed * Math.sin(this.angle);
-                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
-                    this.isDestroyed = true;
-                }
-            }
-        }
-
-        class Meteor extends GameObject {
-            constructor(image, x, y, width, height, speed) {
-                super(image, x, y, width, height);
-                this.speed = speed;
-                this.rotation = Math.random() * Math.PI * 2;
-                this.rotationSpeed = (Math.random() - 0.5) * 0.1;
-            }
-
-            move() {
-                if (isAnimating) return;
-                this.x -= this.speed;
-                this.rotation += this.rotationSpeed;
-                
-                if (this.x + this.width < 0) {
-                    this.isDestroyed = true;
-                }
-            }
-
-            draw() {
-                if (!this.isDestroyed) {
-                    ctx.save();
-                    ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-                    ctx.rotate(this.rotation);
-                    ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
-                    ctx.restore();
-                }
-            }
-        }
-
-        // Luo uusi meteoriitti
-        function spawnMeteor() {
-            const sizeValue = Math.floor(Math.random() * (GAME_CONFIG.meteor.maxSize - GAME_CONFIG.meteor.minSize + 1)) + GAME_CONFIG.meteor.minSize;
-            const size = calculateSize({width: sizeValue, height: sizeValue});
-            const y = Math.random() * (canvas.height - size.height);
-            const speed = GAME_CONFIG.meteor.minSpeed + Math.random() * (GAME_CONFIG.meteor.maxSpeed - GAME_CONFIG.meteor.minSpeed);
-            const meteor = new Meteor(
-                meteorImage,
-                canvas.width,
-                y,
-                size.width,
-                size.height,
-                speed * (window.innerWidth / 1920)
-            );
-            meteors.push(meteor);
-            soundEffects.meteorSound.play();
-        }
-
-        // Luo uusi power-up
-        function spawnPowerUp() {
-            if (powerupCollected) return; // Don't spawn if already collected
-            
-            const size = calculateSize(GAME_CONFIG.powerup.size);
-            const y = Math.random() * (canvas.height - size.height);
-            const powerup = new PowerUp(
-                powerupImage,
-                canvas.width,
-                y,
-                size.width,
-                size.height,
-                GAME_CONFIG.powerup.speed
-            );
-            powerups.push(powerup);
-            soundEffects.powerup.play();
-        }
-
-        // Tason alustus
-        function initializeLevel(levelId) {
-            const level = LEVELS.find(l => l.id === levelId);
-            if (!level) return;
-
-            currentLevel = levelId;
-            currentWave = 0;
-            levelCompleted = false;
-            isAnimating = false;
-            meteors = [];
-            powerups = [];
-            meteorSpawnCounter = 0;
-            nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
-            powerupSpawnCounter = 0;
-            bulletDamageMultiplier = 1;
-            bulletSizeMultiplier = 1;
-            powerupCollected = false; // Reset collected flag for new level
-
-            const playerSize = calculateSize(GAME_CONFIG.playerSize);
-            player = new Player(
-                playerImage, 
-                canvas.width / 2 - playerSize.width / 2,
-                canvas.height / 2 - playerSize.height / 2, 
-                playerSize.width, 
-                playerSize.height
-            );
-            updateEnergyBar();
-            updateLives();
-            updateWaveInfo();
-
-            startNextWave();
-        }
-
-        // Aloita seuraava aalto
-        function startNextWave() {
-            const level = LEVELS.find(l => l.id === currentLevel);
-            if (!level || currentWave >= level.waves.length) {
-                showLevelCompleted();
+        handleCollision(player) {
+            if (this.collisionCooldown > 0 || player.collisionCooldown > 0 || player.isRespawning) {
                 return;
             }
 
-            enemies = [];
-            const waveConfig = level.waves[currentWave];
-            
-            waveConfig.enemies.forEach(enemyConfig => {
-                for (let i = 0; i < enemyConfig.count; i++) {
-                    const size = calculateSize(GAME_CONFIG.enemySizes[enemyConfig.type]);
-                    const x = canvas.width - size.width - 50 - (i * 50);
-                    const y = Math.random() * (canvas.height - size.height);
-                    
-                    const enemy = new Enemy(
-                        new Image(), 
-                        x,
-                        y,
-                        size.width,
-                        size.height,
-                        enemyConfig.health,
-                        enemyConfig.speed,
-                        enemyConfig.isSplitting,
-                        enemyConfig.fireCooldown,
-                        enemyConfig.bulletSpeed,
-                        enemyConfig.bulletDamage,
-                        enemyConfig.collisionDamage
-                    );
-                    enemy.type = enemyConfig.type;
-                    enemy.image.src = enemyConfig.image;
-                    enemies.push(enemy);
-                }
-            });
+            soundEffects.collision.play();
 
-            bullets = [];
-            enemyBullets = [];
-            updateWaveInfo();
+            const dx = (this.x + this.width/2) - (player.x + player.width/2);
+            const dy = (this.y + this.height/2) - (player.y + player.height/2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            const nx = dx / distance;
+            const ny = dy / distance;
+
+            player.repulsionForce = this.baseSpeed * 3;
+            player.repulsionAngle = Math.atan2(ny, nx) + Math.PI;
+            player.isRepelling = true;
+            player.collisionCooldown = 10;
+
+            this.repulsionForce = this.baseSpeed * 4;
+            this.repulsionAngle = Math.atan2(ny, nx);
+            this.isRepelling = true;
+            this.collisionCooldown = 10;
+
+            player.takeDamage(this.collisionDamage);
+            
+            if (this.health <= 1) {
+                if (this.isSplitting) {
+                    this.split();
+                } else {
+                    this.takeDamage();
+                }
+            }
         }
 
-        function checkWaveCompletion() {
-            const level = LEVELS.find(l => l.id === currentLevel);
-            if (!level || currentWave >= level.waves.length) return;
+        takeDamage() {
+            if (this.exploding) return;
+            this.health -= 1;
+            if (this.health <= 0) {
+                this.destroyEnemy();
+            }
+        }
 
-            const allEnemiesDestroyed = enemies.every(enemy => enemy.isDestroyed);
-            
-            if (!allEnemiesDestroyed) return;
-
-            if (currentWave === level.waves.length - 1) {
-                showLevelCompleted();
+        destroyEnemy() {
+            if (this.isSplitting) {
+                soundEffects.ufoSplit.play();
+                this.split();
             } else {
-                currentWave++;
-                startNextWave();
-            }
-        }
-
-        function checkEllipseCollision(obj1, obj2) {
-            const ellipse1 = obj1.getEllipse();
-            const ellipse2 = obj2.getEllipse();
-            
-            const dx = ellipse2.x - ellipse1.x;
-            const dy = ellipse2.y - ellipse1.y;
-            
-            const distanceSquared = (dx * dx) / (ellipse1.radiusX + ellipse2.radiusX) ** 2 + 
-                                   (dy * dy) / (ellipse1.radiusY + ellipse2.radiusY) ** 2;
-            
-            return distanceSquared <= 1;
-        }
-
-        function update() {
-            if (!gameRunning) return;
-
-            try {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                updateGameState();                
-                drawAllObjects();                
+                soundEffects.enemyExplosion.play();
+                this.exploding = true;
                 checkWaveCompletion();
-                
-            } catch (e) {
-                console.error("Päivitysvirhe:", e);
-                resetGameState();
             }
-
-            animationFrameId = requestAnimationFrame(update);
         }
 
-        function updateGameState() {
-            // Päivitä meteoriittien spawnaus
-            meteorSpawnCounter++;
-            if (meteorSpawnCounter >= nextMeteorSpawn) {
-                spawnMeteor();
-                meteorSpawnCounter = 0;
-                nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
+        split() {
+            this.isDestroyed = true;
+            const originalType = this.type || 'medium';
+            
+            let newSize;
+            if (originalType === 'xlarge') {
+                newSize = calculateSize(GAME_CONFIG.enemySizes.large);
+            } else if (originalType === 'large') {
+                newSize = calculateSize(GAME_CONFIG.enemySizes.medium);
+            } else if (originalType === 'medium') {
+                newSize = calculateSize(GAME_CONFIG.enemySizes.small);
+            } else {
+                newSize = calculateSize(GAME_CONFIG.enemySizes.small);
             }
+            
+            const topUfoY = this.y - newSize.height / 2;
+            const bottomUfoY = this.y + this.height - newSize.height / 2;
 
-            // Päivitä power-up spawnaus vain jos ei ole vielä kerätty
-            if (!powerupCollected) {
-                powerupSpawnCounter++;
-                if (powerupSpawnCounter >= GAME_CONFIG.powerup.spawnInterval && 
-                    powerups.length === 0 && 
-                    Math.random() < GAME_CONFIG.powerup.spawnChance) {
-                    spawnPowerUp();
-                    powerupSpawnCounter = 0;
-                }
-            }
-
-            // Päivitä pelaaja
-            player.move();
+            const baseHealth = this.baseHealth || this.health;
+            const newHealth = Math.max(1, Math.ceil(baseHealth / 2));
             
-            // Päivitä ammukset
-            updateBullets();
+            enemies.push(new Enemy(
+                this.image, 
+                this.x + (this.width - newSize.width) / 2,
+                topUfoY,
+                newSize.width, 
+                newSize.height, 
+                newHealth,
+                this.baseSpeed / (window.innerWidth / 1920) + 1,
+                false,
+                this.fireCooldown,
+                this.bulletSpeed,
+                this.bulletDamage,
+                Math.max(1, Math.floor(this.collisionDamage / 2)),
+                this.rotationSpeed * 1.5 // Lisätty pyörimisnopeus splitattuihin UFOihin
+            ));
             
-            // Päivitä viholliset
-            updateEnemies();
-            
-            // Päivitä vihollisten ammukset
-            updateEnemyBullets();
-            
-            // Päivitä meteoriitit
-            updateMeteors();
-            
-            // Päivitä power-upit
-            updatePowerups();
+            enemies.push(new Enemy(
+                this.image, 
+                this.x + (this.width - newSize.width) / 2,
+                bottomUfoY,
+                newSize.width, 
+                newSize.height, 
+                newHealth,
+                this.baseSpeed / (window.innerWidth / 1920) + 1,
+                false,
+                this.fireCooldown,
+                this.bulletSpeed,
+                this.bulletDamage,
+                Math.max(1, Math.floor(this.collisionDamage / 2)),
+                this.rotationSpeed * 1.5 // Lisätty pyörimisnopeus splitattuihin UFOihin
+            ));
         }
 
-        function updateBullets() {
-            bullets.forEach(bullet => {
-                bullet.move();
-            });
+        fire(player) {
+            if (this.fireCounter <= 0 && !isAnimating && !player.isRespawning) {
+                const bulletSize = calculateSize({width: 15, height: 15});
+                const bulletX = this.x + this.width / 2;
+                const bulletY = this.y + this.height / 2;
+                const angle = Math.atan2(player.y + player.height/2 - bulletY, player.x + player.width/2 - bulletX);
 
-            bullets = bullets.filter(bullet => {
-                if (bullet.isDestroyed) return false;
-                
-                let hit = false;
-                enemies.forEach(enemy => {
-                    if (!enemy.isDestroyed && checkEllipseCollision(bullet, enemy)) {
-                        bullet.isDestroyed = true;
-                        enemy.takeDamage(bullet.damageMultiplier);
-                        hit = true;
-                    }
-                });
-                
-                return !hit;
-            });
+                enemyBullets.push(new EnemyBullet(
+                    enemyBulletImage, 
+                    bulletX, 
+                    bulletY, 
+                    bulletSize.width, 
+                    bulletSize.height, 
+                    angle, 
+                    this.bulletSpeed,
+                    this.bulletDamage
+                ));
+                soundEffects.enemyShoot.play();
+                this.fireCounter = this.fireCooldown;
+            } else {
+                this.fireCounter--;
+            }
+        }
+    }
+
+    class Bullet extends GameObject {
+        constructor(image, x, y, width, height, velocityX, velocityY, angle, damageMultiplier = 1) {
+            super(image, x, y, width, height);
+            this.velocityX = velocityX;
+            this.velocityY = velocityY;
+            this.angle = angle || 0;
+            this.damageMultiplier = damageMultiplier;
         }
 
-        function updateEnemies() {
+        move() {
+            if (isAnimating) return;
+            this.x += this.velocityX;
+            this.y += this.velocityY;
+            if (this.x > canvas.width || this.x < 0 || this.y > canvas.height || this.y < 0) {
+                this.isDestroyed = true;
+            }
+        }
+        
+        draw() {
+            if (!this.isDestroyed) {
+                ctx.save();
+                ctx.translate(this.x + this.width/2, this.y + this.height/2);
+                ctx.rotate(this.angle);
+                ctx.drawImage(this.image, -this.width/2, -this.height/2, this.width, this.height);
+                ctx.restore();
+            }
+        }
+    }
+
+    class EnemyBullet extends GameObject {
+        constructor(image, x, y, width, height, angle, speed, damage) {
+            super(image, x, y, width, height);
+            this.angle = angle;
+            this.speed = speed;
+            this.damage = Math.min(damage, 2);
+        }
+
+        move() {
+            if (isAnimating) return;
+            this.x += this.speed * Math.cos(this.angle);
+            this.y += this.speed * Math.sin(this.angle);
+            if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                this.isDestroyed = true;
+            }
+        }
+    }
+
+    class Meteor extends GameObject {
+        constructor(image, x, y, width, height, speed) {
+            super(image, x, y, width, height);
+            this.speed = speed;
+            this.rotation = Math.random() * Math.PI * 2;
+            this.rotationSpeed = (Math.random() - 0.5) * 0.1;
+        }
+
+        move() {
+            if (isAnimating) return;
+            this.x -= this.speed;
+            this.rotation += this.rotationSpeed;
+            
+            if (this.x + this.width < 0) {
+                this.isDestroyed = true;
+            }
+        }
+
+        draw() {
+            if (!this.isDestroyed) {
+                ctx.save();
+                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                ctx.rotate(this.rotation);
+                ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+                ctx.restore();
+            }
+        }
+    }
+
+    // Luo uusi meteoriitti
+    function spawnMeteor() {
+        const sizeValue = Math.floor(Math.random() * (GAME_CONFIG.meteor.maxSize - GAME_CONFIG.meteor.minSize + 1)) + GAME_CONFIG.meteor.minSize;
+        const size = calculateSize({width: sizeValue, height: sizeValue});
+        const y = Math.random() * (canvas.height - size.height);
+        const speed = GAME_CONFIG.meteor.minSpeed + Math.random() * (GAME_CONFIG.meteor.maxSpeed - GAME_CONFIG.meteor.minSpeed);
+        const meteor = new Meteor(
+            meteorImage,
+            canvas.width,
+            y,
+            size.width,
+            size.height,
+            speed * (window.innerWidth / 1920)
+        );
+        meteors.push(meteor);
+        soundEffects.meteorSound.play();
+    }
+
+    // Luo uusi power-up
+    function spawnPowerUp() {
+        if (powerupCollected) return; // Don't spawn if already collected
+        
+        const size = calculateSize(GAME_CONFIG.powerup.size);
+        const y = Math.random() * (canvas.height - size.height);
+        const powerup = new PowerUp(
+            powerupImage,
+            canvas.width,
+            y,
+            size.width,
+            size.height,
+            GAME_CONFIG.powerup.speed
+        );
+        powerups.push(powerup);
+        soundEffects.powerup.play();
+    }
+
+    // Tason alustus
+    function initializeLevel(levelId) {
+        const level = LEVELS.find(l => l.id === levelId);
+        if (!level) return;
+
+        currentLevel = levelId;
+        currentWave = 0;
+        levelCompleted = false;
+        isAnimating = false;
+        meteors = [];
+        powerups = [];
+        meteorSpawnCounter = 0;
+        nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
+        powerupSpawnCounter = 0;
+        bulletDamageMultiplier = 1;
+        bulletSizeMultiplier = 1;
+        powerupCollected = false; // Reset collected flag for new level
+
+        const playerSize = calculateSize(GAME_CONFIG.playerSize);
+        player = new Player(
+            playerImage, 
+            canvas.width / 2 - playerSize.width / 2,
+            canvas.height / 2 - playerSize.height / 2, 
+            playerSize.width, 
+            playerSize.height
+        );
+        updateEnergyBar();
+        updateLives();
+        updateWaveInfo();
+
+        startNextWave();
+    }
+
+    // Aloita seuraava aalto
+    function startNextWave() {
+        const level = LEVELS.find(l => l.id === currentLevel);
+        if (!level || currentWave >= level.waves.length) {
+            showLevelCompleted();
+            return;
+        }
+
+        enemies = [];
+        const waveConfig = level.waves[currentWave];
+        
+        waveConfig.enemies.forEach(enemyConfig => {
+            for (let i = 0; i < enemyConfig.count; i++) {
+                const size = calculateSize(GAME_CONFIG.enemySizes[enemyConfig.type]);
+                const x = canvas.width - size.width - 50 - (i * 50);
+                const y = Math.random() * (canvas.height - size.height);
+                
+                const enemy = new Enemy(
+                    new Image(), 
+                    x,
+                    y,
+                    size.width,
+                    size.height,
+                    enemyConfig.health,
+                    enemyConfig.speed,
+                    enemyConfig.isSplitting,
+                    enemyConfig.fireCooldown,
+                    enemyConfig.bulletSpeed,
+                    enemyConfig.bulletDamage,
+                    enemyConfig.collisionDamage,
+                    enemyConfig.rotationSpeed // Välitetään pyörimisnopeus
+                );
+                enemy.type = enemyConfig.type;
+                enemy.image.src = enemyConfig.image;
+                enemies.push(enemy);
+            }
+        });
+
+        bullets = [];
+        enemyBullets = [];
+        updateWaveInfo();
+    }
+
+    function checkWaveCompletion() {
+        const level = LEVELS.find(l => l.id === currentLevel);
+        if (!level || currentWave >= level.waves.length) return;
+
+        const allEnemiesDestroyed = enemies.every(enemy => enemy.isDestroyed);
+        
+        if (!allEnemiesDestroyed) return;
+
+        if (currentWave === level.waves.length - 1) {
+            showLevelCompleted();
+        } else {
+            currentWave++;
+            startNextWave();
+        }
+    }
+
+    function checkEllipseCollision(obj1, obj2) {
+        const ellipse1 = obj1.getEllipse();
+        const ellipse2 = obj2.getEllipse();
+        
+        const dx = ellipse2.x - ellipse1.x;
+        const dy = ellipse2.y - ellipse1.y;
+        
+        const distanceSquared = (dx * dx) / (ellipse1.radiusX + ellipse2.radiusX) ** 2 + 
+                               (dy * dy) / (ellipse1.radiusY + ellipse2.radiusY) ** 2;
+        
+        return distanceSquared <= 1;
+    }
+
+    function update() {
+        if (!gameRunning) return;
+
+        try {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            updateGameState();                
+            drawAllObjects();                
+            checkWaveCompletion();
+            
+        } catch (e) {
+            console.error("Päivitysvirhe:", e);
+            resetGameState();
+        }
+
+        animationFrameId = requestAnimationFrame(update);
+    }
+
+    function updateGameState() {
+        // Päivitä meteoriittien spawnaus
+        meteorSpawnCounter++;
+        if (meteorSpawnCounter >= nextMeteorSpawn) {
+            spawnMeteor();
+            meteorSpawnCounter = 0;
+            nextMeteorSpawn = Math.floor(Math.random() * (GAME_CONFIG.meteor.spawnInterval.max - GAME_CONFIG.meteor.spawnInterval.min + 1)) + GAME_CONFIG.meteor.spawnInterval.min;
+        }
+
+        // Päivitä power-up spawnaus vain jos ei ole vielä kerätty
+        if (!powerupCollected) {
+            powerupSpawnCounter++;
+            if (powerupSpawnCounter >= GAME_CONFIG.powerup.spawnInterval && 
+                powerups.length === 0 && 
+                Math.random() < GAME_CONFIG.powerup.spawnChance) {
+                spawnPowerUp();
+                powerupSpawnCounter = 0;
+            }
+        }
+
+        // Päivitä pelaaja
+        player.move();
+        
+        // Päivitä ammukset
+        updateBullets();
+        
+        // Päivitä viholliset
+        updateEnemies();
+        
+        // Päivitä vihollisten ammukset
+        updateEnemyBullets();
+        
+        // Päivitä meteoriitit
+        updateMeteors();
+        
+        // Päivitä power-upit
+        updatePowerups();
+    }
+
+    function updateBullets() {
+        bullets.forEach(bullet => {
+            bullet.move();
+        });
+
+        bullets = bullets.filter(bullet => {
+            if (bullet.isDestroyed) return false;
+            
+            let hit = false;
             enemies.forEach(enemy => {
-                if (enemy.isDestroyed) return;
-                
-                enemy.follow(player);
-                enemy.fire(player);
-                
-                if (checkEllipseCollision(player, enemy)) {
-                    enemy.handleCollision(player);
-                }
-            });
-        }
-
-        function updateEnemyBullets() {
-            enemyBullets.forEach(bullet => {
-                if (bullet.isDestroyed) return;
-                
-                bullet.move();
-                
-                if (checkEllipseCollision(player, bullet)) {
-                    player.takeDamage(bullet.damage || 1);
+                if (!enemy.isDestroyed && checkEllipseCollision(bullet, enemy)) {
                     bullet.isDestroyed = true;
+                    enemy.takeDamage(bullet.damageMultiplier);
+                    hit = true;
                 }
-            });
-        }
-
-        function updateMeteors() {
-            meteors.forEach(meteor => {
-                meteor.move();
-                
-                if (!player.isRespawning && checkEllipseCollision(player, meteor)) {
-                    soundEffects.playerExplosion.play();
-                    player.loseLife();
-                    meteor.isDestroyed = true;
-                }
-            });
-
-            meteors = meteors.filter(meteor => !meteor.isDestroyed);
-        }
-
-        function updatePowerups() {
-            powerups.forEach(powerup => {
-                if (powerup.isDestroyed) return;
-                
-                powerup.move();
-                
-                if (checkEllipseCollision(player, powerup)) {
-                    soundEffects.powerup.play();
-                    bulletDamageMultiplier = 1.5;
-                    bulletSizeMultiplier = 1.5;
-                    powerup.isDestroyed = true;
-                    powerupCollected = true; // Mark as collected
-                }
-            });
-
-            powerups = powerups.filter(powerup => !powerup.isDestroyed);
-        }
-
-        function drawAllObjects() {
-            // Piirrä taustaelementit ensin
-            meteors.forEach(meteor => meteor.draw());
-            powerups.forEach(powerup => powerup.draw());
-            bullets.forEach(bullet => bullet.draw());
-            enemyBullets.forEach(bullet => bullet.draw());
-            
-            // Piirrä viholliset
-            enemies.forEach(enemy => {
-                if (!enemy.isDestroyed) enemy.draw();
             });
             
-            // Piirrä pelaaja viimeisenä
-            player.draw();
-        }
+            return !hit;
+        });
+    }
 
-        function resetGameState() {
-            // Palauta pelaaja turvalliseen sijaintiin
-            if (player) {
-                player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-                player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+    function updateEnemies() {
+        enemies.forEach(enemy => {
+            if (enemy.isDestroyed) return;
+            
+            enemy.follow(player);
+            enemy.fire(player);
+            
+            if (checkEllipseCollision(player, enemy)) {
+                enemy.handleCollision(player);
             }
-        }
+        });
+    }
 
-        function showGameOver() {
-            soundEffects.playerExplosion.play();
-            soundEffects.backgroundMusic.pause();
-            document.getElementById('gameOver').style.display = 'block';
-            gameRunning = false;
-        }
-
-        function hideGameOver() {
-            document.getElementById('gameOver').style.display = 'none';
-            gameRunning = true;
-        }
-
-        function showLevelCompleted() {
-            if (levelCompleted) return;
-            levelCompleted = true;
-            document.getElementById('levelCompleted').style.display = 'block';
-            gameRunning = false;
-        }
-
-        function hideLevelCompleted() {
-            document.getElementById('levelCompleted').style.display = 'none';
-            gameRunning = true;
-        }
-
-        function restartGame() {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
+    function updateEnemyBullets() {
+        enemyBullets.forEach(bullet => {
+            if (bullet.isDestroyed) return;
+            
+            bullet.move();
+            
+            if (checkEllipseCollision(player, bullet)) {
+                player.takeDamage(bullet.damage || 1);
+                bullet.isDestroyed = true;
             }
+        });
+    }
+
+    function updateMeteors() {
+        meteors.forEach(meteor => {
+            meteor.move();
+            
+            if (!player.isRespawning && checkEllipseCollision(player, meteor)) {
+                soundEffects.playerExplosion.play();
+                player.loseLife();
+                meteor.isDestroyed = true;
+            }
+        });
+
+        meteors = meteors.filter(meteor => !meteor.isDestroyed);
+    }
+
+    function updatePowerups() {
+        powerups.forEach(powerup => {
+            if (powerup.isDestroyed) return;
+            
+            powerup.move();
+            
+            if (checkEllipseCollision(player, powerup)) {
+                soundEffects.powerup.play();
+                bulletDamageMultiplier = 1.5;
+                bulletSizeMultiplier = 1.5;
+                powerup.isDestroyed = true;
+                powerupCollected = true; // Mark as collected
+            }
+        });
+
+        powerups = powerups.filter(powerup => !powerup.isDestroyed);
+    }
+
+    function drawAllObjects() {
+        // Piirrä taustaelementit ensin
+        meteors.forEach(meteor => meteor.draw());
+        powerups.forEach(powerup => powerup.draw());
+        bullets.forEach(bullet => bullet.draw());
+        enemyBullets.forEach(bullet => bullet.draw());
+        
+        // Piirrä viholliset
+        enemies.forEach(enemy => {
+            if (!enemy.isDestroyed) enemy.draw();
+        });
+        
+        // Piirrä pelaaja viimeisenä
+        player.draw();
+    }
+
+    function resetGameState() {
+        // Palauta pelaaja turvalliseen sijaintiin
+        if (player) {
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+        }
+    }
+
+    function showGameOver() {
+        soundEffects.playerExplosion.play();
+        soundEffects.backgroundMusic.pause();
+        document.getElementById('gameOver').style.display = 'block';
+        gameRunning = false;
+    }
+
+    function hideGameOver() {
+        document.getElementById('gameOver').style.display = 'none';
+        gameRunning = true;
+    }
+
+    function showLevelCompleted() {
+        if (levelCompleted) return;
+        levelCompleted = true;
+        document.getElementById('levelCompleted').style.display = 'block';
+        gameRunning = false;
+    }
+
+    function hideLevelCompleted() {
+        document.getElementById('levelCompleted').style.display = 'none';
+        gameRunning = true;
+    }
+
+    function restartGame() {
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+        }
+        initializeLevel(currentLevel);
+        hideGameOver();
+        hideLevelCompleted();
+        soundEffects.backgroundMusic.currentTime = 0;
+        soundEffects.backgroundMusic.play();
+        update();
+    }
+
+    function nextLevel() {
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+        }
+        
+        const nextLevel = currentLevel + 1;
+        if (nextLevel <= LEVELS.length) {
+            currentLevel = nextLevel;
             initializeLevel(currentLevel);
-            hideGameOver();
             hideLevelCompleted();
             soundEffects.backgroundMusic.currentTime = 0;
             soundEffects.backgroundMusic.play();
             update();
+        } else {
+            document.getElementById('levelCompleted').innerHTML = `
+                <h1>Kaikki tasot suoritettu!</h1>
+                <p>Onneksi olkoon, voitit pelin!</p>
+                <button onclick="returnToMenu()">Päävalikkoon</button>
+            `;
         }
+    }
 
-        function nextLevel() {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-            
-            const nextLevel = currentLevel + 1;
-            if (nextLevel <= LEVELS.length) {
-                currentLevel = nextLevel;
-                initializeLevel(currentLevel);
-                hideLevelCompleted();
-                soundEffects.backgroundMusic.currentTime = 0;
-                soundEffects.backgroundMusic.play();
-                update();
-            } else {
-                document.getElementById('levelCompleted').innerHTML = `
-                    <h1>Kaikki tasot suoritettu!</h1>
-                    <p>Onneksi olkoon, voitit pelin!</p>
-                    <button onclick="returnToMenu()">Päävalikkoon</button>
-                `;
-            }
+    function returnToMenu() {
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
         }
+        gameContainer.style.display = 'none';
+        startScreen.style.display = 'block';
+        hideLevelCompleted();
+        soundEffects.backgroundMusic.pause();
+    }
 
-        function returnToMenu() {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-            gameContainer.style.display = 'none';
-            startScreen.style.display = 'block';
-            hideLevelCompleted();
-            soundEffects.backgroundMusic.pause();
+    function startGame(levelId) {
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
         }
+        currentLevel = levelId;
+        startScreen.style.display = 'none';
+        gameContainer.style.display = 'block';
+        resizeCanvas();
+        initializeLevel(levelId);
+        soundEffects.backgroundMusic.play();
+        update();
+    }
 
-        function startGame(levelId) {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-            currentLevel = levelId;
-            startScreen.style.display = 'none';
-            gameContainer.style.display = 'block';
-            resizeCanvas();
-            initializeLevel(levelId);
-            soundEffects.backgroundMusic.play();
-            update();
-        }
-
-        function initializeLevelButtons() {
-            LEVELS.forEach(level => {
-                const button = document.createElement('button');
-                button.textContent = `Taso ${level.id}: ${level.name}`;
-                button.onclick = () => startGame(level.id);
-                button.title = level.description;
-                levelButtonsContainer.appendChild(button);
-            });
-        }
-
-        // iOS äänien käyttöönotto
-        function enableAudio() {
-            const dummyAudio = new Audio();
-            dummyAudio.volume = 0;
-            dummyAudio.play().then(() => {
-                dummyAudio.pause();
-                dummyAudio.currentTime = 0;
-            });
-        }
-
-        // Nuolinäppäinten käsittely
-        function handleKeyDown(e) {
-            if (keyNames[e.key]) {
-                pressedKeys.add(e.key);
-                allKeysReleased = false;
-
-                // Tallenna kopio nykyisestä näppäintilasta
-                previousPressedKeys = new Set(pressedKeys);
-
-                // Peru viive jos painetaan lisää
-                if (releaseTimeout) {
-                    clearTimeout(releaseTimeout);
-                    releaseTimeout = null;
-                }
-
-                if (e.key === ' ' && gameRunning) {
-                    player.shoot();
-                }
-            }
-        }
-
-        function handleKeyUp(e) {
-            if (keyNames[e.key]) {
-                pressedKeys.delete(e.key);
-
-                if (e.key === ' ') {
-                    player.canShoot = true;
-                }
-
-                // Tallenna vapautettu näppäin ja aikaleima
-                const now = performance.now();
-                releasedKeysLog.push({ key: e.key, time: now });
-                lastKeyReleaseTime = now;
-
-                // Pidä vain kaksi viimeisintä vapautusta
-                if (releasedKeysLog.length > 2) {
-                    releasedKeysLog.shift();
-                }
-
-                if (pressedKeys.size === 0 && !allKeysReleased) {
-                    allKeysReleased = true;
-
-                    releaseTimeout = setTimeout(() => {
-                        lastPressedCombo = Array.from(previousPressedKeys).sort().join(' + ');
-                    }, 50);
-                }
-            }
-        }
-
-        // Alustus
-        window.addEventListener('load', () => {
-            initializeLevelButtons();
-            enableAudio();
-            resizeCanvas();
-            
-            document.body.addEventListener('click', enableAudio, { once: true });
-            
-            document.addEventListener('keydown', handleKeyDown);
-            document.addEventListener('keyup', handleKeyUp);
+    function initializeLevelButtons() {
+        LEVELS.forEach(level => {
+            const button = document.createElement('button');
+            button.textContent = `Taso ${level.id}: ${level.name}`;
+            button.onclick = () => startGame(level.id);
+            button.title = level.description;
+            levelButtonsContainer.appendChild(button);
         });
+    }
 
-        window.addEventListener('resize', () => {
-            resizeCanvas();
+    // iOS äänien käyttöönotto
+    function enableAudio() {
+        const dummyAudio = new Audio();
+        dummyAudio.volume = 0;
+        dummyAudio.play().then(() => {
+            dummyAudio.pause();
+            dummyAudio.currentTime = 0;
         });
-    </script>
-</body>
+    }
+
+    // Nuolinäppäinten käsittely
+    function handleKeyDown(e) {
+        if (keyNames[e.key]) {
+            pressedKeys.add(e.key);
+            allKeysReleased = false;
+
+            // Tallenna kopio nykyisestä näppäintilasta
+            previousPressedKeys = new Set(pressedKeys);
+
+            // Peru viive jos painetaan lisää
+            if (releaseTimeout) {
+                clearTimeout(releaseTimeout);
+                releaseTimeout = null;
+            }
+
+            if (e.key === ' ' && gameRunning) {
+                player.shoot();
+            }
+        }
+    }
+
+    function handleKeyUp(e) {
+        if (keyNames[e.key]) {
+            pressedKeys.delete(e.key);
+
+            if (e.key === ' ') {
+                player.canShoot = true;
+            }
+
+            // Tallenna vapautettu näppäin ja aikaleima
+            const now = performance.now();
+            releasedKeysLog.push({ key: e.key, time: now });
+            lastKeyReleaseTime = now;
+
+            // Pidä vain kaksi viimeisintä vapautusta
+            if (releasedKeysLog.length > 2) {
+                releasedKeysLog.shift();
+            }
+
+            if (pressedKeys.size === 0 && !allKeysReleased) {
+                allKeysReleased = true;
+
+                releaseTimeout = setTimeout(() => {
+                    lastPressedCombo = Array.from(previousPressedKeys).sort().join(' + ');
+                }, 50);
+            }
+        }
+    }
+
+    // Alustus
+    window.addEventListener('load', () => {
+        initializeLevelButtons();
+        enableAudio();
+        resizeCanvas();
+        
+        document.body.addEventListener('click', enableAudio, { once: true });
+        
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyUp);
+    });
+
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+    });
+</script>
+</body> 
 </html>
