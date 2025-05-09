@@ -1020,7 +1020,7 @@ move() {
             this.wobbleSpeed = Math.random() * 0.05 + 0.02;
             this.wobbleCounter = 0;
             this.rotation = 0;
-            this.rotationSpeed = rotationSpeed || 0.02; // Oletusarvo jos ei määritelty
+            this.rotationSpeed = rotationSpeed || 0; // Oletusarvo jos ei määritelty
         }
 
         follow(player) {
